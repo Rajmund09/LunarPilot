@@ -1,0 +1,35 @@
+# Virtual Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs and TensorBoard
+logs/
+*.log
+
+# Models & Weights (keep repo clean, checkpoint models are large)
+models/
+!models/.gitkeep
+
+# Metrics & Figures generated at runtime
+results/figures/*.png
+results/metrics/*.csv
+results/metrics/*.json
+!results/figures/.gitkeep
+!results/metrics/.gitkeep
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
