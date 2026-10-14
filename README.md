@@ -149,15 +149,24 @@ python play.py --model models/best/best_model.zip --episodes 5
 
 ---
 
-## 📊 Benchmark Results
+## 📊 Empirical Benchmark Results (100 Test Flights)
 
-| Metric | Random Baseline (Measured) | Target Trained PPO Agent | Target Objective |
+| Metric | Random Uniform Baseline | Trained PPO Agent (Measured) | Performance Delta |
 |:---|:---:|:---:|:---:|
-| **Mean Episode Reward** | $-203.84 \pm 112.96$ | *Pending Training* | $> +200.0$ |
-| **Landing Success Rate** | $0.0\%$ | *Pending Training* | $\ge 90.0\%$ |
-| **Crash Rate** | $83.0\%$ | *Pending Training* | $\le 5.0\%$ |
-| **Mean Episode Duration**| $95.02\text{ steps}$ | *Pending Training* | Controlled descent |
-| **Reward Range** | $[-520.23, +7.90]$ | *Pending Training* | Consistent positive |
+| **Mean Episode Reward** | $-203.84 \pm 112.96$ | **$+192.74 \pm 91.76$** | **$+396.58$** pts |
+| **Median Episode Reward**| $-191.23$ | **$+232.95$** | **$+424.18$** pts |
+| **Reward Range** | $[-520.23, +7.90]$ | $[-35.87, \mathbf{+287.38}]$ | Consistent High Reward |
+| **Landing Success Rate** | $0.0\%$ | **$81.0\%$** | **$+81.0\%$** |
+| **Terminal Crash Rate** | $83.0\%$ | **$0.0\%$** (0 crashes in 100 flights) | **$-83.0\%$** |
+| **Mean Flight Duration** | $95.02\text{ steps}$ | $365.98\text{ steps}$ | Controlled soft descent |
+| **Final Lateral Drift $\|x\|$$** | $0.62$ | **$0.149$** (between flags) | Centered touchdown |
+| **Main Engine Usage** | $25.0\%$ | $43.5\%$ | Adaptive deceleration |
+
+### Visual Artifacts Generated
+- **Multi-Metric Learning Curves**: `results/figures/learning_curves.png`
+- **Baseline vs PPO Outcome Benchmark**: `results/figures/baseline_vs_ppo.png`
+- **Empirical Baseline Distribution**: `results/figures/baseline_distribution.png`
+
 
 ---
 

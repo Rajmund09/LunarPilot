@@ -1,6 +1,6 @@
 """
 LunarPilot - Agent Demonstration & Telemetry Visualizer
-Renders the trained PPO agent landing in real-time, displays real-time telemetry,
+Renders the trained PPO agent or random baseline in real-time, displays live telemetry,
 and prints detailed episode performance summaries.
 """
 
@@ -36,32 +36,40 @@ def play(
     num_episodes: int = 5,
     fps: int = 50,
     deterministic: bool = True,
+    random_policy: bool = False,
 ):
     print("=" * 60)
     print("[*] LunarPilot - Agent Demonstration & Live Playback")
-    print(f"Loading Model: {model_path}")
     print(f"Target Episodes: {num_episodes} | Target FPS: {fps}")
-    print("=" * 60)
 
-    if not os.path.exists(model_path):
-        fallback = "models/final_model.zip"
-        if os.path.exists(fallback):
-            print(f"[!] Warning: Model at '{model_path}' not found, falling back to '{fallback}'")
-            model_path = fallback
-        else:
-            print(f"[FAIL] Error: Model file not found at {model_path}")
-            print("Please run training first: python -m lunar_pilot.train (or python train.py)")
-            sys.exit(1)
+    model = None
+    if not random_policy:
+        if not os.path.exists(model_path):
+            fallback = "models/final_model.zip"
+            if os.path.exists(fallback):
+                print(f"[!] Model at '{model_path}' not found, falling back to '{fallback}'")
+                model_path = fallback
+            else:
+                print(f"[!] No trained model found at '{model_path}'.")
+                print("    Automatically switching to >> RANDOM BASELINE AGENT << for live demonstration!")
+                print("    (To visualize trained PPO, run training first: python train.py)")
+                random_policy = True
+
+    if not random_policy:
+        print(f"Loading Trained Model: {model_path}")
+        model = PPO.load(model_path)
+    else:
+        print("Policy Mode: Random Exploration Baseline")
+    print("=" * 60)
 
     env_id = get_supported_env_id(env_id)
 
     try:
         env = gym.make(env_id, render_mode="human")
     except Exception as e:
-        print(f"[!] Warning: Human rendering failed: {e}. Falling back without display window...")
+        print(f"[!] Human rendering window could not open: {e}. Falling back to headless simulation...")
         env = gym.make(env_id)
 
-    model = PPO.load(model_path)
     delay = 1.0 / fps
 
     for episode in range(1, num_episodes + 1):
@@ -73,8 +81,11 @@ def play(
         print(f"\n--- Episode {episode}/{num_episodes} Commencing ---")
 
         while not done:
-            action, _ = model.predict(obs, deterministic=deterministic)
-            action = int(action)
+            if model is not None and not random_policy:
+                action, _ = model.predict(obs, deterministic=deterministic)
+                action = int(action)
+            else:
+                action = int(env.action_space.sample())
 
             obs, reward, terminated, truncated, info = env.step(action)
             total_reward += reward
@@ -114,6 +125,7 @@ if __name__ == "__main__":
     parser.add_argument("--episodes", type=int, default=5, help="Number of episodes to visualize")
     parser.add_argument("--fps", type=int, default=50, help="Frames per second")
     parser.add_argument("--stochastic", action="store_true", help="Sample actions stochastically")
+    parser.add_argument("--random", action="store_true", help="Visualize random policy")
     args = parser.parse_args()
 
     play(
@@ -121,4 +133,5 @@ if __name__ == "__main__":
         num_episodes=args.episodes,
         fps=args.fps,
         deterministic=not args.stochastic,
+        random_policy=args.random,
     )

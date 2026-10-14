@@ -1,9 +1,18 @@
 """
 LunarPilot - Publication-Quality Performance Visualization
 Generates high-resolution figures from evaluation logs and comparative benchmarks:
-1. Multi-metric Learning Curves (Mean Reward, Success Rate, Crash Rate, Episode Length)
-2. Empirical Comparison: Random Baseline vs Trained PPO
+1. Baseline Empirical Distribution (Reward histogram, episode lengths, crash vs timeout)
+2. Multi-metric Learning Curves (Mean Reward, Success Rate, Crash Rate, Episode Length)
+3. Empirical Comparison: Random Baseline vs Trained PPO
 """
+
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 import os
 import json
@@ -19,20 +28,66 @@ plt.rcParams["axes.edgecolor"] = "#cccccc"
 plt.rcParams["axes.linewidth"] = 0.8
 
 
+def plot_baseline_distribution(
+    baseline_path: str = "results/metrics/baseline_metrics.json",
+    output_dir: str = "results/figures",
+):
+    """Plot empirical distribution of the random exploration baseline."""
+    if not os.path.exists(baseline_path):
+        print(f"[!] Baseline metrics not found at '{baseline_path}'. Skipping baseline distribution plot.")
+        return
+
+    with open(baseline_path, "r", encoding="utf-8") as f:
+        baseline = json.load(f)
+
+    raw_rewards = baseline.get("raw_rewards", [])
+    raw_lengths = baseline.get("raw_lengths", [])
+
+    os.makedirs(output_dir, exist_ok=True)
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5.5), dpi=300)
+
+    # 1. Reward Distribution Histogram
+    ax1 = axes[0]
+    ax1.hist(raw_rewards, bins=20, color="#ff7f0e", edgecolor="#d95f02", alpha=0.75, density=False)
+    mean_r = baseline.get("mean_reward", np.mean(raw_rewards))
+    ax1.axvline(mean_r, color="#d95f02", linestyle="--", linewidth=2, label=f"Mean: {mean_r:.1f}")
+    ax1.axvline(0, color="#7f7f7f", linestyle=":", linewidth=1)
+    ax1.set_title("Random Baseline: Episode Reward Distribution (100 Episodes)", fontsize=11, fontweight="bold")
+    ax1.set_xlabel("Episode Reward")
+    ax1.set_ylabel("Frequency (Count)")
+    ax1.legend(loc="upper left")
+
+    # 2. Episode Length Distribution
+    ax2 = axes[1]
+    ax2.hist(raw_lengths, bins=15, color="#1f77b4", edgecolor="#145682", alpha=0.75)
+    mean_l = baseline.get("mean_episode_length", np.mean(raw_lengths))
+    ax2.axvline(mean_l, color="#145682", linestyle="--", linewidth=2, label=f"Mean Length: {mean_l:.1f} steps")
+    ax2.set_title("Random Baseline: Episode Duration (Steps to Crash/End)", fontsize=11, fontweight="bold")
+    ax2.set_xlabel("Episode Steps")
+    ax2.set_ylabel("Frequency (Count)")
+    ax2.legend(loc="upper right")
+
+    plt.tight_layout()
+    save_path = os.path.join(output_dir, "baseline_distribution.png")
+    plt.savefig(save_path)
+    plt.close()
+    print(f"[OK] Saved baseline distribution figure to: {save_path}")
+
+
 def plot_learning_curves(
     eval_history_path: str = "logs/evaluations/eval_history.json",
     output_dir: str = "results/figures",
 ):
     """Plot training progression across evaluation timesteps."""
     if not os.path.exists(eval_history_path):
-        print(f"⚠️ Evaluation history not found at '{eval_history_path}'. Skipping learning curve plot.")
+        print(f"[!] Evaluation history not found at '{eval_history_path}'. (Generated during/after training).")
         return
 
     with open(eval_history_path, "r", encoding="utf-8") as f:
         history = json.load(f)
 
     if not history:
-        print("⚠️ Evaluation history is empty.")
+        print("[!] Evaluation history is empty.")
         return
 
     timesteps = [entry["timestep"] for entry in history]
@@ -50,7 +105,7 @@ def plot_learning_curves(
     ax1.plot(timesteps, mean_rewards, color="#1f77b4", linewidth=2.2, label="PPO Mean Reward")
     lower = np.array(mean_rewards) - np.array(std_rewards)
     upper = np.array(mean_rewards) + np.array(std_rewards)
-    ax1.fill_between(timesteps, lower, upper, color="#1f77b4", alpha=0.18, label="±1 Std Dev")
+    ax1.fill_between(timesteps, lower, upper, color="#1f77b4", alpha=0.18, label="+/- 1 Std Dev")
     ax1.axhline(200, color="#2ca02c", linestyle="--", linewidth=1.5, label="Solved Threshold (+200)")
     ax1.axhline(0, color="#7f7f7f", linestyle=":", linewidth=1)
     ax1.set_title("Evaluation Episode Reward over Training", fontsize=12, fontweight="bold")
@@ -85,7 +140,7 @@ def plot_learning_curves(
     save_path = os.path.join(output_dir, "learning_curves.png")
     plt.savefig(save_path)
     plt.close()
-    print(f"📊 Saved learning curves figure to: {save_path}")
+    print(f"[OK] Saved learning curves figure to: {save_path}")
 
 
 def plot_baseline_vs_ppo(
@@ -95,7 +150,7 @@ def plot_baseline_vs_ppo(
 ):
     """Generate comparative charts between Random Baseline and Trained PPO."""
     if not (os.path.exists(baseline_path) and os.path.exists(ppo_path)):
-        print("⚠️ Both baseline and PPO metrics must exist to plot comparison.")
+        print("[!] Both baseline and PPO metrics must exist to plot comparison.")
         return
 
     with open(baseline_path, "r", encoding="utf-8") as f:
@@ -158,10 +213,11 @@ def plot_baseline_vs_ppo(
     save_path = os.path.join(output_dir, "baseline_vs_ppo.png")
     plt.savefig(save_path)
     plt.close()
-    print(f"📊 Saved baseline vs PPO comparison figure to: {save_path}")
+    print(f"[OK] Saved baseline vs PPO comparison figure to: {save_path}")
 
 
 def generate_all_plots():
+    plot_baseline_distribution()
     plot_learning_curves()
     plot_baseline_vs_ppo()
 

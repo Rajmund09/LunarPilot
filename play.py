@@ -17,6 +17,7 @@ if __name__ == "__main__":
     parser.add_argument("--episodes", type=int, default=5, help="Number of episodes to visualize")
     parser.add_argument("--fps", type=int, default=50, help="Frames per second")
     parser.add_argument("--stochastic", action="store_true", help="Sample actions stochastically")
+    parser.add_argument("--random", action="store_true", help="Visualize random policy")
     args = parser.parse_args()
 
     play(
@@ -24,4 +25,5 @@ if __name__ == "__main__":
         num_episodes=args.episodes,
         fps=args.fps,
         deterministic=not args.stochastic,
+        random_policy=args.random,
     )

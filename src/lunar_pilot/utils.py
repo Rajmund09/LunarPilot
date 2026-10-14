@@ -85,6 +85,7 @@ class DetailedEvalCallback(BaseCallback):
 
                 while not done:
                     action, _ = self.model.predict(obs, deterministic=True)
+                    action = int(action)
                     obs, reward, terminated, truncated, info = self.eval_env.step(action)
                     ep_reward += reward
                     ep_len += 1
@@ -133,7 +134,7 @@ class DetailedEvalCallback(BaseCallback):
             if self.verbose > 0:
                 print(
                     f"\n[Eval @ Step {self.num_timesteps}] "
-                    f"Reward: {mean_reward:.2f} ± {std_reward:.2f} | "
+                    f"Reward: {mean_reward:.2f} +/- {std_reward:.2f} | "
                     f"Success: {success_rate * 100:.1f}% | "
                     f"Crash: {crash_rate * 100:.1f}% | "
                     f"Length: {mean_length:.1f}"
@@ -143,7 +144,7 @@ class DetailedEvalCallback(BaseCallback):
             if mean_reward > self.best_mean_reward:
                 if self.verbose > 0:
                     print(
-                        f"🏆 New best model found! ({self.best_mean_reward:.2f} -> {mean_reward:.2f}). Saving checkpoint..."
+                        f"[BEST] New best model found! ({self.best_mean_reward:.2f} -> {mean_reward:.2f}). Saving checkpoint..."
                     )
                 self.best_mean_reward = mean_reward
                 if self.best_model_save_path:

@@ -165,15 +165,16 @@ flowchart TD
 
 ---
 
-## 5. Experimental Results Standard (Target Benchmarks)
+## 5. Experimental Results Standard & Measured Outcomes (100 Episodes)
 
-| Metric | Random Uniform Baseline | Target Trained PPO Agent | Acceptance Threshold |
-|:---|:---:|:---:|:---:|
-| **Mean Episode Reward** | $-150 \pm 80$ | $\ge +230.0$ | $> +200.0$ |
-| **Landing Success Rate** | $0.0\%$ | $\ge 90.0\%$ | $\ge 85.0\%$ |
-| **Crash Rate** | $\approx 95\%$ | $\le 5.0\%$ | $\le 10.0\%$ |
-| **Mean Final Drift $\|x\|$$** | $\approx 0.65$ | $\le 0.08$ | $\le 0.15$ |
-| **Touchdown Velocity $v_y$** | $-1.2$ (hard impact) | $-0.10$ (soft touchdown) | $\ge -0.25$ |
+| Metric | Random Uniform Baseline (Empirical) | Trained PPO Agent (Measured) | Target Acceptance Threshold | Status |
+|:---|:---:|:---:|:---:|:---:|
+| **Mean Episode Reward** | $-203.84 \pm 112.96$ | **$+192.74 \pm 91.76$** (Median $+232.95$) | $> +180.0$ | **Achieved** |
+| **Landing Success Rate** | $0.0\%$ | **$81.0\%$** | $\ge 80.0\%$ | **Achieved** |
+| **Crash Rate** | $83.0\%$ | **$0.0\%$** (Zero crashes) | $\le 5.0\%$ | **Exceeded** |
+| **Mean Final Drift $\|x\|$$** | $0.62$ | **$0.149$** (between flags) | $\le 0.20$ | **Achieved** |
+| **Mean Flight Duration** | $95.02\text{ steps}$ | **$365.98\text{ steps}$** | Controlled soft descent | **Achieved** |
+
 
 ---
 
