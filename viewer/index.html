@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RocketLand 3D — Autonomous Rocket Guidance & Precision Landing Visualizer</title>
+  <title>RocketLand 3D — Autonomous Guidance & Precision Landing Visualizer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #030712;
+      --bg: #020617;
       --card-bg: rgba(11, 17, 32, 0.88);
       --card-border: rgba(255, 255, 255, 0.10);
       --accent-cyan: #38bdf8;
@@ -17,7 +17,7 @@
       --accent-emerald: #10b981;
       --accent-amber: #f59e0b;
       --accent-rose: #f43f5e;
-      --text-main: #f3f4f6;
+      --text-main: #f8fafc;
       --text-muted: #94a3b8;
     }
 
@@ -61,7 +61,7 @@
       border: 1px solid var(--card-border);
       padding: 10px 22px;
       border-radius: 16px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.75);
     }
 
     .brand-section {
@@ -182,7 +182,7 @@
       box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
     }
 
-    /* Flight Phase Pill (Top Center) */
+    /* Top Center Flight Phase Pill */
     #flight-phase-banner {
       position: absolute;
       top: 78px;
@@ -196,30 +196,30 @@
       font-weight: 700;
       letter-spacing: 0.8px;
       text-transform: uppercase;
-      background: rgba(15, 23, 42, 0.88);
+      background: rgba(15, 23, 42, 0.90);
       backdrop-filter: blur(14px);
-      border: 1px solid rgba(56, 189, 248, 0.35);
+      border: 1px solid rgba(56, 189, 248, 0.4);
       color: #38bdf8;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.65);
       display: flex;
       align-items: center;
       gap: 8px;
       transition: all 0.3s ease;
     }
 
-    /* Telemetry HUD Tape (Left) */
+    /* Left Telemetry HUD Tape */
     #telemetry-hud {
       position: absolute;
       top: 80px;
       left: 20px;
       z-index: 15;
-      width: 280px;
+      width: 290px;
       background: var(--card-bg);
       backdrop-filter: blur(20px);
       border: 1px solid var(--card-border);
       border-radius: 16px;
       padding: 16px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.75);
       font-family: 'JetBrains Mono', monospace;
     }
 
@@ -304,6 +304,39 @@
 
     .gauge-fuel {
       background: linear-gradient(90deg, #10b981, #06b6d4);
+    }
+
+    /* Active Attitude Indicator (Artificial Horizon) */
+    .attitude-gyro-box {
+      margin-top: 10px;
+      padding: 8px 10px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .gyro-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--accent-cyan);
+      position: relative;
+      overflow: hidden;
+      background: #0f172a;
+    }
+
+    .gyro-bar {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: #facc15;
+      transform-origin: center;
+      transition: transform 0.08s ease;
     }
 
     /* TVC Gimbal Indicator */
@@ -593,10 +626,15 @@
       <span class="hud-val" id="val-x">0.0 m</span>
     </div>
 
-    <!-- Attitude Tilt -->
-    <div class="hud-row">
-      <span class="hud-label">PITCH TILT:</span>
-      <span class="hud-val" id="val-tilt">0.0°</span>
+    <!-- Active Attitude Gyro -->
+    <div class="attitude-gyro-box">
+      <div>
+        <div class="hud-label" style="font-size: 0.72rem;">ATTITUDE TILT</div>
+        <div class="hud-val" id="val-tilt" style="font-size: 0.85rem;">0.0°</div>
+      </div>
+      <div class="gyro-circle">
+        <div class="gyro-bar" id="gyro-bar"></div>
+      </div>
     </div>
 
     <!-- Main Engine Thrust Gauge -->
@@ -646,14 +684,14 @@
     <button class="preset-pill" onclick="runCustomPreset(280, 0, 0, -35, 0)">
       🎯 Nominal Hoverslam Burn (280m)
     </button>
-    <button class="preset-pill" onclick="runCustomPreset(320, 12, 1.5, -40, 4)">
-      💨 Crosswind & Lateral Drift (12m Offset)
+    <button class="preset-pill" onclick="runCustomPreset(320, 10, 1.5, -40, 4)">
+      💨 Crosswind & Lateral Drift (10m Offset)
     </button>
-    <button class="preset-pill" onclick="runCustomPreset(850, 0, 0, -65, 0)">
-      ⚡ High-Altitude Entry (850m)
+    <button class="preset-pill" onclick="runCustomPreset(650, -12, -2.0, -55, 6)">
+      🌊 High Oceanic Swell Entry (650m)
     </button>
-    <button class="preset-pill" onclick="runCustomPreset(1200, 15, 2, -85, 8)">
-      🌪️ Severe Oceanic Wind Gusts (1200m)
+    <button class="preset-pill" onclick="runCustomPreset(1000, 15, 2, -75, 8)">
+      ⚡ High-Speed Atmospheric Dive (1000m)
     </button>
   </div>
 
@@ -697,10 +735,10 @@
     // --- 1. Three.js Scene Setup ---
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x020617, 0.0012);
+    scene.fog = new THREE.FogExp2(0x020617, 0.0010);
 
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 4000);
-    camera.position.set(0, 40, 75);
+    camera.position.set(16, 35, 36);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -715,8 +753,8 @@
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.maxPolarAngle = Math.PI / 2 - 0.02;
-    controls.minDistance = 5;
-    controls.maxDistance = 600;
+    controls.minDistance = 6;
+    controls.maxDistance = 500;
 
     // --- 2. Lighting ---
     const ambientLight = new THREE.AmbientLight(0x273549, 1.4);
@@ -1024,11 +1062,11 @@
     // 4C. Cold-Gas Nitrogen RCS Thruster Quads
     const rcsPuffs = [];
     function createRCSEmitter(angleY) {
-      const puffGeo = new THREE.ConeGeometry(0.3, 2.2, 12);
+      const puffGeo = new THREE.ConeGeometry(0.4, 3.2, 12);
       puffGeo.rotateZ(Math.PI / 2);
-      const puffMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.85 });
+      const puffMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.9 });
       const puff = new THREE.Mesh(puffGeo, puffMat);
-      puff.position.set(Math.cos(angleY) * 2.8, 38.5, Math.sin(angleY) * 2.8);
+      puff.position.set(Math.cos(angleY) * 3.2, 38.5, Math.sin(angleY) * 3.2);
       puff.rotation.y = angleY;
       puff.visible = false;
       fuselageGroup.add(puff);
@@ -1046,7 +1084,7 @@
     fuselageGroup.add(gimbalPivot);
 
     // Merlin Nozzle Bell
-    const nozzleGeo = new THREE.CylinderGeometry(0.35, 0.90, 1.4, 32, 1, true);
+    const nozzleGeo = new THREE.CylinderGeometry(0.35, 0.95, 1.5, 32, 1, true);
     const nozzleMat = new THREE.MeshStandardMaterial({
       color: 0x334155,
       metalness: 0.95,
@@ -1054,34 +1092,43 @@
       side: THREE.DoubleSide,
     });
     const nozzle = new THREE.Mesh(nozzleGeo, nozzleMat);
-    nozzle.position.y = -0.7;
+    nozzle.position.y = -0.75;
     nozzle.castShadow = true;
     gimbalPivot.add(nozzle);
 
-    // Volumetric Engine Exhaust Plume
+    // Volumetric Engine Exhaust Plume (Parented to gimbalPivot so it visibly vectors!)
     const plumeGroup = new THREE.Group();
-    plumeGroup.position.y = -1.4;
+    plumeGroup.position.y = -1.5;
     gimbalPivot.add(plumeGroup);
 
     // Inner White Incandescent Core
-    const coreFlameGeo = new THREE.ConeGeometry(0.65, 8.0, 16);
+    const coreFlameGeo = new THREE.ConeGeometry(0.75, 10.0, 16);
     coreFlameGeo.rotateX(Math.PI);
     const coreFlameMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 });
     const coreFlame = new THREE.Mesh(coreFlameGeo, coreFlameMat);
-    coreFlame.position.y = -4.0;
+    coreFlame.position.y = -5.0;
     plumeGroup.add(coreFlame);
 
+    // Mach Shock Diamond Discs
+    const diamondMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.9 });
+    for (let d = 2.0; d < 8.0; d += 2.2) {
+      const diamond = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.5, 16), diamondMat);
+      diamond.position.y = -d;
+      diamond.rotateX(Math.PI / 2);
+      plumeGroup.add(diamond);
+    }
+
     // Outer Expanding Transonic Plume
-    const outerPlumeGeo = new THREE.ConeGeometry(1.35, 14.0, 16);
+    const outerPlumeGeo = new THREE.ConeGeometry(1.6, 18.0, 16);
     outerPlumeGeo.rotateX(Math.PI);
     const outerPlumeMat = new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.45 });
     const outerPlume = new THREE.Mesh(outerPlumeGeo, outerPlumeMat);
-    outerPlume.position.y = -7.0;
+    outerPlume.position.y = -9.0;
     plumeGroup.add(outerPlume);
 
     // Dynamic Plume Light
-    const plumeLight = new THREE.PointLight(0xf97316, 5.0, 60);
-    plumeLight.position.y = -2.0;
+    const plumeLight = new THREE.PointLight(0xf97316, 6.0, 80);
+    plumeLight.position.y = -2.5;
     plumeGroup.add(plumeLight);
     plumeGroup.visible = false;
 
@@ -1128,6 +1175,7 @@
     let activeVehicle = "falcon";
     let currentEpisode = null;
     let currentStepIdx = 0;
+    let currentTime_s = 0.0;
     let isPlaying = false;
     let playbackSpeed = 1.0;
     let cameraMode = 'chase';
@@ -1150,6 +1198,7 @@
     const valVx = document.getElementById('val-vx');
     const valX = document.getElementById('val-x');
     const valTilt = document.getElementById('val-tilt');
+    const gyroBar = document.getElementById('gyro-bar');
     const valThrust = document.getElementById('val-thrust');
     const gaugeThrottleFill = document.getElementById('gauge-throttle-fill');
     const gimbalNeedle = document.getElementById('gimbal-needle');
@@ -1193,11 +1242,12 @@
         const data = await res.json();
         currentEpisode = data;
         currentStepIdx = 0;
+        currentTime_s = 0.0;
         timeScrubber.max = data.steps.length - 1;
         timeScrubber.value = 0;
 
         updateEnvironmentVisuals();
-        updateState(0);
+        updateInterpolatedState(0.0);
 
         isPlaying = true;
         playIcon.textContent = "⏸";
@@ -1223,15 +1273,54 @@
       }
     }
 
-    // Update 3D Model Pose & HUD on Every Step
-    function updateState(stepIdx) {
-      if (!currentEpisode || !currentEpisode.steps || !currentEpisode.steps[stepIdx]) return;
-      const s = currentEpisode.steps[stepIdx];
-      const isTerminal = (stepIdx >= currentEpisode.steps.length - 1);
+    // Continuous 60fps Interpolated State & Dynamic Flight Pose
+    function updateInterpolatedState(time_s) {
+      if (!currentEpisode || !currentEpisode.steps || currentEpisode.steps.length === 0) return;
+      const steps = currentEpisode.steps;
+      const totalSteps = steps.length;
+      const dt = (steps[1] ? steps[1].t - steps[0].t : 0.1) || 0.1;
+
+      let idx = Math.floor(time_s / dt);
+      if (idx < 0) idx = 0;
+      const isTerminal = (idx >= totalSteps - 1 || time_s >= (currentEpisode.duration_s || steps[totalSteps - 1].t));
+
+      let s;
+      if (isTerminal || idx >= totalSteps - 1) {
+        idx = totalSteps - 1;
+        s = steps[idx];
+      } else {
+        const s0 = steps[idx];
+        const s1 = steps[idx + 1];
+        const span = (s1.t - s0.t) > 0 ? (s1.t - s0.t) : dt;
+        const alpha = Math.max(0, Math.min(1, (time_s - s0.t) / span));
+        const lerp = (a, b) => a + (b - a) * alpha;
+
+        s = {
+          step: idx,
+          t: time_s,
+          x: lerp(s0.x, s1.x),
+          y: lerp(s0.y, s1.y),
+          h_foot: lerp(s0.h_foot !== undefined ? s0.h_foot : Math.max(0.0, s0.y - 20.0), s1.h_foot !== undefined ? s1.h_foot : Math.max(0.0, s1.y - 20.0)),
+          vx: lerp(s0.vx, s1.vx),
+          vy: lerp(s0.vy, s1.vy),
+          theta: lerp(s0.theta, s1.theta),
+          tilt_deg: lerp(s0.tilt_deg, s1.tilt_deg),
+          omega_deg: lerp(s0.omega_deg, s1.omega_deg),
+          throttle: lerp(s0.throttle, s1.throttle),
+          thrust_kn: lerp(s0.thrust_kn, s1.thrust_kn),
+          gimbal_deg: lerp(s0.gimbal_deg, s1.gimbal_deg),
+          rcs_knm: lerp(s0.rcs_knm, s1.rcs_knm),
+          fuel: lerp(s0.fuel, s1.fuel),
+          left_contact: alpha > 0.5 ? s1.left_contact : s0.left_contact,
+          right_contact: alpha > 0.5 ? s1.right_contact : s0.right_contact,
+          phase: alpha > 0.5 ? s1.phase : s0.phase,
+        };
+      }
+
+      currentStepIdx = idx;
 
       // 1. Precise Rocket 3D Position
-      // Foot altitude above deck: when h_foot = 0, feet rest at y = 0.0!
-      const hFoot = (s.h_foot !== undefined) ? s.h_foot : Math.max(0.0, s.y - 20.0);
+      const hFoot = Math.max(0.0, s.h_foot !== undefined ? s.h_foot : s.y - 20.0);
       rocket.position.set(s.x, hFoot, 0);
       rocket.rotation.z = s.theta;
 
@@ -1244,26 +1333,26 @@
       if (throttle > 0.05 && !isTerminal) {
         plumeGroup.visible = true;
         const flameScale = Math.max(0.35, throttle);
-        const flicker = 0.95 + Math.random() * 0.1;
+        const flicker = 0.96 + Math.random() * 0.08;
         plumeGroup.scale.set(flameScale * flicker, flameScale * flicker, flameScale * flicker);
         plumeLight.intensity = throttle * 6.5;
       } else {
         plumeGroup.visible = false;
       }
 
-      // 4. Grid Fins Aerodynamic Cant Animation
-      const finCant = Math.max(-0.35, Math.min(0.35, -s.vx * 0.04));
-      gridFins.forEach(fin => {
-        fin.rotation.z = finCant;
-      });
+      // 4. Grid Fins Aerodynamic Deflection (Visibly cant to steer!)
+      const finCant = Math.max(-0.4, Math.min(0.4, -s.vx * 0.08 - s.gimbal_deg * 0.04));
+      gridFins[0].rotation.z = finCant;
+      gridFins[2].rotation.z = -finCant;
+      gridFins[1].rotation.x = Math.sin(time_s * 4.0) * 0.08;
+      gridFins[3].rotation.x = -Math.sin(time_s * 4.0) * 0.08;
 
-      // 5. RCS Cold-Gas Nitrogen Puffs
+      // 5. RCS Cold-Gas Nitrogen Puffs (Visibly fires on active torque!)
       const rcsVal = s.rcs_knm || 0.0;
-      rcsPuffs[0].visible = (rcsVal > 1.0);
-      rcsPuffs[2].visible = (rcsVal < -1.0);
+      rcsPuffs[0].visible = (rcsVal > 0.8 || s.gimbal_deg < -1.5);
+      rcsPuffs[2].visible = (rcsVal < -0.8 || s.gimbal_deg > 1.5);
 
       // 6. Articulated Landing Leg Deployment Animation
-      // When altitude < 45m, legs smoothly swing outward to lock position!
       const deployProgress = Math.max(0.0, Math.min(1.0, (45.0 - hFoot) / 25.0));
       landingLegs.forEach(leg => {
         leg.strut.rotation.z = deployProgress * leg.deployedAngle;
@@ -1271,16 +1360,16 @@
 
       // 7. Ground Effect Smoke Cloud
       if (hFoot < 15.0 && throttle > 0.1 && activeVehicle === 'falcon') {
-        smokeMat.opacity = Math.max(0, (15.0 - hFoot) / 15.0) * 0.5;
+        smokeMat.opacity = Math.max(0, (15.0 - hFoot) / 15.0) * 0.55;
         smokeCloud.position.x = s.x;
       } else {
         smokeMat.opacity = 0.0;
       }
 
       // 8. Update HUD Metrics
-      timeScrubber.value = stepIdx;
-      timeReadout.textContent = `${s.t}s / ${currentEpisode.duration_s}s`;
-      hudStepTag.textContent = `T+${s.t}s`;
+      timeScrubber.value = idx;
+      timeReadout.textContent = `${s.t.toFixed(1)}s / ${currentEpisode.duration_s}s`;
+      hudStepTag.textContent = `T+${s.t.toFixed(1)}s`;
       valAltitude.textContent = hFoot.toFixed(1);
 
       // Vertical speed styling
@@ -1289,22 +1378,32 @@
       else if (Math.abs(s.vy) <= 15.0) valVy.className = "hud-val warn";
       else valVy.className = "hud-val danger";
 
-      valVx.textContent = `${s.vx.toFixed(1)} m/s`;
+      // Lateral speed & direction arrow
+      const vxDir = s.vx > 0.1 ? '→' : (s.vx < -0.1 ? '←' : '•');
+      valVx.textContent = `${vxDir} ${Math.abs(s.vx).toFixed(1)} m/s`;
       valX.textContent = `${s.x.toFixed(1)} m`;
-      valTilt.textContent = `${s.tilt_deg.toFixed(1)}°`;
 
+      // Attitude tilt & artificial horizon bar
+      valTilt.textContent = `${s.tilt_deg > 0 ? '+' : ''}${s.tilt_deg.toFixed(1)}°`;
+      gyroBar.style.transform = `rotate(${s.tilt_deg}deg)`;
+
+      // Throttle & Thrust readout
       const thrPct = Math.round(throttle * 100);
       valThrust.textContent = `${s.thrust_kn.toFixed(1)} kN (${thrPct}%)`;
       gaugeThrottleFill.style.width = `${thrPct}%`;
 
+      // TVC Gimbal gauge
       const needlePosPct = Math.max(0, Math.min(100, 50 + (s.gimbal_deg / 5.0) * 50));
       gimbalNeedle.style.left = `${needlePosPct}%`;
-      valGimbal.textContent = `${s.gimbal_deg > 0 ? '+' : ''}${s.gimbal_deg.toFixed(1)}°`;
+      const gimbDir = s.gimbal_deg > 0.3 ? '[R]' : (s.gimbal_deg < -0.3 ? '[L]' : '[C]');
+      valGimbal.textContent = `${gimbDir} ${Math.abs(s.gimbal_deg).toFixed(1)}°`;
 
+      // Propellant gauge
       valFuel.textContent = `${Math.round(s.fuel)} kg`;
       const fuelPct = Math.max(0, Math.min(100, (s.fuel / 4000.0) * 100));
       gaugeFuelFill.style.width = `${fuelPct}%`;
 
+      // Leg contact sensors
       badgeLegLeft.className = s.left_contact ? "leg-badge contact" : "leg-badge";
       badgeLegLeft.textContent = s.left_contact ? "LEFT LEG: LOCKED" : "LEFT LEG: FREE";
       badgeLegRight.className = s.right_contact ? "leg-badge contact" : "leg-badge";
@@ -1317,8 +1416,15 @@
         outcomeModal.style.display = 'block';
         outcomeModal.className = currentEpisode.is_success ? "success" : "crash";
         outcomeTitle.textContent = currentEpisode.outcome;
-        outcomeDesc.textContent = `Touchdown Vy: ${s.vy.toFixed(2)} m/s | Offset: ${Math.abs(s.x).toFixed(1)} m | Fuel: ${Math.round(s.fuel)} kg`;
+        outcomeDesc.textContent = `Touchdown Vy: ${s.vy.toFixed(2)} m/s | Center Offset: ${Math.abs(s.x).toFixed(2)} m | Fuel: ${Math.round(s.fuel)} kg`;
       }
+    }
+
+    function updateState(stepIdx) {
+      if (!currentEpisode || !currentEpisode.steps || !currentEpisode.steps[stepIdx]) return;
+      const t = currentEpisode.steps[stepIdx].t;
+      currentTime_s = t;
+      updateInterpolatedState(t);
     }
 
 
@@ -1375,10 +1481,12 @@
 
     btnReplay.addEventListener('click', () => {
       currentStepIdx = 0;
-      updateState(0);
+      currentTime_s = 0.0;
+      updateInterpolatedState(0.0);
       isPlaying = true;
       playIcon.textContent = "⏸";
       playLabel.textContent = "Pause";
+      outcomeModal.style.display = 'none';
     });
 
     btnRelaunchNow.addEventListener('click', () => {
@@ -1386,8 +1494,14 @@
     });
 
     timeScrubber.addEventListener('input', (e) => {
-      currentStepIdx = parseInt(e.target.value);
-      updateState(currentStepIdx);
+      const idx = parseInt(e.target.value);
+      currentStepIdx = idx;
+      if (currentEpisode && currentEpisode.steps && currentEpisode.steps[idx]) {
+        currentTime_s = currentEpisode.steps[idx].t;
+      } else {
+        currentTime_s = idx * 0.1;
+      }
+      updateInterpolatedState(currentTime_s);
     });
 
     const speedOptions = [0.5, 1.0, 2.0, 4.0];
@@ -1421,53 +1535,50 @@
     camOrbit.addEventListener('click', () => setCamera('orbit'));
 
 
-    // --- 8. Render & Animation Loop ---
+    // --- 8. Render & Continuous 60 FPS Real-Time Animation Loop ---
     let lastTime = performance.now();
-    let stepAccumulator = 0;
-    const stepDuration = 1000 / 40;
 
     function animate(now) {
       requestAnimationFrame(animate);
-      const delta = now - lastTime;
+      const delta = Math.min(100, now - lastTime); // Prevent delta explosion on tab switch
       lastTime = now;
 
-      if (isPlaying && currentEpisode && currentEpisode.steps) {
-        stepAccumulator += delta * playbackSpeed;
-        while (stepAccumulator >= stepDuration) {
-          stepAccumulator -= stepDuration;
-          if (currentStepIdx < currentEpisode.steps.length - 1) {
-            currentStepIdx++;
-            updateState(currentStepIdx);
-          } else {
-            // Reached terminal step
-            isPlaying = false;
-            playIcon.textContent = "▶";
-            playLabel.textContent = "Play";
+      if (isPlaying && currentEpisode && currentEpisode.steps && currentEpisode.steps.length > 0) {
+        currentTime_s += (delta / 1000.0) * playbackSpeed;
+        const totalDuration = currentEpisode.duration_s || (currentEpisode.steps[currentEpisode.steps.length - 1].t);
 
-            if (autoRelaunch && !isFetching) {
-              setTimeout(() => {
-                if (autoRelaunch && !isPlaying) fetchNextFlight();
-              }, 1800);
-            }
-            break;
+        if (currentTime_s >= totalDuration) {
+          currentTime_s = totalDuration;
+          updateInterpolatedState(currentTime_s);
+          isPlaying = false;
+          playIcon.textContent = "▶";
+          playLabel.textContent = "Play";
+
+          if (autoRelaunch && !isFetching) {
+            setTimeout(() => {
+              if (autoRelaunch && !isPlaying) fetchNextFlight();
+            }, 2500);
           }
+        } else {
+          updateInterpolatedState(currentTime_s);
         }
       }
 
       // Smooth Dynamic Camera Tracking
       if (cameraMode === 'chase') {
-        // Camera smoothly follows the rocket at all altitudes from entry to touchdown!
-        const camY = rocket.position.y + 14.0;
-        const camZ = 46.0;
-        camera.position.lerp(new THREE.Vector3(rocket.position.x * 0.6, camY, camZ), 0.1);
-        camera.lookAt(rocket.position.x * 0.4, rocket.position.y + 8.0, 0);
+        // Dramatic 3D isometric chase camera (fills screen, shows full vehicle perspective!)
+        const targetCamX = rocket.position.x * 0.5 + 14.0;
+        const targetCamY = rocket.position.y + 10.0;
+        const targetCamZ = 24.0;
+        camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.08);
+        camera.lookAt(rocket.position.x, rocket.position.y + 5.0, 0);
       } else if (cameraMode === 'deck') {
-        // Iconic deck-level camera looking up at the incoming booster
-        camera.position.set(-24, 2.5, 34);
-        camera.lookAt(rocket.position.x, Math.max(2.0, rocket.position.y * 0.5), 0);
+        // Low-angle deck camera looking up at the incoming booster
+        camera.position.set(-18, 2.2, 24);
+        camera.lookAt(rocket.position.x, Math.max(1.5, rocket.position.y + 3.0), 0);
       } else if (cameraMode === 'booster') {
-        // Interstage onboard camera looking down along the fuselage
-        camera.position.set(rocket.position.x + 2.1, rocket.position.y + 36.0, 0.8);
+        // Interstage camera looking down along the fuselage
+        camera.position.set(rocket.position.x + 2.2, rocket.position.y + 36.0, 0.8);
         camera.lookAt(rocket.position.x, rocket.position.y - 10.0, 0);
       } else if (cameraMode === 'orbit') {
         controls.update();

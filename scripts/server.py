@@ -96,23 +96,25 @@ def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, wind=0.0,
     env = RocketLand2DEnv(ROCKET_CONFIG)
     obs, info = env.reset(seed=seed)
 
-    # Custom initial state override if requested
-    init_alt = float(alt) if alt is not None else float(env.state[1])
-    init_x = float(x_offset) if x_offset is not None else float(env.state[0])
-    init_vx = float(vx) if vx is not None else float(env.state[2])
-    init_vy = float(vy) if vy is not None else float(env.state[3])
+    # Custom initial state override or realistic approach parameters
+    init_alt = float(alt) if alt is not None else round(random.uniform(260.0, 340.0), 1)
+    init_x = float(x_offset) if x_offset is not None else round(random.uniform(-8.0, 8.0), 1)
+    init_vx = float(vx) if vx is not None else round(random.uniform(-1.5, 1.5), 1)
+    init_vy = float(vy) if vy is not None else round(random.uniform(-40.0, -32.0), 1)
     init_fuel = float(env.state[6])
+    init_tilt = float(np.radians(random.uniform(-3.0, 3.0)))
 
     # Re-apply state
-    env.state = np.array([init_x, init_alt, init_vx, init_vy, 0.0, 0.0, init_fuel], dtype=np.float64)
+    env.state = np.array([init_x, init_alt, init_vx, init_vy, init_tilt, 0.0, init_fuel], dtype=np.float64)
     obs = make_observation(env.state, env.actuators.throttle, env.actuators.gimbal_deg, env.contacts, ROCKET_CONFIG, rng=env.rng)
 
     steps_data = []
     done = False
     step = 0
+    contact_steps = 0
     dt_c = ROCKET_CONFIG.dt_control
 
-    while not done and step < 800:
+    while not done and step < 400:
         action = SUICIDE_CONTROLLER(obs)
         next_obs, reward, terminated, truncated, info = env.step(action)
         done = terminated or truncated
@@ -124,6 +126,12 @@ def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, wind=0.0,
         h_foot = float(y - h_geom * np.cos(theta) - w_geom * abs(np.sin(theta)))
         legs_deployed = bool(h_foot < 45.0)
 
+        # Clean touchdown settling: end after 4 contact steps (0.4s)
+        if (env.contacts[0] or env.contacts[1] or h_foot <= 0.05) and step > 10:
+            contact_steps += 1
+            if contact_steps >= 4:
+                done = True
+
         # Actuators
         throttle_pct = float(env.actuators.throttle)
         thrust_kn = float(throttle_pct * ROCKET_CONFIG.thrust_max / 1000.0) if throttle_pct > 0.0 else 0.0
@@ -132,13 +140,13 @@ def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, wind=0.0,
 
         # Dynamic Flight Phase
         if done:
-            phase = "TOUCHDOWN & ROLLOUT"
-        elif h_foot < 15.0:
+            phase = "TOUCHDOWN & LOCKOUT"
+        elif h_foot < 12.0:
             phase = "TERMINAL HOVERSLAM FLARE"
         elif throttle_pct > 0.1:
-            phase = "SUICIDE BURN RETRO-IGNITION"
-        elif abs(action[1]) > 0.3 or abs(action[2]) > 0.3:
-            phase = "GRID FIN & RCS STEERING"
+            phase = "ACTIVE SUICIDE BURN GUIDANCE"
+        elif abs(action[1]) > 0.2 or abs(action[2]) > 0.2:
+            phase = "GRID FIN & TVC STEERING"
         else:
             phase = "HIGH-SPEED DESCENT COAST"
 
@@ -167,16 +175,41 @@ def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, wind=0.0,
         obs = next_obs
         step += 1
 
-    outcome_str = info.get("outcome", "TIMEOUT")
-    td = info.get("touchdown", {})
+    td = env.first_touchdown_kinematics or info.get("touchdown", {})
     abs_x = td.get("abs_x", abs(float(env.state[0])))
     vy_final = td.get("vy", float(env.state[3]))
+    vx_final = td.get("vx", float(env.state[2]))
+    theta_final = td.get("theta", float(env.state[4]))
 
-    if outcome_str == Outcome.LANDED_ON_PAD.value or outcome_str == "LANDED_ON_PAD":
+    raw_outcome = info.get("outcome")
+    if raw_outcome in (Outcome.LANDED_ON_PAD.value, "LANDED_ON_PAD"):
+        outcome_str = "LANDED_ON_PAD"
+    elif raw_outcome in (Outcome.LANDED_OFF_PAD.value, "LANDED_OFF_PAD"):
+        outcome_str = "LANDED_OFF_PAD"
+    elif raw_outcome in (Outcome.HARD_LANDING.value, Outcome.CRASH.value, Outcome.TIPPED.value, "HARD_LANDING", "CRASH", "TIPPED"):
+        outcome_str = str(raw_outcome)
+    elif contact_steps > 0 or env.contacts[0] or env.contacts[1] or h_foot <= 0.15:
+        on_pad = abs_x <= ROCKET_CONFIG.pad_half_width
+        safe_speed = abs(vy_final) <= ROCKET_CONFIG.touchdown_vy_limit and abs(vx_final) <= ROCKET_CONFIG.touchdown_vx_limit
+        safe_tilt = abs(np.degrees(theta_final)) <= ROCKET_CONFIG.touchdown_tilt_limit_deg
+        if on_pad and safe_speed and safe_tilt:
+            outcome_str = "LANDED_ON_PAD"
+        elif not on_pad and safe_speed and safe_tilt:
+            outcome_str = "LANDED_OFF_PAD"
+        elif not safe_speed:
+            outcome_str = "HARD_LANDING"
+        elif not safe_tilt:
+            outcome_str = "TIPPED"
+        else:
+            outcome_str = "CRASH"
+    else:
+        outcome_str = raw_outcome or "TIMEOUT"
+
+    if outcome_str == "LANDED_ON_PAD":
         outcome_label = "TOUCHDOWN (Safe Landing on Droneship!)"
         is_success = True
         is_crash = False
-    elif outcome_str == Outcome.LANDED_OFF_PAD.value or outcome_str == "LANDED_OFF_PAD":
+    elif outcome_str == "LANDED_OFF_PAD":
         outcome_label = "TOUCHDOWN (Off-Pad Oceanic Landing)"
         is_success = False
         is_crash = False

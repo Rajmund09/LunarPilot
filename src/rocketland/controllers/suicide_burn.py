@@ -89,17 +89,19 @@ class SuicideBurnController:
             if h_foot < 12.0 and vy < -0.6:
                 a_throttle = max(-0.85, a_throttle)
 
-        # 3. Attitude guidance: tilt to cancel horizontal drift, upright rollout near pad
-        if h_foot < 20.0:
-            theta_target = 0.0
+        # 3. Attitude guidance: active lateral centering and bank steering
+        if h_foot < 8.0:
+            theta_target = 0.0  # Upright rollout for safe touchdown
         else:
-            vx_target = float(np.clip(-0.15 * x, -8.0, 8.0))
-            theta_target = float(np.clip(0.04 * (vx - vx_target), -np.radians(4.0), np.radians(4.0)))
+            # Active guidance towards x = 0 (pad center)
+            vx_target = float(np.clip(-0.5 * x, -4.0, 4.0))
+            vx_err = vx - vx_target
+            theta_target = float(np.clip(0.04 * vx_err, -np.radians(5.0), np.radians(5.0)))
 
         theta_error = theta - theta_target
-        gimbal_cmd = 12.0 * theta_error + 6.0 * omega
+        gimbal_cmd = 14.0 * theta_error + 7.0 * omega
         a_gimbal = float(np.clip(gimbal_cmd, -1.0, 1.0))
-        rcs_cmd = -(12.0 * theta_error + 6.0 * omega)
+        rcs_cmd = -(14.0 * theta_error + 7.0 * omega)
         a_rcs = float(np.clip(rcs_cmd, -1.0, 1.0))
 
         return np.array([a_throttle, a_gimbal, a_rcs], dtype=np.float32)
