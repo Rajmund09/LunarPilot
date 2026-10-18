@@ -1,0 +1,6 @@
+{
+  "train": {"range": [0, 4], "seeds": [0, 1, 2, 3, 4]},
+  "validation": {"range": [10000, 10199], "seeds": "range(10000, 10200)"},
+  "test": {"range": [20000, 20999], "seeds": "range(20000, 21000)"},
+  "_comment": "Seed ranges are disjoint. Tuning (hyperparameter search) uses validation only. Final reporting uses test only."
+}

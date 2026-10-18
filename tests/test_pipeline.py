@@ -3,10 +3,11 @@ Integration tests for configuration, model initialization, and serialization.
 """
 
 import os
-import pytest
+
 import gymnasium as gym
 from stable_baselines3 import PPO
-from lunar_pilot.utils import load_config, set_seed, get_supported_env_id
+
+from lunar_pilot.utils import get_supported_env_id, load_config, set_seed
 
 
 def test_config_loading():

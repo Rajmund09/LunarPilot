@@ -5,6 +5,7 @@ parallel environments, checkpoints, TensorBoard logging, and evaluation callback
 """
 
 import sys
+
 if hasattr(sys.stdout, "reconfigure"):
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -12,16 +13,17 @@ if hasattr(sys.stdout, "reconfigure"):
     except Exception:
         pass
 
-import os
-import json
 import argparse
+import json
+import os
 from datetime import datetime
+
 import gymnasium as gym
 from stable_baselines3 import PPO
+from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.callbacks import CheckpointCallback, CallbackList
 
-from lunar_pilot.utils import load_config, set_seed, get_supported_env_id, DetailedEvalCallback
+from lunar_pilot.utils import DetailedEvalCallback, get_supported_env_id, load_config, set_seed
 
 
 def train(config_path: str = "configs/default.json"):

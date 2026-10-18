@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "kind": "evaluation",
+  "env_id": "LunarLander-v3",
+  "scenario": "NOMINAL",
+  "policy": {
+    "name": "PPO_LunarLander",
+    "model_path": "models\\best\\best_model.zip",
+    "deterministic": true
+  },
+  "seeds": {
+    "range": [
+      20000,
+      20999
+    ],
+    "count": 1000
+  },
+  "n_episodes": 1000,
+  "outcome_counts": {
+    "LANDED_ON_PAD": 955,
+    "LANDED_OFF_PAD": 26,
+    "HARD_LANDING": 0,
+    "TIPPED": 0,
+    "CRASH": 1,
+    "OUT_OF_BOUNDS": 0,
+    "TIMEOUT": 18
+  },
+  "outcome_rates": {
+    "LANDED_ON_PAD": {
+      "count": 955,
+      "rate": 0.955,
+      "ci95": [
+        0.940317,
+        0.966201
+      ]
+    },
+    "LANDED_OFF_PAD": {
+      "count": 26,
+      "rate": 0.026,
+      "ci95": [
+        0.017804,
+        0.037824
+      ]
+    },
+    "HARD_LANDING": {
+      "count": 0,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.003827
+      ]
+    },
+    "TIPPED": {
+      "count": 0,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.003827
+      ]
+    },
+    "CRASH": {
+      "count": 1,
+      "rate": 0.001,
+      "ci95": [
+        0.000177,
+        0.005643
+      ]
+    },
+    "OUT_OF_BOUNDS": {
+      "count": 0,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.003827
+      ]
+    },
+    "TIMEOUT": {
+      "count": 18,
+      "rate": 0.018,
+      "ci95": [
+        0.011416,
+        0.028273
+      ]
+    }
+  },
+  "reward": {
+    "mean": 189.4849756,
+    "median": 191.2954,
+    "std": 28.284774999119662,
+    "min": -85.1107,
+    "max": 255.6496,
+    "mean_ci95": [
+      187.6527917975,
+      191.16288645749998
+    ]
+  },
+  "touchdown": {
+    "vy_p50": 0.0,
+    "vy_p95": 0.0,
+    "x_err_p50": 0.03870654106140137,
+    "x_err_p95": 0.10895194858312603
+  },
+  "provenance": {
+    "git_commit": "1bcb5834caa8bb7349a22aa2244316cb4cff1811",
+    "git_dirty": true,
+    "python": "3.10.11",
+    "platform": "Windows-10-10.0.26300-SP0",
+    "packages": {
+      "gymnasium": "1.4.0",
+      "stable_baselines3": "2.9.0",
+      "numpy": "1.26.4",
+      "torch": "2.14.1"
+    },
+    "config_hash": null,
+    "seed_list_hash": "8c4800d1cddc4f9997d64bf5436b35ae579b1b616815220475ae9d3a6e9ddafa",
+    "model_sha256": "c36cafe2f8ac30e00b59d19b6a38c1a65c7097207c076be750ccd9b6b9c1e8e5",
+    "timestamp_utc": "2026-10-18T05:26:05.217142+00:00"
+  },
+  "episodes_file": "results/episodes/lander_ppo_test.jsonl"
+}

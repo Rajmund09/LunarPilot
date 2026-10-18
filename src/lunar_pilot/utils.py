@@ -3,13 +3,14 @@ LunarPilot - Utility Functions and Custom RL Callbacks
 Includes custom evaluation callbacks, metric tracking, seed fixing, and environment helpers.
 """
 
-import os
 import json
+import os
 import random
+
+import gymnasium as gym
 import numpy as np
 import torch
-import gymnasium as gym
-from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
+from stable_baselines3.common.callbacks import BaseCallback
 
 
 def load_config(config_path: str = "configs/default.json") -> dict:
@@ -35,10 +36,11 @@ def get_supported_env_id(preferred_id: str = "LunarLander-v3") -> str:
     try:
         gym.spec(preferred_id)
         return preferred_id
-    except gym.error.NamespaceNotFound:
+    except gym.error.Error:
         return "LunarLander-v2"
     except Exception:
         return preferred_id
+
 
 
 class DetailedEvalCallback(BaseCallback):

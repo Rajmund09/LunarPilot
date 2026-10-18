@@ -1,0 +1,310 @@
+{
+  "schema_version": 1,
+  "kind": "baselines",
+  "env_id": "LunarLander-v3",
+  "seeds": {
+    "range": [
+      20000,
+      20999
+    ],
+    "count": 1000
+  },
+  "baselines": {
+    "null": {
+      "policy": {
+        "name": "NullPolicy"
+      },
+      "summary": {
+        "n_episodes": 1000,
+        "outcome_counts": {
+          "LANDED_ON_PAD": 0,
+          "LANDED_OFF_PAD": 0,
+          "HARD_LANDING": 0,
+          "TIPPED": 0,
+          "CRASH": 1000,
+          "OUT_OF_BOUNDS": 0,
+          "TIMEOUT": 0
+        },
+        "outcome_rates": {
+          "LANDED_ON_PAD": {
+            "count": 0,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.003827
+            ]
+          },
+          "LANDED_OFF_PAD": {
+            "count": 0,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.003827
+            ]
+          },
+          "HARD_LANDING": {
+            "count": 0,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.003827
+            ]
+          },
+          "TIPPED": {
+            "count": 0,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.003827
+            ]
+          },
+          "CRASH": {
+            "count": 1000,
+            "rate": 1.0,
+            "ci95": [
+              0.996173,
+              1.0
+            ]
+          },
+          "OUT_OF_BOUNDS": {
+            "count": 0,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.003827
+            ]
+          },
+          "TIMEOUT": {
+            "count": 0,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.003827
+            ]
+          }
+        },
+        "reward": {
+          "mean": -132.17529989999997,
+          "median": -132.53235,
+          "std": 39.380069891583105,
+          "min": -366.7132,
+          "max": 45.6464,
+          "mean_ci95": [
+            -134.67484839749997,
+            -129.75922615000002
+          ]
+        },
+        "touchdown": {
+          "vy_p50": -0.3415345847606659,
+          "vy_p95": 1.1691585832807001e-07,
+          "x_err_p50": 0.2558498829603195,
+          "x_err_p95": 0.5752524226903913
+        }
+      },
+      "episodes_file": "results/episodes/lander_null_baseline.jsonl"
+    },
+    "random": {
+      "policy": {
+        "name": "RandomPolicy",
+        "seed": 42
+      },
+      "summary": {
+        "n_episodes": 1000,
+        "outcome_counts": {
+          "LANDED_ON_PAD": 0,
+          "LANDED_OFF_PAD": 0,
+          "HARD_LANDING": 0,
+          "TIPPED": 0,
+          "CRASH": 924,
+          "OUT_OF_BOUNDS": 76,
+          "TIMEOUT": 0
+        },
+        "outcome_rates": {
+          "LANDED_ON_PAD": {
+            "count": 0,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.003827
+            ]
+          },
+          "LANDED_OFF_PAD": {
+            "count": 0,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.003827
+            ]
+          },
+          "HARD_LANDING": {
+            "count": 0,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.003827
+            ]
+          },
+          "TIPPED": {
+            "count": 0,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.003827
+            ]
+          },
+          "CRASH": {
+            "count": 924,
+            "rate": 0.924,
+            "ci95": [
+              0.905904,
+              0.938851
+            ]
+          },
+          "OUT_OF_BOUNDS": {
+            "count": 76,
+            "rate": 0.076,
+            "ci95": [
+              0.061149,
+              0.094096
+            ]
+          },
+          "TIMEOUT": {
+            "count": 0,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.003827
+            ]
+          }
+        },
+        "reward": {
+          "mean": -182.01148569999998,
+          "median": -147.49984999999998,
+          "std": 109.28000701518154,
+          "min": -575.0722,
+          "max": 33.4487,
+          "mean_ci95": [
+            -188.89618232499998,
+            -175.15408328249998
+          ]
+        },
+        "touchdown": {
+          "vy_p50": -0.3614055961370468,
+          "vy_p95": 0.16683461815118783,
+          "x_err_p50": 0.4176625460386276,
+          "x_err_p95": 1.0051959335803986
+        }
+      },
+      "episodes_file": "results/episodes/lander_random_baseline.jsonl"
+    },
+    "heuristic": {
+      "policy": {
+        "name": "GymHeuristicPolicy"
+      },
+      "summary": {
+        "n_episodes": 1000,
+        "outcome_counts": {
+          "LANDED_ON_PAD": 527,
+          "LANDED_OFF_PAD": 386,
+          "HARD_LANDING": 0,
+          "TIPPED": 0,
+          "CRASH": 27,
+          "OUT_OF_BOUNDS": 46,
+          "TIMEOUT": 14
+        },
+        "outcome_rates": {
+          "LANDED_ON_PAD": {
+            "count": 527,
+            "rate": 0.527,
+            "ci95": [
+              0.496011,
+              0.557783
+            ]
+          },
+          "LANDED_OFF_PAD": {
+            "count": 386,
+            "rate": 0.386,
+            "ci95": [
+              0.356317,
+              0.416556
+            ]
+          },
+          "HARD_LANDING": {
+            "count": 0,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.003827
+            ]
+          },
+          "TIPPED": {
+            "count": 0,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.003827
+            ]
+          },
+          "CRASH": {
+            "count": 27,
+            "rate": 0.027,
+            "ci95": [
+              0.018621,
+              0.038999
+            ]
+          },
+          "OUT_OF_BOUNDS": {
+            "count": 46,
+            "rate": 0.046,
+            "ci95": [
+              0.034662,
+              0.060813
+            ]
+          },
+          "TIMEOUT": {
+            "count": 14,
+            "rate": 0.014,
+            "ci95": [
+              0.008357,
+              0.023362
+            ]
+          }
+        },
+        "reward": {
+          "mean": 235.13539970000002,
+          "median": 264.04225,
+          "std": 109.31716341073397,
+          "min": -254.6167,
+          "max": 322.82,
+          "mean_ci95": [
+            228.31384925499998,
+            241.7050372775
+          ]
+        },
+        "touchdown": {
+          "vy_p50": 0.0,
+          "vy_p95": 0.0908893153071403,
+          "x_err_p50": 0.08627691492438316,
+          "x_err_p95": 0.7888372778892507
+        }
+      },
+      "episodes_file": "results/episodes/lander_heuristic_baseline.jsonl"
+    }
+  },
+  "provenance": {
+    "git_commit": "1bcb5834caa8bb7349a22aa2244316cb4cff1811",
+    "git_dirty": true,
+    "python": "3.10.11",
+    "platform": "Windows-10-10.0.26300-SP0",
+    "packages": {
+      "gymnasium": "1.4.0",
+      "stable_baselines3": "2.9.0",
+      "numpy": "1.26.4",
+      "torch": "2.14.1"
+    },
+    "config_hash": "8e30a90def63e81872ae63fad5863af331c04dea8638960eb93bd3c00ec573ac",
+    "seed_list_hash": "8c4800d1cddc4f9997d64bf5436b35ae579b1b616815220475ae9d3a6e9ddafa",
+    "model_sha256": null,
+    "timestamp_utc": "2026-10-18T04:31:17.183371+00:00"
+  }
+}

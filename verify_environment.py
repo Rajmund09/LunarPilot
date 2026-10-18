@@ -28,7 +28,7 @@ def verify():
     env_id = "LunarLander-v3"
     try:
         gym.spec(env_id)
-    except gym.error.NamespaceNotFound:
+    except gym.error.Error:
         env_id = "LunarLander-v2"
     except Exception:
         pass
@@ -75,7 +75,16 @@ def verify():
     print(f"  - Executed {total_steps} steps smoothly.")
     print(f"  - Terminated episodes: {terminated_count}, Truncated episodes: {truncated_count}")
 
-    print("\n[4/4] Clean shutdown...")
+    print("\n[4/4] Verifying headless rgb_array rendering...")
+    render_env = gym.make(env_id, render_mode="rgb_array")
+    render_env.reset(seed=42)
+    frame = render_env.render()
+    assert isinstance(frame, np.ndarray), f"Expected render frame ndarray, got {type(frame)}"
+    assert frame.ndim == 3 and frame.shape[2] == 3, f"Unexpected render frame shape: {frame.shape}"
+    render_env.close()
+    print(f"[OK] Headless rgb_array render verified! Frame shape: {frame.shape}")
+
+    print("\n[Clean shutdown...]")
     env.close()
     print("[OK] Environment closed safely.")
 

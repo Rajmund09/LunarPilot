@@ -2,7 +2,6 @@
 Unit tests for LunarLander environment setup and dynamics.
 """
 
-import pytest
 import gymnasium as gym
 import numpy as np
 

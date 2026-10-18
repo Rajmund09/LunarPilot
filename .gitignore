@@ -20,13 +20,17 @@ logs/
 # Models & Weights (keep repo clean, checkpoint models are large)
 models/
 !models/.gitkeep
+!models/registry.json
 
 # Metrics & Figures generated at runtime
 results/figures/*.png
 results/metrics/*.csv
-results/metrics/*.json
 !results/figures/.gitkeep
 !results/metrics/.gitkeep
+!results/metrics/*.json
+!results/training/**/meta.json
+!results/training/**/metrics.jsonl
+results/episodes/*.jsonl
 
 # IDE and OS
 .vscode/

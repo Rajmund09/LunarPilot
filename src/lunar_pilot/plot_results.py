@@ -7,6 +7,7 @@ Generates high-resolution figures from evaluation logs and comparative benchmark
 """
 
 import sys
+
 if hasattr(sys.stdout, "reconfigure"):
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -14,11 +15,11 @@ if hasattr(sys.stdout, "reconfigure"):
     except Exception:
         pass
 
-import os
 import json
-import argparse
-import numpy as np
+import os
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Set aesthetic styling
 plt.style.use("seaborn-v0_8-whitegrid" if "seaborn-v0_8-whitegrid" in plt.style.available else "default")
@@ -172,7 +173,7 @@ def plot_baseline_vs_ppo(
         widths=0.45,
     )
     colors = ["#ff7f0e", "#1f77b4"]
-    for patch, color in zip(box["boxes"], colors):
+    for patch, color in zip(box["boxes"], colors, strict=False):
         patch.set_facecolor(color)
         patch.set_alpha(0.7)
 

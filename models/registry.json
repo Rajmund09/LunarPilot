@@ -1,0 +1,18 @@
+{
+  "models": [
+    {
+      "id": "ppo_lunarlander_v3",
+      "name": "PPO LunarLander-v3 Master Policy",
+      "env": "LunarLander-v3",
+      "path": "models\\best\\best_model.zip",
+      "sha256": "c36cafe2f8ac30e00b59d19b6a38c1a65c7097207c076be750ccd9b6b9c1e8e5",
+      "trained_on": "LunarLander-v3 nominal (seeds 0-4)",
+      "eval_file": "results/metrics/lander_ppo_test.json",
+      "success_rate": 0.955,
+      "wilson_ci95": [
+        0.940317,
+        0.966201
+      ]
+    }
+  ]
+}

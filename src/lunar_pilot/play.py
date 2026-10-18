@@ -5,6 +5,7 @@ and prints detailed episode performance summaries.
 """
 
 import sys
+
 if hasattr(sys.stdout, "reconfigure"):
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -12,15 +13,14 @@ if hasattr(sys.stdout, "reconfigure"):
     except Exception:
         pass
 
+import argparse
 import os
 import time
-import argparse
+
 import gymnasium as gym
-import numpy as np
 from stable_baselines3 import PPO
 
 from lunar_pilot.utils import get_supported_env_id
-
 
 ACTION_NAMES = {
     0: "Do Nothing",

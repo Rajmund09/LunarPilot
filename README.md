@@ -12,13 +12,13 @@ A production-grade Reinforcement Learning (RL) engineering project that trains, 
 
 ## 🌟 Key Highlights
 
-- **Reproducible Pipeline**: Decoupled hyperparameters in `configs/default.json` with multi-seed determinism.
-- **Empirical Baseline**: Rigorous 100-episode benchmarking against a stochastic uniform random policy.
-- **Continuous Telemetry**: Automated TensorBoard logging of policy entropy, value loss, KL divergence, landing success rate, and crash percentage.
-- **Scientific Evaluation**: Physical criteria evaluation (ground contact sensors + vertical velocity + zero-crash status) rather than ungrounded reward heuristics.
-- **Publication-Ready Figures**: Automated generation of multi-panel learning curves and comparative outcome distributions via Matplotlib.
-- **Interactive Demonstrator**: Real-time 50 FPS telemetry visualizer (`play.py`) rendering physical state variables and actuation decisions.
-- **Automated Test Suite**: Unit and integration testing via `pytest`.
+- **Reproducible Pipeline**: Decoupled hyperparameters in `configs/default.json` with multi-seed determinism across disjoint train, validation, and test seed ranges.
+- **Empirical Baselines**: Rigorous 1,000-episode benchmarking against Null Policy, Random Uniform Policy, and Classical Heuristic Policy.
+- **Continuous Telemetry**: Automated logging of policy entropy, value loss, KL divergence, landing outcome rates, and snapshot replay trajectories.
+- **Physical Outcome Classification**: Ground truth event classification (`LANDED_ON_PAD`, `LANDED_OFF_PAD`, `CRASH`, `TIMEOUT`, `OUT_OF_BOUNDS`) directly from simulator physics.
+- **Publication-Ready Figures**: Automated generation of comparative outcome distributions and learning curves.
+- **Interactive Demonstrator & API**: Real-time telemetry streaming and web dashboard.
+- **Automated Test Suite**: Unit and integration testing via `pytest` with 100% CI compliance.
 
 ---
 
@@ -91,7 +91,7 @@ LunarPilot/
 ### 1. Environment Setup
 ```powershell
 # Clone the repository
-git clone https://github.com/your-username/LunarPilot.git
+git clone https://github.com/Rajmund09/LunarPilot.git
 cd LunarPilot
 
 # Create and activate virtual environment (Python 3.10 recommended)
@@ -149,27 +149,25 @@ python play.py --model models/best/best_model.zip --episodes 5
 
 ---
 
-## 📊 Empirical Benchmark Results (100 Test Flights)
+## 📊 Empirical Benchmark Results
 
-| Metric | Random Uniform Baseline | Trained PPO Agent (Measured) | Performance Delta |
-|:---|:---:|:---:|:---:|
-| **Mean Episode Reward** | $-203.84 \pm 112.96$ | **$+192.74 \pm 91.76$** | **$+396.58$** pts |
-| **Median Episode Reward**| $-191.23$ | **$+232.95$** | **$+424.18$** pts |
-| **Reward Range** | $[-520.23, +7.90]$ | $[-35.87, \mathbf{+287.38}]$ | Consistent High Reward |
-| **Landing Success Rate** | $0.0\%$ | **$81.0\%$** | **$+81.0\%$** |
-| **Terminal Crash Rate** | $83.0\%$ | **$0.0\%$** (0 crashes in 100 flights) | **$-83.0\%$** |
-| **Mean Flight Duration** | $95.02\text{ steps}$ | $365.98\text{ steps}$ | Controlled soft descent |
-| **Final Lateral Drift $\|x\|$$** | $0.62$ | **$0.149$** (between flags) | Centered touchdown |
-| **Main Engine Usage** | $25.0\%$ | $43.5\%$ | Adaptive deceleration |
+<!-- RESULTS:START -->
+### Verified Benchmark Results (1000 Test Flights, Seeds 20000–20999)
 
-### Visual Artifacts Generated
-- **Multi-Metric Learning Curves**: `results/figures/learning_curves.png`
-- **Baseline vs PPO Outcome Benchmark**: `results/figures/baseline_vs_ppo.png`
-- **Empirical Baseline Distribution**: `results/figures/baseline_distribution.png`
+| Metric | Null Policy (Engine Off) | Random Uniform Baseline | Classical Heuristic Floor | Trained PPO Agent (G0 Validated) |
+|:---|:---:|:---:|:---:|:---:|
+| **Landing Success (`LANDED_ON_PAD`)** | 0.0% | 0.0% | 52.7% | **95.50%** |
+| **95% Wilson CI (`LANDED_ON_PAD`)** | [0.0%, 0.38%] | [0.00%, 0.38%] | [49.60%, 55.78%] | **[94.03%, 96.62%]** |
+| **Terminal Crash Rate (`CRASH`)** | 100.0% | 92.4% | 2.7% | **0.10%** |
+| **Mean Episode Reward** | -132.18 ± 39.38 | -182.01 ± 109.28 | 235.14 ± 109.32 | **189.48 ± 28.28** |
+| **Median Episode Reward** | -132.53 | -147.50 | 264.04 | **191.30** |
+| **Touchdown Lateral Error p50 / p95** | N/A | N/A | 0.086 / 0.789 | **0.039 / 0.109** |
 
+> **Gate G0 Status: PASSED**
+> - Target: ≥95.0% `LANDED_ON_PAD` on 1,000 test seeds with Wilson Lower Bound ≥90.0%.
+> - Achieved: **95.50%** landing success with Wilson 95% CI **[94.03%, 96.62%]** (lower bound 94.03% exceeds gate threshold).
 
----
-
+<!-- RESULTS:END -->
 ## 🧪 Automated Testing
 
 Execute the test suite to verify simulator stability and model integrity:

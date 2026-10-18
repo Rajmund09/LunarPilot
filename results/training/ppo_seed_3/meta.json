@@ -1,0 +1,10 @@
+{
+  "run_id": "ppo_seed_3",
+  "env_id": "LunarLander-v3",
+  "algo": "PPO",
+  "seed": 3,
+  "started_utc": "2026-10-18T05:01:04.682837+00:00",
+  "total_timesteps": 400000,
+  "status": "finished",
+  "finished_utc": "2026-10-18T05:10:30.101982+00:00"
+}

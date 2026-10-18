@@ -44,7 +44,7 @@ Discrete thrust actuation vector:
 
 | Action ID | Physical Actuation | Mechanical Force Applied | Fuel Consumption Penalty |
 |:---:|:---|:---|:---:|
-| `0` | **Do Nothing** | Free ballistic ballistic drift under lunar gravity ($g = -9.81$ scaled). | $0.0$ |
+| `0` | **Do Nothing** | Free ballistic drift under Box2D gravity ($g = -10.0$). | $0.0$ |
 | `1` | **Fire Left Engine** | Lateral nozzle applying torque inducing rightward roll ($\theta > 0$). | $-0.03$ / step |
 | `2` | **Fire Main Engine** | Vertical main booster applying positive vertical thrust upwards. | $-0.30$ / step |
 | `3` | **Fire Right Engine** | Lateral nozzle applying torque inducing leftward roll ($\theta < 0$). | $-0.03$ / step |
@@ -56,8 +56,8 @@ At each timestep $t$, the scalar reward $r_t$ reflects:
 3. **Leg Surface Interaction**: $+10$ points for each leg making physical contact with the ground.
 4. **Fuel Efficiency Penalty**: Firing the main engine costs $-0.3$ points/frame; side engines cost $-0.03$ points/frame.
 5. **Terminal Outcomes**:
-   - **Successful Touchdown**: $+100$ bonus if the lander comes to rest safely between the target flags ($x \in [-0.2, 0.2]$) with zero crash velocity. Overall episode reward typically exceeds $+200$.
-   - **Terminal Crash**: $-100$ penalty if the lander body contacts the terrain violently or tips beyond recovery.
+   - **Successful Touchdown**: $+100$ bonus if the lander comes to rest safely on ground (`not lander.awake`) with both leg ground contacts active. True pad landings require landing within pad coordinates ($|x| \le 0.2$).
+   - **Terminal Crash**: $-100$ penalty if the lander body contacts terrain violently (`game_over = True`).
    - **Truncation**: Maximum episode length is capped at $1,000$ steps.
 
 ### 2.4 PPO Algorithm Specifications
@@ -182,7 +182,7 @@ flowchart TD
 1. **Experiment A (Hyperparameter Grid)**: Learning rate ablation ($1 \times 10^{-4}$ vs $3 \times 10^{-4}$ vs $5 \times 10^{-4}$).
 2. **Experiment B (Algorithm Comparison)**: PPO vs Deep Q-Networks (DQN) under identical timestep budgets ($500\text{k}$).
 3. **Experiment C (Wind & Perturbations)**: Evaluate policy robustness against environmental wind (`enable_wind=True`, `wind_power=15.0`).
-4. **Experiment D (Continuous Thrust)**: Extend pipeline to `LunarLanderContinuous-v3` using PPO with Gaussian continuous action distributions.
+4. **Experiment D (Continuous Thrust)**: Extend pipeline to continuous control (`LunarLander-v3` with `continuous=True`) using PPO with Gaussian continuous action distributions.
 
 ---
 

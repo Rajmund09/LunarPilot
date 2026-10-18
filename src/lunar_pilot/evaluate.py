@@ -6,6 +6,7 @@ and compares with the empirical random baseline.
 """
 
 import sys
+
 if hasattr(sys.stdout, "reconfigure"):
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -13,9 +14,10 @@ if hasattr(sys.stdout, "reconfigure"):
     except Exception:
         pass
 
-import os
-import json
 import argparse
+import json
+import os
+
 import gymnasium as gym
 import numpy as np
 from stable_baselines3 import PPO
