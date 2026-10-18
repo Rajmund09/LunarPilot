@@ -86,7 +86,7 @@ SESSION_STATS = {
 
 
 # --- Mode 1: RocketLand-2D Super Heavy / Falcon-9 Simulation ---
-def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, wind=0.0, seed=None, vehicle="starship"):
+def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, tilt=None, wind=0.0, seed=None, vehicle="starship"):
     """Simulates Super Heavy / Falcon-9 descent onto Mechazilla catch tower or autonomous drone ship."""
     global SESSION_STATS
 
@@ -100,12 +100,12 @@ def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, wind=0.0,
     obs, info = env.reset(seed=seed)
 
     # Custom initial state override or realistic approach parameters
-    init_alt = float(alt) if alt is not None else round(random.uniform(260.0, 340.0), 1)
-    init_x = float(x_offset) if x_offset is not None else round(random.uniform(-8.0, 8.0), 1)
-    init_vx = float(vx) if vx is not None else round(random.uniform(-1.5, 1.5), 1)
+    init_alt = float(alt) if alt is not None else round(random.uniform(280.0, 360.0), 1)
+    init_x = float(x_offset) if x_offset is not None else round(random.uniform(-6.0, 6.0), 1)
+    init_vx = float(vx) if vx is not None else round(random.uniform(-1.0, 1.0), 1)
     init_vy = float(vy) if vy is not None else round(random.uniform(-40.0, -32.0), 1)
     init_fuel = float(env.state[6])
-    init_tilt = float(np.radians(random.uniform(-2.0, 2.0)))
+    init_tilt = float(np.radians(float(tilt))) if tilt is not None else float(np.radians(random.uniform(-2.0, 2.0)))
 
     # Re-apply state
     env.state = np.array([init_x, init_alt, init_vx, init_vy, init_tilt, 0.0, init_fuel], dtype=np.float64)
@@ -185,47 +185,64 @@ def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, wind=0.0,
     theta_final = td.get("theta", float(env.state[4]))
 
     raw_outcome = info.get("outcome")
-    if raw_outcome in (Outcome.LANDED_ON_PAD.value, "LANDED_ON_PAD"):
-        outcome_str = "LANDED_ON_PAD"
-    elif raw_outcome in (Outcome.LANDED_OFF_PAD.value, "LANDED_OFF_PAD"):
-        outcome_str = "LANDED_OFF_PAD"
-    elif raw_outcome in (Outcome.HARD_LANDING.value, Outcome.CRASH.value, Outcome.TIPPED.value, "HARD_LANDING", "CRASH", "TIPPED"):
-        outcome_str = str(raw_outcome)
-    elif contact_steps > 0 or env.contacts[0] or env.contacts[1] or h_foot <= 0.15:
+
+    if vehicle == "starship":
+        # Strict Mechazilla Catch Envelope:
+        # - Pinpoint horizontal centering (|x| <= 1.8m)
+        # - Strict upright verticality (|theta| <= 1.2 degrees)
+        # - Soft vertical descent (|vy| <= 1.5 m/s)
+        # - Minimized lateral drift (|vx| <= 0.8 m/s)
+        final_tilt_deg = abs(np.degrees(theta_final))
+        on_catch = abs_x <= 1.8
+        safe_tilt = final_tilt_deg <= 1.2
+        safe_vy = abs(vy_final) <= 1.5
+        safe_vx = abs(vx_final) <= 0.8
+        safe_speed = safe_vy and safe_vx
+
+        if on_catch and safe_speed and safe_tilt:
+            outcome_label = "🎯 PERFECT MECHAZILLA CATCH (Booster Vertical & Secured by Chopsticks!)"
+            is_success = True
+            is_crash = False
+        elif not safe_tilt:
+            outcome_label = f"❌ CATCH ABORT: BOOSTER TILTED ({final_tilt_deg:.1f}° > 1.2° Limit)"
+            is_success = False
+            is_crash = True
+        elif not on_catch:
+            outcome_label = f"❌ MISSED CHOPSTICKS: OFFSET ({abs_x:.1f}m > 1.8m Catch Span)"
+            is_success = False
+            is_crash = True
+        elif not safe_vy:
+            outcome_label = f"❌ HARD IMPACT: DESCENT RATE ({abs(vy_final):.1f}m/s > 1.5m/s Limit)"
+            is_success = False
+            is_crash = True
+        else:
+            outcome_label = f"❌ EXCESS LATERAL DRIFT: Vx ({abs(vx_final):.1f}m/s > 0.8m/s Limit)"
+            is_success = False
+            is_crash = True
+    elif contact_steps > 0 or env.contacts[0] or env.contacts[1] or h_foot <= 0.15 or raw_outcome:
         on_pad = abs_x <= ROCKET_CONFIG.pad_half_width
         safe_speed = abs(vy_final) <= ROCKET_CONFIG.touchdown_vy_limit and abs(vx_final) <= ROCKET_CONFIG.touchdown_vx_limit
         safe_tilt = abs(np.degrees(theta_final)) <= ROCKET_CONFIG.touchdown_tilt_limit_deg
         if on_pad and safe_speed and safe_tilt:
-            outcome_str = "LANDED_ON_PAD"
-        elif not on_pad and safe_speed and safe_tilt:
-            outcome_str = "LANDED_OFF_PAD"
-        elif not safe_speed:
-            outcome_str = "HARD_LANDING"
-        elif not safe_tilt:
-            outcome_str = "TIPPED"
-        else:
-            outcome_str = "CRASH"
-    else:
-        outcome_str = raw_outcome or "TIMEOUT"
-
-    if outcome_str == "LANDED_ON_PAD":
-        if vehicle == "starship":
-            outcome_label = "MECHAZILLA CATCH (Booster Secured by Launch Tower Chopsticks!)"
-        else:
             outcome_label = "TOUCHDOWN (Safe Landing on Droneship!)"
-        is_success = True
-        is_crash = False
-    elif outcome_str == "LANDED_OFF_PAD":
-        if vehicle == "starship":
-            outcome_label = "OFF-TOWER TOUCHDOWN (Missed Catch Envelope)"
-        else:
+            is_success = True
+            is_crash = False
+        elif not on_pad and safe_speed and safe_tilt:
             outcome_label = "TOUCHDOWN (Off-Pad Oceanic Landing)"
-        is_success = False
-        is_crash = False
-    elif "HARD_LANDING" in outcome_str or "CRASH" in outcome_str or "TIPPED" in outcome_str:
-        outcome_label = f"IMPACT: {outcome_str.replace('_', ' ')}"
-        is_success = False
-        is_crash = True
+            is_success = False
+            is_crash = False
+        elif not safe_speed:
+            outcome_label = f"IMPACT: HARD LANDING ({abs(vy_final):.1f}m/s)"
+            is_success = False
+            is_crash = True
+        elif not safe_tilt:
+            outcome_label = f"IMPACT: TIPPED ({abs(np.degrees(theta_final)):.1f}°)"
+            is_success = False
+            is_crash = True
+        else:
+            outcome_label = "IMPACT: VEHICLE CRASH"
+            is_success = False
+            is_crash = True
     else:
         outcome_label = "MISSION TIMEOUT"
         is_success = False
@@ -461,12 +478,13 @@ class LunarPilotRequestHandler(SimpleHTTPRequestHandler):
                 x = float(query.get("x", [0.0])[0])
                 vx = float(query.get("vx", [0.0])[0])
                 vy = float(query.get("vy", [-65.0])[0])
+                tilt = float(query.get("tilt", [0.0])[0])
                 wind = float(query.get("wind", [0.0])[0])
                 vehicle = query.get("vehicle", [ACTIVE_VEHICLE])[0]
             except ValueError:
-                alt, x, vx, vy, wind, vehicle = 850.0, 0.0, 0.0, -65.0, 0.0, ACTIVE_VEHICLE
+                alt, x, vx, vy, tilt, wind, vehicle = 850.0, 0.0, 0.0, -65.0, 0.0, 0.0, ACTIVE_VEHICLE
 
-            result = simulate_rocket_episode(alt=alt, x_offset=x, vx=vx, vy=vy, wind=wind, vehicle=vehicle)
+            result = simulate_rocket_episode(alt=alt, x_offset=x, vx=vx, vy=vy, tilt=tilt, wind=wind, vehicle=vehicle)
             self._send_json(result)
             return
 

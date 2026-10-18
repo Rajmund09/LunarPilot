@@ -528,6 +528,95 @@
       background: rgba(127, 29, 29, 0.88);
     }
 
+    /* Custom Drop & Positioning Panel */
+    #custom-drop-panel {
+      position: absolute;
+      top: 76px;
+      right: 18px;
+      z-index: 30;
+      width: 370px;
+      max-height: calc(100vh - 160px);
+      overflow-y: auto;
+      background: var(--card-bg);
+      backdrop-filter: blur(28px);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 16px 56px rgba(0, 0, 0, 0.9);
+      font-family: 'JetBrains Mono', monospace;
+      display: none;
+    }
+
+    .slider-group {
+      margin-bottom: 12px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .slider-val-badge {
+      font-weight: 700;
+      color: var(--accent-cyan);
+    }
+
+    .custom-slider {
+      width: 100%;
+      height: 6px;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    .custom-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 10px var(--accent-cyan);
+      cursor: pointer;
+      border: 2px solid #fff;
+    }
+
+    .drop-btn-primary {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.5);
+      transition: all 0.2s ease;
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .drop-btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.75);
+    }
+
+    .action-btn.success {
+      background: rgba(16, 185, 129, 0.3) !important;
+      border-color: #10b981 !important;
+      color: #34d399 !important;
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.5) !important;
+    }
+
     /* Custom Scenario Presets Drawer */
     #scenario-drawer {
       position: absolute;
@@ -601,11 +690,14 @@
 
     <!-- Actions -->
     <div class="header-actions">
+      <button class="action-btn" id="btn-toggle-custom" style="background: linear-gradient(135deg, rgba(2, 132, 199, 0.4), rgba(37, 99, 235, 0.4)); border-color: rgba(56, 189, 248, 0.6); color: #fff;">
+        🛠️ Custom Drop
+      </button>
       <button class="action-btn" id="btn-toggle-scenarios">
         🎯 Presets
       </button>
       <button class="action-btn active" id="btn-auto-relaunch">
-        ⚡ Auto-Relaunch: ON
+        🔁 Auto-Learn Loop: ON
       </button>
     </div>
   </header>
@@ -708,6 +800,81 @@
     </div>
   </div>
 
+  <!-- Custom Positioning & Launch Drop Panel -->
+  <div id="custom-drop-panel">
+    <div class="hud-header">
+      <span>🛠️ Custom Drop & Conditions</span>
+      <span style="cursor: pointer; font-size: 1rem;" id="btn-close-custom">✕</span>
+    </div>
+    <div style="font-size: 0.70rem; color: #94a3b8; margin-bottom: 12px; line-height: 1.4;">
+      Configure initial drop parameters. The booster will autonomously fire TVC gimbaling, attitude thrusters, and aerodynamic grid fins to right itself and land into the chopsticks.
+    </div>
+
+    <!-- Sliders -->
+    <div class="slider-group">
+      <div class="slider-header">
+        <span>INITIAL ALTITUDE (y₀)</span>
+        <span class="slider-val-badge" id="badge-alt">320 m</span>
+      </div>
+      <input type="range" class="custom-slider" id="slider-alt" min="50" max="800" step="10" value="320">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-header">
+        <span>LATERAL OFFSET (x₀)</span>
+        <span class="slider-val-badge" id="badge-x">0.0 m</span>
+      </div>
+      <input type="range" class="custom-slider" id="slider-x" min="-30" max="30" step="0.5" value="0">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-header">
+        <span>TILT ANGLE (θ₀)</span>
+        <span class="slider-val-badge" id="badge-tilt">0.0°</span>
+      </div>
+      <input type="range" class="custom-slider" id="slider-tilt" min="-25" max="25" step="0.5" value="0">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-header">
+        <span>DESCENT RATE (Vy₀)</span>
+        <span class="slider-val-badge" id="badge-vy">-35.0 m/s</span>
+      </div>
+      <input type="range" class="custom-slider" id="slider-vy" min="-65" max="-10" step="1" value="-35">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-header">
+        <span>LATERAL DRIFT (Vx₀)</span>
+        <span class="slider-val-badge" id="badge-vx">0.0 m/s</span>
+      </div>
+      <input type="range" class="custom-slider" id="slider-vx" min="-10" max="10" step="0.5" value="0">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-header">
+        <span>CROSSWIND (Vwind)</span>
+        <span class="slider-val-badge" id="badge-wind">0.0 m/s</span>
+      </div>
+      <input type="range" class="custom-slider" id="slider-wind" min="-10" max="10" step="0.5" value="0">
+    </div>
+
+    <!-- Quick Drop Presets -->
+    <div style="margin-top: 10px; margin-bottom: 8px;">
+      <div style="font-size: 0.68rem; color: #64748b; margin-bottom: 6px; font-weight: 700;">QUICK DROP PRESETS</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+        <button class="preset-pill" style="margin: 0; text-align: center;" onclick="applyDropPreset(320, 0, 0, -35, 0, 0)">🎯 Nominal Approach</button>
+        <button class="preset-pill" style="margin: 0; text-align: center;" onclick="applyDropPreset(380, 8, 16, -38, -1.5, 2.0)">📐 Tilt +16° Recovery</button>
+        <button class="preset-pill" style="margin: 0; text-align: center;" onclick="applyDropPreset(420, -18, -12, -42, 2.5, 4.0)">💨 Wind + Drift</button>
+        <button class="preset-pill" style="margin: 0; text-align: center;" onclick="applyDropPreset(650, 0, 0, -60, 0, 0)">⚡ High Dive (650m)</button>
+      </div>
+    </div>
+
+    <button class="drop-btn-primary" id="btn-execute-drop">
+      🚀 DROP & ENGAGE AUTONOMOUS CATCH
+    </button>
+  </div>
+
   <!-- Scenario Presets Drawer -->
   <div id="scenario-drawer">
     <div class="hud-header">
@@ -730,8 +897,8 @@
 
   <!-- Outcome Modal -->
   <div id="outcome-modal">
-    <div style="font-weight: 700; margin-bottom: 4px;" id="outcome-title">TOUCHDOWN</div>
-    <div style="font-size: 0.74rem; color: #cbd5e1;" id="outcome-desc">Safe landing achieved.</div>
+    <div style="font-weight: 700; margin-bottom: 6px; font-size: 0.85rem;" id="outcome-title">TOUCHDOWN</div>
+    <div style="font-size: 0.74rem; color: #cbd5e1; line-height: 1.5;" id="outcome-desc">Evaluating landing criteria...</div>
   </div>
 
   <!-- Bottom Timeline Dock -->
@@ -1032,7 +1199,7 @@
     // 5. MOVABLE MECHAZILLA "CHOPSTICKS" (CATCH ARMS) — THE HOLDER
     // Vertically riding carriage block with dual cantilevered catch arms
     const mechazillaHolder = new THREE.Group();
-    mechazillaHolder.position.set(TOWER_W / 2 + 0.8, 28.0, 0); // Base catch height ~28m
+    mechazillaHolder.position.set(TOWER_W / 2 + 0.8, 33.9, 0); // Pinpoint catch height aligned with booster lifting pins
     towerGroup.add(mechazillaHolder);
 
     // Carriage Base Frame
@@ -1490,10 +1657,33 @@
     const btnVehicleStarship = document.getElementById('btn-vehicle-starship');
     const btnVehicleFalcon = document.getElementById('btn-vehicle-falcon');
     const btnVehicleArtemis = document.getElementById('btn-vehicle-artemis');
+    const btnToggleCustom = document.getElementById('btn-toggle-custom');
+    const customDropPanel = document.getElementById('custom-drop-panel');
+    const btnCloseCustom = document.getElementById('btn-close-custom');
     const btnToggleScenarios = document.getElementById('btn-toggle-scenarios');
     const btnAutoRelaunch = document.getElementById('btn-auto-relaunch');
     const scenarioDrawer = document.getElementById('scenario-drawer');
     const btnCloseScenarios = document.getElementById('btn-close-scenarios');
+
+    const sliderAlt = document.getElementById('slider-alt');
+    const sliderX = document.getElementById('slider-x');
+    const sliderTilt = document.getElementById('slider-tilt');
+    const sliderVy = document.getElementById('slider-vy');
+    const sliderVx = document.getElementById('slider-vx');
+    const sliderWind = document.getElementById('slider-wind');
+
+    const badgeAlt = document.getElementById('badge-alt');
+    const badgeX = document.getElementById('badge-x');
+    const badgeTilt = document.getElementById('badge-tilt');
+    const badgeVy = document.getElementById('badge-vy');
+    const badgeVx = document.getElementById('badge-vx');
+    const badgeWind = document.getElementById('badge-wind');
+    const btnExecuteDrop = document.getElementById('btn-execute-drop');
+
+    let autoLearnActive = true;
+    let autoLearnConverged = false;
+    let learnAttemptCount = 1;
+    let lastCustomQuery = null;
 
     const hudVehicleTag = document.getElementById('hud-vehicle-tag');
     const hudStepTag = document.getElementById('hud-step-tag');
@@ -1710,6 +1900,7 @@
           // Open ready position
           chopstickLeft.rotation.y = 0.22;
           chopstickRight.rotation.y = -0.22;
+          mechazillaHolder.position.y = 33.9;
           badgeLegLeft.className = "leg-badge";
           badgeLegLeft.textContent = "CHOPSTICK L: READY";
           badgeLegRight.className = "leg-badge";
@@ -1719,6 +1910,7 @@
           const clampProgress = Math.max(0, Math.min(1, (42.0 - hFoot) / 38.0));
           chopstickLeft.rotation.y = 0.22 * (1.0 - clampProgress);
           chopstickRight.rotation.y = -0.22 * (1.0 - clampProgress);
+          mechazillaHolder.position.y = 33.9;
           badgeLegLeft.className = "leg-badge warn";
           badgeLegLeft.textContent = "CHOPSTICK L: CLOSING";
           badgeLegRight.className = "leg-badge warn";
@@ -1733,7 +1925,7 @@
           badgeLegRight.textContent = "CHOPSTICK R: CAUGHT";
 
           // Shock dampener compliance compression
-          mechazillaHolder.position.y = 28.0 - 0.35 * Math.min(1, (1.5 - hFoot) / 1.5);
+          mechazillaHolder.position.y = 33.9 - 0.25 * Math.min(1, (1.5 - hFoot) / 1.5);
         }
 
         // 2. High-Pressure Deluge Water Steam Eruption!
@@ -1802,9 +1994,58 @@
 
       if (isTerminal) {
         outcomeModal.style.display = 'block';
-        outcomeModal.className = currentEpisode.is_success ? "success" : "crash";
-        outcomeTitle.textContent = currentEpisode.outcome;
-        outcomeDesc.textContent = `Touchdown Vy: ${s.vy.toFixed(2)} m/s | Center Offset: ${Math.abs(s.x).toFixed(2)} m | Fuel: ${Math.round(s.fuel)} kg`;
+        const td = currentEpisode.touchdown || {
+          tilt_deg: s.tilt_deg,
+          abs_x: Math.abs(s.x),
+          vy: s.vy,
+          vx: s.vx,
+          fuel_remaining_kg: s.fuel
+        };
+        const finalTilt = Math.abs(td.tilt_deg !== undefined ? td.tilt_deg : s.tilt_deg);
+        const finalX = Math.abs(td.abs_x !== undefined ? td.abs_x : Math.abs(s.x));
+        const finalVy = Math.abs(td.vy !== undefined ? td.vy : Math.abs(s.vy));
+        const finalVx = Math.abs(td.vx !== undefined ? td.vx : Math.abs(s.vx));
+
+        // Strict Mechazilla verification:
+        const isUpright = finalTilt <= 1.2;
+        const isCentered = finalX <= 1.8;
+        const isSoft = finalVy <= 1.5 && finalVx <= 0.8;
+        const isPerfect = Boolean(currentEpisode.is_success && isUpright && isCentered && isSoft);
+
+        outcomeModal.className = isPerfect ? "success" : "crash";
+        outcomeTitle.textContent = isPerfect ? "🎯 PERFECT MECHAZILLA CATCH" : (currentEpisode.outcome || "❌ CATCH ABORT / MISSED");
+
+        outcomeDesc.innerHTML = `
+          <div style="margin-bottom: 6px; font-weight: 600; color: ${isPerfect ? '#34d399' : '#f87171'}">
+            ${isPerfect ? '✅ Strict verticality and chopstick cradle alignment satisfied!' : '❌ Tolerance boundary exceeded — Catch rails unengaged.'}
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.72rem; margin-bottom: 8px;">
+            <div>Tilt: <b style="color: ${isUpright ? '#34d399' : '#f87171'}">${finalTilt.toFixed(1)}°</b> (≤1.2°)</div>
+            <div>Offset: <b style="color: ${isCentered ? '#34d399' : '#f87171'}">${finalX.toFixed(2)}m</b> (≤1.8m)</div>
+            <div>Vy: <b style="color: ${finalVy <= 1.5 ? '#34d399' : '#f87171'}">${(s.vy).toFixed(2)}m/s</b> (≤1.5)</div>
+            <div>Vx: <b style="color: ${finalVx <= 0.8 ? '#34d399' : '#f87171'}">${(s.vx).toFixed(2)}m/s</b> (≤0.8)</div>
+          </div>
+          <div style="font-size: 0.70rem; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px;">
+            ${isPerfect ? 
+              `🎉 <b>LEARNING COMPLETE!</b> Attempt #${learnAttemptCount} achieved perfect catch. Loop completed.` :
+              (autoLearnActive ? 
+                `🔁 <b>Attempt #${learnAttemptCount} Missed:</b> Auto-relaunching & refining guidance in 2.0s...` : 
+                `Auto-Relaunch is paused. Click "🚀 Launch Next" or enable loop.`)}
+          </div>
+        `;
+
+        if (isPerfect) {
+          autoLearnConverged = true;
+          btnAutoRelaunch.className = "action-btn success";
+          btnAutoRelaunch.innerHTML = `🎉 Catch Converged (Attempt #${learnAttemptCount})`;
+          flightPhaseBanner.textContent = "🎉 PERFECT MECHAZILLA CATCH CONVERGED!";
+          flightPhaseBanner.style.borderColor = "#10b981";
+          flightPhaseBanner.style.color = "#34d399";
+        } else if (autoLearnActive && !autoLearnConverged) {
+          flightPhaseBanner.textContent = `⚠️ ATTEMPT #${learnAttemptCount} MISSED — AUTO-REFINING & RELAUNCHING...`;
+          flightPhaseBanner.style.borderColor = "#f43f5e";
+          flightPhaseBanner.style.color = "#fda4af";
+        }
       }
     }
 
@@ -1817,6 +2058,11 @@
       btnVehicleStarship.classList.add('active');
       btnVehicleFalcon.classList.remove('active');
       btnVehicleArtemis.classList.remove('active');
+      autoLearnConverged = false;
+      learnAttemptCount = 1;
+      lastCustomQuery = null;
+      btnAutoRelaunch.className = "action-btn active";
+      btnAutoRelaunch.innerHTML = "🔁 Auto-Learn Loop: ON";
       fetchNextFlight();
     });
 
@@ -1825,6 +2071,11 @@
       btnVehicleFalcon.classList.add('active');
       btnVehicleStarship.classList.remove('active');
       btnVehicleArtemis.classList.remove('active');
+      autoLearnConverged = false;
+      learnAttemptCount = 1;
+      lastCustomQuery = null;
+      btnAutoRelaunch.className = "action-btn active";
+      btnAutoRelaunch.innerHTML = "🔁 Auto-Learn Loop: ON";
       fetchNextFlight();
     });
 
@@ -1833,24 +2084,81 @@
       btnVehicleArtemis.classList.add('active');
       btnVehicleStarship.classList.remove('active');
       btnVehicleFalcon.classList.remove('active');
+      autoLearnConverged = false;
+      learnAttemptCount = 1;
+      lastCustomQuery = null;
+      btnAutoRelaunch.className = "action-btn active";
+      btnAutoRelaunch.innerHTML = "🔁 Auto-Learn Loop: ON";
       fetchNextFlight();
     });
 
+    // Custom Drop Panel Toggle & Sliders
+    btnToggleCustom.addEventListener('click', () => {
+      const isVis = customDropPanel.style.display === 'block';
+      customDropPanel.style.display = isVis ? 'none' : 'block';
+      if (!isVis) scenarioDrawer.style.display = 'none';
+    });
+
+    btnCloseCustom.addEventListener('click', () => {
+      customDropPanel.style.display = 'none';
+    });
+
+    sliderAlt.addEventListener('input', (e) => { badgeAlt.textContent = `${e.target.value} m`; });
+    sliderX.addEventListener('input', (e) => { 
+      const v = parseFloat(e.target.value); 
+      badgeX.textContent = `${v >= 0 ? '+' : ''}${v.toFixed(1)} m`; 
+    });
+    sliderTilt.addEventListener('input', (e) => { 
+      const v = parseFloat(e.target.value); 
+      badgeTilt.textContent = `${v >= 0 ? '+' : ''}${v.toFixed(1)}°`; 
+    });
+    sliderVy.addEventListener('input', (e) => { badgeVy.textContent = `${parseFloat(e.target.value).toFixed(1)} m/s`; });
+    sliderVx.addEventListener('input', (e) => { 
+      const v = parseFloat(e.target.value); 
+      badgeVx.textContent = `${v >= 0 ? '+' : ''}${v.toFixed(1)} m/s`; 
+    });
+    sliderWind.addEventListener('input', (e) => { 
+      const v = parseFloat(e.target.value); 
+      badgeWind.textContent = `${v >= 0 ? '+' : ''}${v.toFixed(1)} m/s`; 
+    });
+
+    window.applyDropPreset = function(alt, x, tilt, vy, vx, wind) {
+      sliderAlt.value = alt; badgeAlt.textContent = `${alt} m`;
+      sliderX.value = x; badgeX.textContent = `${x >= 0 ? '+' : ''}${x.toFixed(1)} m`;
+      sliderTilt.value = tilt; badgeTilt.textContent = `${tilt >= 0 ? '+' : ''}${tilt.toFixed(1)}°`;
+      sliderVy.value = vy; badgeVy.textContent = `${vy.toFixed(1)} m/s`;
+      sliderVx.value = vx; badgeVx.textContent = `${vx >= 0 ? '+' : ''}${vx.toFixed(1)} m/s`;
+      sliderWind.value = wind; badgeWind.textContent = `${wind >= 0 ? '+' : ''}${wind.toFixed(1)} m/s`;
+    };
+
+    btnExecuteDrop.addEventListener('click', () => {
+      customDropPanel.style.display = 'none';
+      autoLearnConverged = false;
+      learnAttemptCount = 1;
+      btnAutoRelaunch.className = "action-btn active";
+      btnAutoRelaunch.innerHTML = "🔁 Auto-Learn Loop: ON";
+      lastCustomQuery = `alt=${sliderAlt.value}&x=${sliderX.value}&tilt=${sliderTilt.value}&vy=${sliderVy.value}&vx=${sliderVx.value}&wind=${sliderWind.value}`;
+      fetchNextFlight(lastCustomQuery);
+    });
+
     btnAutoRelaunch.addEventListener('click', () => {
-      autoRelaunch = !autoRelaunch;
-      if (autoRelaunch) {
+      autoLearnActive = !autoLearnActive;
+      if (autoLearnActive) {
+        autoLearnConverged = false;
         btnAutoRelaunch.classList.add('active');
-        btnAutoRelaunch.textContent = '⚡ Auto-Relaunch: ON';
-        if (!isPlaying) fetchNextFlight();
+        btnAutoRelaunch.innerHTML = '🔁 Auto-Learn Loop: ON';
+        if (!isPlaying) fetchNextFlight(lastCustomQuery);
       } else {
         btnAutoRelaunch.classList.remove('active');
-        btnAutoRelaunch.textContent = '⏸ Auto-Relaunch: OFF';
+        btnAutoRelaunch.classList.remove('success');
+        btnAutoRelaunch.innerHTML = '⏸ Auto-Learn: PAUSED';
       }
     });
 
     btnToggleScenarios.addEventListener('click', () => {
       const isVisible = scenarioDrawer.style.display === 'block';
       scenarioDrawer.style.display = isVisible ? 'none' : 'block';
+      if (!isVisible) customDropPanel.style.display = 'none';
     });
 
     btnCloseScenarios.addEventListener('click', () => {
@@ -1859,8 +2167,10 @@
 
     window.runCustomPreset = function(alt, x, vx, vy, wind) {
       scenarioDrawer.style.display = 'none';
-      const q = `alt=${alt}&x=${x}&vx=${vx}&vy=${vy}&wind=${wind}`;
-      fetchNextFlight(q);
+      autoLearnConverged = false;
+      learnAttemptCount = 1;
+      lastCustomQuery = `alt=${alt}&x=${x}&vx=${vx}&vy=${vy}&wind=${wind}&tilt=0`;
+      fetchNextFlight(lastCustomQuery);
     };
 
     btnPlay.addEventListener('click', () => {
@@ -1947,10 +2257,22 @@
           playIcon.textContent = "▶";
           playLabel.textContent = "Play";
 
-          if (autoRelaunch && !isFetching) {
+          // If the landing succeeded, the learning loop has converged and halts!
+          if (currentEpisode && currentEpisode.is_success) {
+            autoLearnConverged = true;
+          } else if (autoLearnActive && !isFetching && !autoLearnConverged) {
+            // Auto-relaunch next attempt after 2 seconds
             setTimeout(() => {
-              if (autoRelaunch && !isPlaying) fetchNextFlight();
-            }, 2500);
+              if (autoLearnActive && !isPlaying && !autoLearnConverged) {
+                learnAttemptCount++;
+                const seed = Math.floor(Math.random() * 900000) + 1000;
+                if (lastCustomQuery) {
+                  fetchNextFlight(`${lastCustomQuery}&seed=${seed}`);
+                } else {
+                  fetchNextFlight(`seed=${seed}`);
+                }
+              }
+            }, 2000);
           }
         } else {
           updateInterpolatedState(currentTime_s);
