@@ -62,30 +62,39 @@ class SuicideBurnController:
         w_geom = self.cfg.diameter * 1.5
         h_foot = y - h_geom * np.cos(theta) - w_geom * abs(np.sin(theta))
 
-        if h_foot <= 0.05:
+        if h_foot <= 0.01:
             return np.array([-1.0, 0.0, 0.0], dtype=np.float32)
 
-        # 2. Glide-slope parabolic velocity tracking with flare bias
-        a_glide = 8.5
-        v_target = -np.sqrt(2.0 * a_glide * max(0.001, h_foot - 0.35) + 0.16)
+        # 2. Hoverslam glide-slope parabolic velocity tracking
+        # Target touchdown velocity is -0.7 m/s (well within [0, 2.0 m/s] limit)
+        a_glide = 8.8
+        v_target = -np.sqrt(2.0 * a_glide * max(0.001, h_foot) + 0.49)
         v_err = vy - v_target
 
         # Proportional-derivative throttle command
-        a_cmd = a_glide - 3.5 * v_err
+        a_cmd = a_glide - 4.0 * v_err
         m_total = self.cfg.dry_mass + fuel
         thrust_req = m_total * (a_cmd + self.cfg.g)
         thr_frac = thrust_req / self.cfg.thrust_max
 
-        if thr_frac < self.cfg.throttle_min * 0.75:
+        # Free fall check: ignite when reaching stopping window or lower than 120m
+        a_net = (self.cfg.thrust_max * 0.75 / m_total) - self.cfg.g
+        burn_dist = (vy ** 2) / (2.0 * max(0.5, a_net))
+
+        if h_foot > burn_dist * 1.10 and h_foot > 120.0:
             a_throttle = -1.0
         else:
-            a_throttle = float(-0.9 + np.clip((thr_frac - self.cfg.throttle_min) / (1.0 - self.cfg.throttle_min), 0.0, 1.0) * 1.9)
+            a_throttle = float(-1.0 + np.clip((thr_frac - self.cfg.throttle_min) / (1.0 - self.cfg.throttle_min), 0.0, 1.0) * 2.0)
+            # Never shut down engine completely during final 12m flare to avoid free-fall impact
+            if h_foot < 12.0 and vy < -0.6:
+                a_throttle = max(-0.85, a_throttle)
 
         # 3. Attitude guidance: tilt to cancel horizontal drift, upright rollout near pad
-        if h_foot < 5.0:
+        if h_foot < 20.0:
             theta_target = 0.0
         else:
-            theta_target = float(np.clip(0.05 * vx + 0.01 * (x / self.cfg.pad_half_width), -np.radians(3.5), np.radians(3.5)))
+            vx_target = float(np.clip(-0.15 * x, -8.0, 8.0))
+            theta_target = float(np.clip(0.04 * (vx - vx_target), -np.radians(4.0), np.radians(4.0)))
 
         theta_error = theta - theta_target
         gimbal_cmd = 12.0 * theta_error + 6.0 * omega
@@ -94,3 +103,4 @@ class SuicideBurnController:
         a_rcs = float(np.clip(rcs_cmd, -1.0, 1.0))
 
         return np.array([a_throttle, a_gimbal, a_rcs], dtype=np.float32)
+

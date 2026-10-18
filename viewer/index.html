@@ -3,24 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LunarPilot 3D — Autonomous Rocket Landing & Self-Training Visualizer</title>
+  <title>RocketLand 3D — Autonomous Rocket Guidance & Precision Landing Visualizer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg: #030712;
+      --card-bg: rgba(11, 17, 32, 0.85);
+      --card-border: rgba(255, 255, 255, 0.09);
+      --accent-cyan: #38bdf8;
+      --accent-blue: #2563eb;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --text-main: #f3f4f6;
+      --text-muted: #94a3b8;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      user-select: none;
     }
+
     body {
-      background: #020208;
-      color: #e2e8f0;
-      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: 'Outfit', sans-serif;
       overflow: hidden;
       height: 100vh;
       width: 100vw;
     }
+
     #canvas-container {
       position: absolute;
       top: 0;
@@ -30,22 +46,30 @@
       z-index: 1;
     }
 
-    /* Glassmorphism Header */
+    /* Glass Header */
     header {
       position: absolute;
       top: 16px;
       left: 20px;
-      z-index: 10;
+      right: 20px;
+      z-index: 20;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      padding: 10px 20px;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    .brand-section {
       display: flex;
       align-items: center;
       gap: 12px;
-      background: rgba(10, 14, 26, 0.9);
-      backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 10px 18px;
-      border-radius: 14px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
     }
+
     .brand-title {
       font-size: 1.15rem;
       font-weight: 700;
@@ -53,22 +77,91 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #fff;
     }
+
     .brand-title span {
-      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      background: linear-gradient(135deg, var(--accent-cyan), #818cf8);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    /* Mode Toggle Switch in Header */
-    .header-btn {
+    .status-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.70rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+    }
+
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: pulseGreen 1.5s infinite alternate;
+    }
+
+    @keyframes pulseGreen {
+      from { opacity: 0.4; transform: scale(0.9); }
+      to { opacity: 1.0; transform: scale(1.3); }
+    }
+
+    /* Mode Pill Selector in Center */
+    .vehicle-selector {
+      display: flex;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 3px;
+      gap: 4px;
+    }
+
+    .vehicle-btn {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.80rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 9px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .vehicle-btn:hover {
+      color: #fff;
+    }
+
+    .vehicle-btn.active {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #fff;
+      box-shadow: 0 0 14px rgba(37, 99, 235, 0.5);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .action-btn {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.74rem;
-      padding: 5px 12px;
-      border-radius: 8px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 9px;
       cursor: pointer;
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      border: 1px solid var(--card-border);
       background: rgba(30, 41, 59, 0.7);
       color: #cbd5e1;
       display: flex;
@@ -76,369 +169,348 @@
       gap: 6px;
       transition: all 0.2s ease;
     }
-    .header-btn:hover {
-      border-color: #38bdf8;
+
+    .action-btn:hover {
+      border-color: var(--accent-cyan);
       color: #fff;
     }
-    .header-btn.active-self-train {
-      background: rgba(168, 85, 247, 0.25);
-      border-color: #c084fc;
-      color: #f3e8ff;
-      box-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
-      font-weight: 700;
-    }
-    .header-btn.active-expert {
-      background: rgba(56, 189, 248, 0.25);
-      border-color: #38bdf8;
+
+    .action-btn.active {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--accent-cyan);
       color: #e0f2fe;
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
-      font-weight: 700;
-    }
-    .header-btn.auto-relaunch-on {
-      background: rgba(34, 197, 94, 0.25);
-      border-color: #22c55e;
-      color: #86efac;
-      box-shadow: 0 0 14px rgba(34, 197, 94, 0.6);
-      font-weight: 700;
-      animation: pulseGreen 2s infinite alternate;
-    }
-    @keyframes pulseGreen {
-      from { box-shadow: 0 0 8px rgba(34, 197, 94, 0.4); }
-      to { box-shadow: 0 0 20px rgba(34, 197, 94, 0.8); }
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
     }
 
-    /* Telemetry HUD Panel */
-    #telemetry-panel {
+    /* Floating Flight Phase Pill (Top Center) */
+    #flight-phase-banner {
+      position: absolute;
+      top: 76px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #38bdf8;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    /* Telemetry HUD Tape (Left) */
+    #telemetry-hud {
       position: absolute;
       top: 80px;
       left: 20px;
-      z-index: 10;
-      width: 330px;
-      background: rgba(8, 12, 22, 0.90);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 14px;
+      z-index: 15;
+      width: 290px;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
       padding: 16px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.75);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
       font-family: 'JetBrains Mono', monospace;
     }
-    .panel-title {
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      color: #94a3b8;
-      margin-bottom: 10px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding-bottom: 5px;
-      display: flex;
-      justify-content: space-between;
-    }
-    .metric-row {
+
+    .hud-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 7px;
-      font-size: 0.83rem;
-    }
-    .metric-label {
-      color: #64748b;
-    }
-    .metric-value {
-      font-weight: 600;
-      color: #f1f5f9;
-    }
-    .metric-value.good {
-      color: #4ade80;
-    }
-    .metric-value.warn {
-      color: #facc15;
-    }
-    .metric-value.danger {
-      color: #f87171;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
     }
 
-    /* RL Reward & Penalties Breakdown Box */
-    .reward-box {
-      margin-top: 10px;
-      padding: 10px 12px;
-      background: rgba(15, 23, 42, 0.92);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      font-size: 0.78rem;
-    }
-    .reward-row {
+    .hud-row {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 4px;
-    }
-    .reward-row:last-child {
-      margin-bottom: 0;
-      padding-top: 4px;
-      border-top: 1px dashed rgba(255, 255, 255, 0.12);
-      font-weight: 700;
+      align-items: baseline;
+      margin-bottom: 8px;
     }
 
-    .action-display {
-      margin-top: 8px;
-      padding: 8px 10px;
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 8px;
+    .hud-label {
+      color: #64748b;
       font-size: 0.78rem;
-      text-align: center;
-      color: #38bdf8;
-      font-weight: 600;
     }
-    .legs-status {
+
+    .hud-val {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .hud-val.good { color: #34d399; }
+    .hud-val.warn { color: #fbbf24; }
+    .hud-val.danger { color: #f87171; }
+
+    /* Altitude & Speed Prominent Displays */
+    .primary-metric {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+    }
+
+    .metric-big {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .metric-unit {
+      font-size: 0.80rem;
+      font-weight: 500;
+      color: var(--accent-cyan);
+    }
+
+    /* Gauge Bar */
+    .gauge-container {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .gauge-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.08s linear;
+    }
+
+    .gauge-throttle {
+      background: linear-gradient(90deg, #38bdf8, #f59e0b, #ef4444);
+    }
+
+    .gauge-fuel {
+      background: linear-gradient(90deg, #10b981, #06b6d4);
+    }
+
+    /* TVC Gimbal Indicator */
+    .gimbal-indicator-box {
+      margin-top: 10px;
+      padding: 8px 10px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .gimbal-needle-track {
+      width: 90px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      position: relative;
+    }
+
+    .gimbal-needle-pip {
+      position: absolute;
+      top: -2px;
+      left: 50%;
+      width: 4px;
+      height: 12px;
+      border-radius: 2px;
+      background: var(--accent-cyan);
+      transform: translateX(-50%);
+      transition: left 0.05s ease;
+    }
+
+    /* Leg Status Indicators */
+    .leg-sensor-row {
       display: flex;
       gap: 8px;
-      margin-top: 8px;
+      margin-top: 10px;
     }
-    .leg-sensor {
+
+    .leg-badge {
       flex: 1;
-      padding: 5px;
+      padding: 6px;
       text-align: center;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 0.70rem;
-      background: rgba(30, 41, 59, 0.6);
+      font-weight: 700;
+      background: rgba(30, 41, 59, 0.5);
       border: 1px solid rgba(255, 255, 255, 0.06);
       color: #64748b;
       transition: all 0.2s ease;
     }
-    .leg-sensor.active {
-      background: rgba(34, 197, 94, 0.2);
-      border-color: #22c55e;
-      color: #4ade80;
-      font-weight: 700;
+
+    .leg-badge.contact {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: #10b981;
+      color: #34d399;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
     }
 
-    /* Training Flight Log Drawer */
-    #flight-history-box {
-      margin-top: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      padding-top: 8px;
-      max-height: 120px;
-      overflow-y: auto;
-      font-size: 0.72rem;
-    }
-    .history-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 3px 0;
-      color: #94a3b8;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    }
-    .history-item.crash {
-      color: #f87171;
-    }
-    .history-item.success {
-      color: #4ade80;
-    }
-
-    /* Bottom Playback Bar */
-    #playback-bar {
+    /* Bottom Timeline & Controls Dock */
+    #timeline-dock {
       position: absolute;
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 10;
-      width: min(94%, 900px);
-      background: rgba(8, 12, 24, 0.92);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 18px;
-      padding: 12px 22px;
+      z-index: 20;
+      width: min(92%, 840px);
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 12px 20px;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.85);
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.85);
+      gap: 10px;
     }
-    .timeline-container {
+
+    .timeline-row {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
-    #scrubber {
+
+    #time-scrubber {
       flex: 1;
-      accent-color: #38bdf8;
+      accent-color: var(--accent-cyan);
       cursor: pointer;
       height: 6px;
     }
-    .time-info {
+
+    .time-readout {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
-      color: #94a3b8;
-      min-width: 75px;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      min-width: 90px;
       text-align: right;
     }
-    .controls-row {
+
+    .dock-controls {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 10px;
     }
+
     .btn-group {
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .btn {
-      background: rgba(30, 41, 59, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #f1f5f9;
+
+    .dock-btn {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
       padding: 6px 14px;
-      border-radius: 8px;
-      cursor: pointer;
+      border-radius: 9px;
       font-family: inherit;
       font-size: 0.82rem;
       font-weight: 600;
+      cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
       transition: all 0.2s;
     }
-    .btn:hover {
+
+    .dock-btn:hover {
       background: rgba(56, 189, 248, 0.2);
-      border-color: #38bdf8;
+      border-color: var(--accent-cyan);
       color: #fff;
     }
-    .btn.active {
-      background: #38bdf8;
-      color: #020617;
-      border-color: #38bdf8;
-    }
-    select {
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      color: #f8fafc;
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 0.80rem;
-      cursor: pointer;
-      outline: none;
-      max-width: 260px;
+
+    .dock-btn.active {
+      background: var(--accent-cyan);
+      color: #030712;
+      border-color: var(--accent-cyan);
     }
 
-    /* Outcome & Auto-Relaunch Countdown Banner */
-    #outcome-banner {
+    /* Outcome Notification Modal */
+    #outcome-modal {
       position: absolute;
-      top: 76px;
-      right: 20px;
-      z-index: 10;
-      padding: 8px 16px;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: 0.84rem;
-      letter-spacing: 0.5px;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.3s;
-    }
-    .outcome-touchdown {
-      background: rgba(34, 197, 94, 0.25);
-      border: 1px solid rgba(34, 197, 94, 0.7);
-      color: #4ade80;
-    }
-    .outcome-crash {
-      background: rgba(239, 68, 68, 0.3);
-      border: 1px solid rgba(239, 68, 68, 0.8);
-      color: #f87171;
-      animation: pulseRed 1s infinite alternate;
-    }
-    .outcome-timeout {
-      background: rgba(234, 179, 8, 0.25);
-      border: 1px solid rgba(234, 179, 8, 0.6);
-      color: #facc15;
-    }
-    @keyframes pulseRed {
-      from { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
-      to { box-shadow: 0 0 25px rgba(239, 68, 68, 0.85); }
-    }
-
-    /* Floating Auto-Relaunch Notification */
-    #relaunch-notification {
-      position: absolute;
-      top: 125px;
-      right: 20px;
-      z-index: 15;
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px solid #38bdf8;
-      border-radius: 12px;
-      padding: 12px 18px;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.82rem;
-      display: none;
-      max-width: 340px;
-    }
-    .progress-bar-container {
-      width: 100%;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 2px;
-      margin-top: 8px;
-      overflow: hidden;
-    }
-    .progress-bar-fill {
-      height: 100%;
-      background: #38bdf8;
-      width: 100%;
-      transition: width 0.1s linear;
-    }
-
-    /* Custom Mission Panel */
-    #custom-mission-panel {
-      position: absolute;
-      top: 160px;
+      top: 130px;
       right: 24px;
-      z-index: 10;
-      width: 320px;
-      background: rgba(8, 12, 22, 0.92);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(56, 189, 248, 0.35);
+      z-index: 25;
+      padding: 12px 18px;
       border-radius: 14px;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.80rem;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.75);
+      display: none;
+      max-width: 320px;
+    }
+
+    #outcome-modal.success {
+      border-color: #10b981;
+      background: rgba(6, 78, 59, 0.75);
+    }
+
+    #outcome-modal.crash {
+      border-color: #ef4444;
+      background: rgba(127, 29, 29, 0.75);
+    }
+
+    /* Custom Scenario Dispatcher Drawer */
+    #scenario-drawer {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      z-index: 20;
+      width: 300px;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 16px;
       padding: 16px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.8);
       font-family: 'JetBrains Mono', monospace;
       display: none;
     }
-    .slider-row {
-      margin-bottom: 10px;
-    }
-    .slider-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.76rem;
-      margin-bottom: 4px;
-      color: #94a3b8;
-    }
-    .slider-header span:last-child {
-      color: #38bdf8;
-      font-weight: 700;
-    }
-    .range-input {
+
+    .preset-pill {
+      display: block;
       width: 100%;
-      accent-color: #38bdf8;
-      cursor: pointer;
-      height: 5px;
-    }
-    .preset-btn {
-      font-size: 0.70rem;
-      padding: 4px 6px;
-      background: rgba(30, 41, 59, 0.8);
+      text-align: left;
+      font-family: inherit;
+      font-size: 0.75rem;
+      padding: 7px 10px;
+      margin-bottom: 6px;
+      background: rgba(30, 41, 59, 0.6);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 6px;
+      border-radius: 8px;
       color: #cbd5e1;
       cursor: pointer;
+      transition: all 0.2s;
     }
-    .preset-btn:hover {
-      background: rgba(56, 189, 248, 0.25);
-      border-color: #38bdf8;
+
+    .preset-pill:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--accent-cyan);
       color: #fff;
     }
   </style>
@@ -449,223 +521,174 @@
 
   <div id="canvas-container"></div>
 
-  <!-- Header with Live Self-Training Controls -->
+  <!-- Header -->
   <header>
-    <div class="brand-title">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
-        <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
-        <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/>
-        <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
-      </svg>
-      <span>LunarPilot 3D</span>
+    <div class="brand-section">
+      <div class="brand-title">
+        <span>ROCKETLAND</span>
+      </div>
+      <div class="status-badge">
+        <div class="pulse-dot"></div>
+        <span>AUTONOMOUS GUIDANCE</span>
+      </div>
     </div>
 
-    <!-- Mode Selector: Self-Training vs 500k Expert -->
-    <button class="header-btn" id="btn-mode-train" title="Agent learns online from mistakes and crashes">
-      🧠 Self-Train by Itself
-    </button>
-    <button class="header-btn active-expert" id="btn-mode-expert" title="500k Timestep Trained PPO Master">
-      🏆 500k Expert
-    </button>
+    <!-- Mode Selector -->
+    <div class="vehicle-selector">
+      <button class="vehicle-btn active" id="btn-vehicle-falcon">
+        🚀 Falcon 9 (Droneship)
+      </button>
+      <button class="vehicle-btn" id="btn-vehicle-artemis">
+        🌕 Artemis (Lunar Base)
+      </button>
+    </div>
 
-    <!-- Auto-Relaunch Active Toggle -->
-    <button class="header-btn auto-relaunch-on" id="btn-auto-relaunch-toggle" title="Automatically relaunches and trains after every landing/crash">
-      ⚡ Auto-Relaunch: ACTIVE
-    </button>
-
-    <!-- Reset to Scratch Button -->
-    <button class="header-btn" id="btn-reset-scratch-header" style="border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;" title="Wipe policy to untrained random weights to watch learning from 0">
-      ↺ Reset to 0
-    </button>
-
-    <!-- Custom Mission Dispatcher Toggle -->
-    <button class="header-btn" id="btn-custom-toggle">
-      🎯 Custom Spawn
-    </button>
+    <!-- Header Actions -->
+    <div class="header-actions">
+      <button class="action-btn" id="btn-toggle-scenarios">
+        🎯 Presets
+      </button>
+      <button class="action-btn active" id="btn-auto-relaunch">
+        ⚡ Auto-Relaunch: ON
+      </button>
+    </div>
   </header>
 
-  <!-- Flight Status Outcome Banner -->
-  <div id="outcome-banner" class="outcome-touchdown">
-    <span id="outcome-text">TOUCHDOWN (Safe Landing)</span>
+  <!-- Flight Phase Pill (Top Center) -->
+  <div id="flight-phase-banner">
+    HIGH-SPEED DESCENT COAST
   </div>
 
-  <!-- Auto-Relaunch & Policy Training Countdown Banner -->
-  <div id="relaunch-notification">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <span id="relaunch-msg-title" style="font-weight: 700; color: #38bdf8;">🧠 Self-Training Loop</span>
-      <span id="relaunch-countdown-sec" style="color: #94a3b8; font-size: 0.74rem;">in 1.5s</span>
+  <!-- Telemetry HUD (Left) -->
+  <div id="telemetry-hud">
+    <div class="hud-header">
+      <span id="hud-vehicle-tag">Falcon-9 Telemetry</span>
+      <span id="hud-step-tag">T+0.0s</span>
     </div>
-    <div id="relaunch-msg-desc" style="font-size: 0.74rem; color: #cbd5e1; margin-top: 4px;">
-      Updating policy gradients & auto-relaunching...
+
+    <!-- Primary Altitude -->
+    <div class="primary-metric">
+      <div class="hud-label">ALTITUDE AGL</div>
+      <div class="metric-big">
+        <span id="val-altitude">850.0</span>
+        <span class="metric-unit">M</span>
+      </div>
     </div>
-    <div class="progress-bar-container">
-      <div class="progress-bar-fill" id="relaunch-progress-fill"></div>
+
+    <!-- Vertical Speed -->
+    <div class="hud-row">
+      <span class="hud-label">DESCENT RATE (Vy):</span>
+      <span class="hud-val" id="val-vy">-65.0 m/s</span>
+    </div>
+
+    <!-- Horizontal Speed -->
+    <div class="hud-row">
+      <span class="hud-label">LATERAL SPEED (Vx):</span>
+      <span class="hud-val" id="val-vx">0.0 m/s</span>
+    </div>
+
+    <!-- Pad Offset -->
+    <div class="hud-row">
+      <span class="hud-label">PAD OFFSET (X):</span>
+      <span class="hud-val" id="val-x">0.0 m</span>
+    </div>
+
+    <!-- Attitude Tilt -->
+    <div class="hud-row">
+      <span class="hud-label">PITCH TILT:</span>
+      <span class="hud-val" id="val-tilt">0.0°</span>
+    </div>
+
+    <!-- Engine Throttle & Thrust -->
+    <div style="margin-top: 10px;">
+      <div class="hud-row" style="margin-bottom: 2px;">
+        <span class="hud-label">MAIN ENGINE THRUST:</span>
+        <span class="hud-val" id="val-thrust" style="color: var(--accent-cyan);">0.0 kN (0%)</span>
+      </div>
+      <div class="gauge-container">
+        <div class="gauge-fill gauge-throttle" id="gauge-throttle-fill" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <!-- TVC Gimbal Indicator -->
+    <div class="gimbal-indicator-box">
+      <span class="hud-label" style="font-size: 0.72rem;">TVC GIMBAL</span>
+      <div class="gimbal-needle-track">
+        <div class="gimbal-needle-pip" id="gimbal-needle"></div>
+      </div>
+      <span class="hud-val" id="val-gimbal" style="font-size: 0.74rem;">0.0°</span>
+    </div>
+
+    <!-- Propellant Remaining -->
+    <div style="margin-top: 10px;">
+      <div class="hud-row" style="margin-bottom: 2px;">
+        <span class="hud-label">PROPELLANT REMAINING:</span>
+        <span class="hud-val" id="val-fuel" style="color: #34d399;">3,500 kg</span>
+      </div>
+      <div class="gauge-container">
+        <div class="gauge-fill gauge-fuel" id="gauge-fuel-fill" style="width: 100%;"></div>
+      </div>
+    </div>
+
+    <!-- Landing Leg Contact Sensors -->
+    <div class="leg-sensor-row">
+      <div class="leg-badge" id="badge-leg-left">LEFT LEG: FREE</div>
+      <div class="leg-badge" id="badge-leg-right">RIGHT LEG: FREE</div>
     </div>
   </div>
 
-  <!-- Interactive Custom Mission Dispatcher Panel -->
-  <div id="custom-mission-panel">
-    <div class="panel-title">
-      <span>Custom Spawn Mission</span>
-      <span style="font-size: 0.68rem; color: #38bdf8;">LIVE GUIDANCE</span>
+  <!-- Scenario Drawer -->
+  <div id="scenario-drawer">
+    <div class="hud-header">
+      <span>Mission Presets</span>
+      <span style="cursor: pointer;" id="btn-close-scenarios">✕</span>
     </div>
-    <p style="font-size: 0.72rem; color: #94a3b8; margin-bottom: 10px; line-height: 1.35; font-family: 'Outfit', sans-serif;">
-      Spawn the rocket at <b>any coordinates or tilt</b>. The active AI policy will steer to the pad!
-    </p>
-
-    <div class="slider-row">
-      <div class="slider-header">
-        <span>Horizontal Offset (X):</span>
-        <span id="label-val-x">0.00 m</span>
-      </div>
-      <input type="range" class="range-input" id="input-spawn-x" min="-0.8" max="0.8" step="0.05" value="0.0">
-    </div>
-
-    <div class="slider-row">
-      <div class="slider-header">
-        <span>Entry Altitude (Y):</span>
-        <span id="label-val-y">120.0 m</span>
-      </div>
-      <input type="range" class="range-input" id="input-spawn-y" min="0.6" max="1.4" step="0.05" value="1.2">
-    </div>
-
-    <div class="slider-row">
-      <div class="slider-header">
-        <span>Initial Tilt Angle:</span>
-        <span id="label-val-angle">0.0°</span>
-      </div>
-      <input type="range" class="range-input" id="input-spawn-angle" min="-40" max="40" step="1" value="0">
-    </div>
-
-    <div style="margin-top: 6px;">
-      <span style="font-size: 0.70rem; color: #64748b;">Presets:</span>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px;">
-        <button class="preset-btn" onclick="applySpawnPreset(0.0, 1.2, 0)">🎯 Center High</button>
-        <button class="preset-btn" onclick="applySpawnPreset(-0.6, 1.25, 15)">⬅️ Far Left Drift</button>
-        <button class="preset-btn" onclick="applySpawnPreset(0.6, 1.25, -15)">➡️ Far Right Drift</button>
-        <button class="preset-btn" onclick="applySpawnPreset(-0.25, 1.35, 30)">⚡ Steep Tilt Dive</button>
-      </div>
-    </div>
-
-    <button class="btn active" id="btn-launch-mission" style="width: 100%; margin-top: 12px; padding: 8px; justify-content: center; font-size: 0.82rem; font-weight: 700;">
-      🚀 Launch Autonomous Guidance
+    <button class="preset-pill" onclick="runCustomPreset(850, 0, 0, -60, 0)">
+      🎯 Nominal Suicide Burn (850m)
+    </button>
+    <button class="preset-pill" onclick="runCustomPreset(1100, 15, 2, -75, 5)">
+      💨 Crosswind & Lateral Drift (15m Offset)
+    </button>
+    <button class="preset-pill" onclick="runCustomPreset(650, -20, -3, -50, 10)">
+      🌊 High Oceanic Swell Entry
+    </button>
+    <button class="preset-pill" onclick="runCustomPreset(1300, 0, 0, -90, 0)">
+      ⚡ High-Speed Terminal Dive (1300m)
     </button>
   </div>
 
-  <!-- Real-time Telemetry & Reward Penalties HUD -->
-  <div id="telemetry-panel">
-    <div class="panel-title">
-      <span>Flight Telemetry</span>
-      <span id="telemetry-step">Step 000</span>
-    </div>
-
-    <div class="metric-row">
-      <span class="metric-label">Altitude (Y):</span>
-      <span class="metric-value" id="hud-alt">0.00 m</span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-label">Horizontal (X):</span>
-      <span class="metric-value" id="hud-pos-x">0.00 m</span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-label">Descent Rate (Vy):</span>
-      <span class="metric-value" id="hud-vy">-0.00 m/s</span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-label">Horizontal Speed (Vx):</span>
-      <span class="metric-value" id="hud-vx">0.00 m/s</span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-label">Attitude Tilt:</span>
-      <span class="metric-value" id="hud-angle">0.0 deg</span>
-    </div>
-
-    <!-- RL Step Reward & Negative Penalties Breakdown -->
-    <div class="reward-box">
-      <div class="panel-title" style="margin-bottom: 5px; padding-bottom: 2px;">
-        <span>Negative Marks & Rewards</span>
-        <span id="hud-step-reward" style="font-weight: 700;">-0.00 pts</span>
-      </div>
-      <div class="reward-row">
-        <span class="metric-label">Fuel Burn Cost:</span>
-        <span class="metric-value danger" id="hud-fuel-cost">-0.00 pts</span>
-      </div>
-      <div class="reward-row">
-        <span class="metric-label">Terminal Impact:</span>
-        <span class="metric-value" id="hud-impact-penalty">--</span>
-      </div>
-      <div class="reward-row">
-        <span>Cumulative Reward:</span>
-        <span id="hud-cumulative-reward" class="good">+0.00 pts</span>
-      </div>
-    </div>
-
-    <div class="action-display" id="hud-action">
-      [ACT] Engine Idle (Coasting)
-    </div>
-
-    <div class="legs-status">
-      <div class="leg-sensor" id="sensor-left">LEFT LEG: FREE</div>
-      <div class="leg-sensor" id="sensor-right">RIGHT LEG: FREE</div>
-    </div>
-
-    <!-- Live Session Stats & Autonomous History Log -->
-    <div style="margin-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 8px;">
-      <div class="panel-title" style="margin-bottom: 4px; padding-bottom: 2px;">
-        <span>Autonomous Session</span>
-        <span id="stat-attempts" style="color: #38bdf8;">0 Flights</span>
-      </div>
-      <div class="metric-row" style="font-size: 0.74rem;">
-        <span class="metric-label">Trained Steps:</span>
-        <span class="metric-value" id="stat-trained-steps" style="color: #c084fc;">0</span>
-      </div>
-      <div class="metric-row" style="font-size: 0.74rem;">
-        <span class="metric-label">Touchdown / Crash:</span>
-        <span class="metric-value" id="stat-touchdown-crash">0 / 0</span>
-      </div>
-      <div class="metric-row" style="font-size: 0.74rem;">
-        <span class="metric-label">Average Score:</span>
-        <span class="metric-value" id="stat-avg-reward">0.0 pts</span>
-      </div>
-
-      <!-- Recent Flights List -->
-      <div id="flight-history-box">
-        <!-- Populated via JS -->
-      </div>
-    </div>
+  <!-- Outcome Modal -->
+  <div id="outcome-modal">
+    <div style="font-weight: 700; margin-bottom: 4px;" id="outcome-title">TOUCHDOWN</div>
+    <div style="font-size: 0.74rem; color: #cbd5e1;" id="outcome-desc">Safe landing achieved.</div>
   </div>
 
-  <!-- Playback Control Bar -->
-  <div id="playback-bar">
-    <div class="timeline-container">
-      <input type="range" id="scrubber" min="0" max="100" value="0">
-      <span class="time-info" id="time-display">0 / 0</span>
+  <!-- Bottom Timeline Dock -->
+  <div id="timeline-dock">
+    <div class="timeline-row">
+      <input type="range" id="time-scrubber" min="0" max="100" value="0">
+      <span class="time-readout" id="time-readout">0.0s / 0.0s</span>
     </div>
 
-    <div class="controls-row">
+    <div class="dock-controls">
       <div class="btn-group">
-        <button class="btn" id="btn-play-pause">
+        <button class="dock-btn" id="btn-play">
           <span id="play-icon">▶</span>
-          <span id="play-text">Play</span>
+          <span id="play-label">Play</span>
         </button>
-        <button class="btn" id="btn-restart">↺ Replay</button>
-        <button class="btn" id="btn-speed">1.0x</button>
-        <button class="btn" id="btn-relaunch-now" style="background: rgba(56, 189, 248, 0.2); border-color: #38bdf8; color: #38bdf8;">
-          🚀 Relaunch Now
+        <button class="dock-btn" id="btn-replay">↺ Replay</button>
+        <button class="dock-btn" id="btn-speed">1.0x</button>
+        <button class="dock-btn" id="btn-relaunch-now" style="color: var(--accent-cyan); border-color: rgba(56, 189, 248, 0.4);">
+          🚀 Launch Next
         </button>
       </div>
 
       <div class="btn-group">
-        <label style="font-size: 0.78rem; color: #94a3b8;">Flight:</label>
-        <select id="episode-select">
-          <!-- Populated from flight data -->
-        </select>
-
-        <label style="font-size: 0.78rem; color: #94a3b8; margin-left: 6px;">Camera:</label>
-        <button class="btn active" id="btn-cam-follow">Chase</button>
-        <button class="btn" id="btn-cam-orbit">Orbit</button>
-        <button class="btn" id="btn-cam-cockpit">Cockpit</button>
+        <span style="font-size: 0.74rem; color: var(--text-muted); margin-right: 4px;">Camera:</span>
+        <button class="dock-btn active" id="cam-chase">Chase</button>
+        <button class="dock-btn" id="cam-deck">Droneship</button>
+        <button class="dock-btn" id="cam-booster">Booster</button>
+        <button class="dock-btn" id="cam-orbit">Orbit</button>
       </div>
     </div>
   </div>
@@ -674,35 +697,39 @@
     // --- 1. Three.js Scene Setup ---
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x020208, 0.012);
+    scene.fog = new THREE.FogExp2(0x030712, 0.008);
 
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 8, 22);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 15, 38);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
     container.appendChild(renderer.domElement);
 
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2 - 0.02;
+    controls.maxPolarAngle = Math.PI / 2 - 0.01;
+    controls.minDistance = 5;
+    controls.maxDistance = 350;
 
-    // --- 2. Lighting & Atmosphere ---
-    const ambientLight = new THREE.AmbientLight(0x282c3c, 0.85);
+    // --- 2. Lighting ---
+    const ambientLight = new THREE.AmbientLight(0x1e293b, 1.2);
     scene.add(ambientLight);
 
-    const sunLight = new THREE.DirectionalLight(0xfff5ea, 2.0);
-    sunLight.position.set(35, 70, 45);
+    const sunLight = new THREE.DirectionalLight(0xfffaed, 2.5);
+    sunLight.position.set(60, 140, 80);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 2048;
     sunLight.shadow.mapSize.height = 2048;
     sunLight.shadow.camera.near = 10;
-    sunLight.shadow.camera.far = 160;
-    const shadowD = 28;
+    sunLight.shadow.camera.far = 400;
+    const shadowD = 60;
     sunLight.shadow.camera.left = -shadowD;
     sunLight.shadow.camera.right = shadowD;
     sunLight.shadow.camera.top = shadowD;
@@ -710,673 +737,674 @@
     scene.add(sunLight);
 
     // Starfield
-    const starsGeo = new THREE.BufferGeometry();
-    const starCount = 3500;
-    const starPos = new Float32Array(starCount * 3);
+    const starGeo = new THREE.BufferGeometry();
+    const starCount = 3000;
+    const starArr = new Float32Array(starCount * 3);
     for (let i = 0; i < starCount * 3; i += 3) {
-      starPos[i] = (Math.random() - 0.5) * 650;
-      starPos[i + 1] = Math.random() * 320 + 10;
-      starPos[i + 2] = (Math.random() - 0.5) * 650;
+      starArr[i] = (Math.random() - 0.5) * 1200;
+      starArr[i + 1] = Math.random() * 600 + 20;
+      starArr[i + 2] = (Math.random() - 0.5) * 1200;
     }
-    starsGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-    const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.9, transparent: true, opacity: 0.85 });
-    const starField = new THREE.Points(starsGeo, starsMat);
-    scene.add(starField);
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starArr, 3));
+    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 1.2, transparent: true, opacity: 0.8 });
+    const stars = new THREE.Points(starGeo, starMat);
+    scene.add(stars);
 
-    // Glowing Earth
-    const earthGeo = new THREE.SphereGeometry(6.5, 32, 32);
-    const earthMat = new THREE.MeshPhongMaterial({
-      color: 0x1d4ed8,
-      emissive: 0x075985,
-      specular: 0x38bdf8,
-      shininess: 25,
+    // --- 3. Switchable Environments ---
+    const oceanGroup = new THREE.Group();
+    const lunarGroup = new THREE.Group();
+    scene.add(oceanGroup);
+    scene.add(lunarGroup);
+    lunarGroup.visible = false;
+
+    // 3A. Ocean & Droneship ("A Shortfall of Gravitas")
+    // Ocean Surface
+    const waterGeo = new THREE.PlaneGeometry(800, 800, 64, 64);
+    waterGeo.rotateX(-Math.PI / 2);
+    const waterMat = new THREE.MeshStandardMaterial({
+      color: 0x071b2e,
+      roughness: 0.15,
+      metalness: 0.85,
     });
-    const earth = new THREE.Mesh(earthGeo, earthMat);
-    earth.position.set(-95, 85, -170);
-    scene.add(earth);
+    const water = new THREE.Mesh(waterGeo, waterMat);
+    water.position.y = -0.5;
+    water.receiveShadow = true;
+    oceanGroup.add(water);
 
-    // Lunar Surface
-    const terrainGeo = new THREE.PlaneGeometry(160, 160, 90, 90);
-    terrainGeo.rotateX(-Math.PI / 2);
-    const posAttr = terrainGeo.attributes.position;
-    for (let i = 0; i < posAttr.count; i++) {
-      const vx = posAttr.getX(i);
-      const vz = posAttr.getZ(i);
-      const distFromCenter = Math.sqrt(vx * vx + vz * vz);
-      if (distFromCenter > 4.5) {
-        const noise = Math.sin(vx * 0.14) * Math.cos(vz * 0.14) * 0.85
-                    + Math.sin(vx * 0.28 + vz * 0.22) * 0.45;
-        posAttr.setY(i, noise);
+    // Detailed Autonomous Droneship Model
+    const droneship = new THREE.Group();
+    oceanGroup.add(droneship);
+
+    // Barge Main Hull (50m x 90m deck)
+    const hullGeo = new THREE.BoxGeometry(50, 2.5, 90);
+    const hullMat = new THREE.MeshStandardMaterial({
+      color: 0x1f242d,
+      roughness: 0.8,
+      metalness: 0.4,
+    });
+    const hull = new THREE.Mesh(hullGeo, hullMat);
+    hull.position.y = 0.5;
+    hull.receiveShadow = true;
+    hull.castShadow = true;
+    droneship.add(hull);
+
+    // Hazard Stripes Deck Border
+    const borderGeo = new THREE.BoxGeometry(50.4, 0.1, 90.4);
+    const borderMat = new THREE.MeshStandardMaterial({ color: 0xca8a04, roughness: 0.5 });
+    const border = new THREE.Mesh(borderGeo, borderMat);
+    border.position.y = 1.76;
+    droneship.add(border);
+
+    // Steel Landing Surface Deck
+    const deckGeo = new THREE.PlaneGeometry(48, 88);
+    deckGeo.rotateX(-Math.PI / 2);
+    const deckMat = new THREE.MeshStandardMaterial({
+      color: 0x22262f,
+      roughness: 0.7,
+      metalness: 0.3,
+    });
+    const deck = new THREE.Mesh(deckGeo, deckMat);
+    deck.position.y = 1.78;
+    deck.receiveShadow = true;
+    droneship.add(deck);
+
+    // Concentric Landing Target Rings
+    function createTargetRing(radius, color, thickness) {
+      const ringGeo = new THREE.RingGeometry(radius - thickness, radius, 64);
+      ringGeo.rotateX(-Math.PI / 2);
+      const ringMat = new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.position.y = 1.80;
+      return ring;
+    }
+    droneship.add(createTargetRing(25.0, 0xeab308, 0.4)); // Outer 25m pad boundary
+    droneship.add(createTargetRing(15.0, 0xffffff, 0.3)); // 15m ring
+    droneship.add(createTargetRing(5.0, 0x38bdf8, 0.3));  // Inner 5m bullseye
+
+    // Iconic Center SpaceX "X" Logo
+    const xGroup = new THREE.Group();
+    const xBarGeo = new THREE.PlaneGeometry(7.0, 1.2);
+    xBarGeo.rotateX(-Math.PI / 2);
+    const xBarMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide });
+    const xBar1 = new THREE.Mesh(xBarGeo, xBarMat);
+    xBar1.rotation.y = Math.PI / 4;
+    const xBar2 = new THREE.Mesh(xBarGeo, xBarMat);
+    xBar2.rotation.y = -Math.PI / 4;
+    xGroup.add(xBar1);
+    xGroup.add(xBar2);
+    xGroup.position.y = 1.81;
+    droneship.add(xGroup);
+
+    // 4 Corner Floodlight Stanchions
+    function createFloodlight(x, z, angleY) {
+      const stanchion = new THREE.Group();
+      const mastGeo = new THREE.CylinderGeometry(0.2, 0.25, 6, 8);
+      const mastMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.7 });
+      const mast = new THREE.Mesh(mastGeo, mastMat);
+      mast.position.y = 3;
+      stanchion.add(mast);
+
+      // Light head
+      const headGeo = new THREE.BoxGeometry(0.8, 0.5, 0.6);
+      const headMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
+      const head = new THREE.Mesh(headGeo, headMat);
+      head.position.set(0, 6, 0);
+      stanchion.add(head);
+
+      // Spotlight casting cone on deck
+      const spot = new THREE.SpotLight(0xfff1dc, 2.0, 45, Math.PI / 4, 0.4);
+      spot.position.set(0, 6, 0);
+      spot.target.position.set(-x * 0.4, 1.8, -z * 0.4);
+      stanchion.add(spot);
+      stanchion.add(spot.target);
+
+      stanchion.position.set(x, 1.7, z);
+      return stanchion;
+    }
+    droneship.add(createFloodlight(-23, -42, 0));
+    droneship.add(createFloodlight(23, -42, 0));
+    droneship.add(createFloodlight(-23, 42, 0));
+    droneship.add(createFloodlight(23, 42, 0));
+
+    // Marine Beacons (Port red, starboard green)
+    function createBeacon(x, z, colorHex) {
+      const beacon = new THREE.Mesh(
+        new THREE.SphereGeometry(0.3, 12, 12),
+        new THREE.MeshBasicMaterial({ color: colorHex })
+      );
+      beacon.position.set(x, 2.5, z);
+      return beacon;
+    }
+    droneship.add(createBeacon(-24, 43, 0xef4444)); // Red Port
+    droneship.add(createBeacon(24, 43, 0x10b981));  // Green Starboard
+
+    // 3B. Lunar Artemis Surface
+    const moonGeo = new THREE.PlaneGeometry(600, 600, 64, 64);
+    moonGeo.rotateX(-Math.PI / 2);
+    const moonPos = moonGeo.attributes.position;
+    for (let i = 0; i < moonPos.count; i++) {
+      const mx = moonPos.getX(i);
+      const mz = moonPos.getZ(i);
+      const dist = Math.hypot(mx, mz);
+      if (dist > 8) {
+        moonPos.setY(i, Math.sin(mx * 0.08) * Math.cos(mz * 0.08) * 2.2);
       } else {
-        posAttr.setY(i, 0); // Flat landing zone
+        moonPos.setY(i, 0); // Flat landing site
       }
     }
-    terrainGeo.computeVertexNormals();
-    const terrainMat = new THREE.MeshStandardMaterial({
-      color: 0x525662,
-      roughness: 0.92,
-      metalness: 0.1,
+    moonGeo.computeVertexNormals();
+    const moonMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.95 });
+    const moon = new THREE.Mesh(moonGeo, moonMat);
+    moon.receiveShadow = true;
+    lunarGroup.add(moon);
+
+    const lunarPad = createTargetRing(7.0, 0x38bdf8, 0.4);
+    lunarPad.position.y = 0.05;
+    lunarGroup.add(lunarPad);
+
+    const earthGeo = new THREE.SphereGeometry(12, 32, 32);
+    const earthMat = new THREE.MeshPhongMaterial({ color: 0x1d4ed8, emissive: 0x075985, shininess: 25 });
+    const earthMesh = new THREE.Mesh(earthGeo, earthMat);
+    earthMesh.position.set(-160, 180, -300);
+    lunarGroup.add(earthMesh);
+
+
+    // --- 4. Complex 3D Falcon-9 Orbital Booster Model ---
+    const rocket = new THREE.Group();
+    scene.add(rocket);
+
+    // Booster Materials
+    const fuselageWhiteMat = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      roughness: 0.35,
+      metalness: 0.25,
     });
-    const terrain = new THREE.Mesh(terrainGeo, terrainMat);
-    terrain.receiveShadow = true;
-    scene.add(terrain);
+    const interstageBlackMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a,
+      roughness: 0.6,
+      metalness: 0.6,
+    });
+    const titaniumFinMat = new THREE.MeshStandardMaterial({
+      color: 0x475569,
+      roughness: 0.4,
+      metalness: 0.85,
+    });
+    const engineMetalMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      roughness: 0.3,
+      metalness: 0.9,
+    });
+    const carbonLegMat = new THREE.MeshStandardMaterial({
+      color: 0x0a0f1d,
+      roughness: 0.5,
+      metalness: 0.7,
+    });
 
-    // Illuminated Landing Target Pad Ring
-    const padRingGeo = new THREE.RingGeometry(1.6, 2.0, 36);
-    padRingGeo.rotateX(-Math.PI / 2);
-    const padRingMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide });
-    const padRing = new THREE.Mesh(padRingGeo, padRingMat);
-    padRing.position.set(0, 0.02, 0);
-    scene.add(padRing);
+    // 4A. Fuselage Assembly (Falcon-9 proportions: diameter 3.7m, length 40m)
+    // Scale: 1 Three.js unit = 1 meter
+    const fuselageGroup = new THREE.Group();
+    rocket.add(fuselageGroup);
 
-    // Boundary Flags
-    function createFlag(xPos) {
-      const flagGroup = new THREE.Group();
-      const poleGeo = new THREE.CylinderGeometry(0.04, 0.04, 1.8, 8);
-      const poleMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.8 });
-      const pole = new THREE.Mesh(poleGeo, poleMat);
-      pole.position.y = 0.9;
-      pole.castShadow = true;
-      flagGroup.add(pole);
+    // Main Cylindrical Fuel Tanks (White)
+    const mainBodyGeo = new THREE.CylinderGeometry(1.85, 1.85, 34, 32);
+    const mainBody = new THREE.Mesh(mainBodyGeo, fuselageWhiteMat);
+    mainBody.position.y = 17.0; // Base at y=0, top at y=34
+    mainBody.castShadow = true;
+    fuselageGroup.add(mainBody);
 
-      const bannerGeo = new THREE.PlaneGeometry(0.7, 0.4);
-      const bannerMat = new THREE.MeshBasicMaterial({ color: 0xef4444, side: THREE.DoubleSide });
-      const banner = new THREE.Mesh(bannerGeo, bannerMat);
-      banner.position.set(0.35, 1.55, 0);
-      flagGroup.add(banner);
+    // Carbon Composite Interstage (Top black ring, 6m)
+    const interstageGeo = new THREE.CylinderGeometry(1.85, 1.85, 6.0, 32);
+    const interstage = new THREE.Mesh(interstageGeo, interstageBlackMat);
+    interstage.position.y = 37.0; // y=34 to y=40
+    interstage.castShadow = true;
+    fuselageGroup.add(interstage);
 
-      flagGroup.position.set(xPos, 0, 0);
-      return flagGroup;
+    // Top Dome Cap
+    const domeGeo = new THREE.SphereGeometry(1.85, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+    const dome = new THREE.Mesh(domeGeo, interstageBlackMat);
+    dome.position.y = 40.0;
+    fuselageGroup.add(dome);
+
+    // External Vertical Raceway / Avionics Conduit Spines
+    function createRaceway(angle) {
+      const racewayGeo = new THREE.BoxGeometry(0.2, 36, 0.3);
+      const raceway = new THREE.Mesh(racewayGeo, interstageBlackMat);
+      raceway.position.set(
+        Math.cos(angle) * 1.95,
+        18.0,
+        Math.sin(angle) * 1.95
+      );
+      raceway.rotation.y = -angle;
+      return raceway;
     }
-    scene.add(createFlag(-2.4));
-    scene.add(createFlag(2.4));
+    fuselageGroup.add(createRaceway(0));
+    fuselageGroup.add(createRaceway(Math.PI));
 
-    // --- 3. Sleek Aerodynamic Rocket Body (Matching User's Reference Image) ---
-    const lander = new THREE.Group();
-    scene.add(lander);
+    // Base Heatshield & Octaweb Ring
+    const octawebGeo = new THREE.CylinderGeometry(1.85, 1.75, 1.2, 32);
+    const octaweb = new THREE.Mesh(octawebGeo, engineMetalMat);
+    octaweb.position.y = 0.6;
+    fuselageGroup.add(octaweb);
 
-    const rocketMat = new THREE.MeshStandardMaterial({
-      color: 0x18181c, // Obsidian Black
-      metalness: 0.72,
-      roughness: 0.32,
-    });
+    // 4B. 4 Articulated Titanium Grid Fins (Top of Booster)
+    const gridFins = [];
+    function createGridFin(angleY) {
+      const pivot = new THREE.Group();
+      pivot.position.set(Math.cos(angleY) * 1.88, 38.0, Math.sin(angleY) * 1.88);
+      pivot.rotation.y = angleY;
 
-    const curvePoints = [];
-    curvePoints.push(new THREE.Vector2(0.40, 0.0));  // Base nozzle mount
-    curvePoints.push(new THREE.Vector2(0.46, 0.25)); // Base rim
-    curvePoints.push(new THREE.Vector2(0.68, 0.55)); // Waist flare
-    curvePoints.push(new THREE.Vector2(0.88, 1.10)); // Mid body
-    curvePoints.push(new THREE.Vector2(0.92, 1.60)); // Max belly
-    curvePoints.push(new THREE.Vector2(0.86, 2.10)); // Upper body taper
-    curvePoints.push(new THREE.Vector2(0.70, 2.55)); // Shoulder
-    curvePoints.push(new THREE.Vector2(0.46, 2.95)); // Nose cone base
-    curvePoints.push(new THREE.Vector2(0.20, 3.25)); // Nose tip
-    curvePoints.push(new THREE.Vector2(0.06, 3.40)); // Nodule base
-    curvePoints.push(new THREE.Vector2(0.00, 3.46)); // Tip peak
+      // Titanium Grid Fin Mesh
+      const finFrame = new THREE.Group();
+      const frameGeo = new THREE.BoxGeometry(1.8, 0.12, 1.2);
+      const frame = new THREE.Mesh(frameGeo, titaniumFinMat);
+      frame.position.x = 0.9;
+      frame.castShadow = true;
+      finFrame.add(frame);
 
-    const fuselageGeo = new THREE.LatheGeometry(curvePoints, 36);
-    const fuselage = new THREE.Mesh(fuselageGeo, rocketMat);
-    fuselage.castShadow = true;
-    lander.add(fuselage);
+      // Inner Grid Ribs
+      for (let r = 0.3; r < 1.7; r += 0.3) {
+        const ribGeo = new THREE.BoxGeometry(0.04, 0.25, 1.1);
+        const rib = new THREE.Mesh(ribGeo, titaniumFinMat);
+        rib.position.x = r;
+        finFrame.add(rib);
+      }
 
-    // Tip Accent
-    const tipGeo = new THREE.SphereGeometry(0.07, 16, 16);
-    const tipMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-    const tip = new THREE.Mesh(tipGeo, tipMat);
-    tip.position.set(0, 3.46, 0);
-    lander.add(tip);
-
-    // Porthole Window
-    const windowGroup = new THREE.Group();
-    const bezelGeo = new THREE.TorusGeometry(0.32, 0.05, 16, 32);
-    const bezelMat = new THREE.MeshStandardMaterial({ color: 0x27272a, metalness: 0.9, roughness: 0.2 });
-    const bezel = new THREE.Mesh(bezelGeo, bezelMat);
-    windowGroup.add(bezel);
-
-    const glassGeo = new THREE.CircleGeometry(0.29, 32);
-    const glassMat = new THREE.MeshPhysicalMaterial({
-      color: 0x0369a1,
-      emissive: 0x0284c7,
-      emissiveIntensity: 0.5,
-      roughness: 0.1,
-      metalness: 0.8,
-    });
-    const glass = new THREE.Mesh(glassGeo, glassMat);
-    glass.position.z = 0.01;
-    windowGroup.add(glass);
-
-    windowGroup.position.set(0, 2.15, 0.82);
-    windowGroup.rotation.x = -0.22;
-    lander.add(windowGroup);
-
-    // 4 Aerodynamic Curved Booster Claw Fins
-    function createAerodynamicBoosterFin(rotationAngle) {
-      const finGroup = new THREE.Group();
-      const finShape = new THREE.Shape();
-      finShape.moveTo(0, 0.35);
-      finShape.quadraticCurveTo(0.65, 0.55, 1.05, 0.15);
-      finShape.quadraticCurveTo(1.22, -0.45, 1.15, -0.85);
-      finShape.quadraticCurveTo(0.85, -0.50, 0.55, -0.20);
-      finShape.lineTo(0, -0.15);
-      finShape.closePath();
-
-      const extrudeSettings = {
-        steps: 1,
-        depth: 0.08,
-        bevelEnabled: true,
-        bevelThickness: 0.04,
-        bevelSize: 0.04,
-        bevelSegments: 4,
-      };
-
-      const finGeo = new THREE.ExtrudeGeometry(finShape, extrudeSettings);
-      const finMesh = new THREE.Mesh(finGeo, rocketMat);
-      finMesh.position.set(0.62, 0.75, -0.04);
-      finMesh.castShadow = true;
-      finGroup.add(finMesh);
-
-      // Chrome Foot Pad
-      const footGeo = new THREE.CylinderGeometry(0.12, 0.16, 0.08, 16);
-      const footMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.2 });
-      const foot = new THREE.Mesh(footGeo, footMat);
-      foot.position.set(1.75, -0.10, 0);
-      foot.castShadow = true;
-      finGroup.add(foot);
-
-      finGroup.rotation.y = rotationAngle;
-      return finGroup;
+      pivot.add(finFrame);
+      fuselageGroup.add(pivot);
+      gridFins.push(finFrame);
+      return pivot;
     }
+    createGridFin(0);
+    createGridFin(Math.PI / 2);
+    createGridFin(Math.PI);
+    createGridFin(-Math.PI / 2);
 
-    lander.add(createAerodynamicBoosterFin(0));
-    lander.add(createAerodynamicBoosterFin(Math.PI / 2));
-    lander.add(createAerodynamicBoosterFin(Math.PI));
-    lander.add(createAerodynamicBoosterFin(-Math.PI / 2));
+    // 4C. RCS Cold-Gas Thruster Nitrogen Puffs (Interstage)
+    const rcsPuffs = [];
+    function createRCSEmitter(angleY) {
+      const puffGeo = new THREE.ConeGeometry(0.3, 2.0, 12);
+      puffGeo.rotateZ(Math.PI / 2);
+      const puffMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.85 });
+      const puff = new THREE.Mesh(puffGeo, puffMat);
+      puff.position.set(Math.cos(angleY) * 2.8, 38.5, Math.sin(angleY) * 2.8);
+      puff.rotation.y = angleY;
+      puff.visible = false;
+      fuselageGroup.add(puff);
+      rcsPuffs.push(puff);
+      return puff;
+    }
+    createRCSEmitter(0);
+    createRCSEmitter(Math.PI / 2);
+    createRCSEmitter(Math.PI);
+    createRCSEmitter(-Math.PI / 2);
 
-    // Exhaust Bell Nozzle
-    const nozzleGeo = new THREE.CylinderGeometry(0.38, 0.52, 0.45, 24, 1, true);
-    const nozzleMat = new THREE.MeshStandardMaterial({ color: 0x3f3f46, metalness: 0.85, roughness: 0.3, side: THREE.DoubleSide });
+    // 4D. TVC Gimballed Merlin 1D Engine Assembly
+    const gimbalPivot = new THREE.Group();
+    gimbalPivot.position.set(0, 0.6, 0); // Gimbal axis at base of octaweb
+    fuselageGroup.add(gimbalPivot);
+
+    // Engine Bell Nozzle (Flared de Laval)
+    const nozzleGeo = new THREE.CylinderGeometry(0.4, 0.95, 1.8, 32, 1, true);
+    const nozzleMat = new THREE.MeshStandardMaterial({
+      color: 0x334155,
+      metalness: 0.95,
+      roughness: 0.2,
+      side: THREE.DoubleSide,
+    });
     const nozzle = new THREE.Mesh(nozzleGeo, nozzleMat);
-    nozzle.position.set(0, -0.12, 0);
-    lander.add(nozzle);
+    nozzle.position.y = -0.9;
+    nozzle.castShadow = true;
+    gimbalPivot.add(nozzle);
 
-    // Main Engine Exhaust Jet Flame
-    const flameGroup = new THREE.Group();
-    const coreFlameGeo = new THREE.ConeGeometry(0.32, 2.2, 16);
+    // Multi-Layer Volumetric Exhaust Plume
+    const plumeGroup = new THREE.Group();
+    plumeGroup.position.y = -1.8;
+    gimbalPivot.add(plumeGroup);
+
+    // Inner White Incandescent Core
+    const coreFlameGeo = new THREE.ConeGeometry(0.65, 8.0, 16);
     coreFlameGeo.rotateX(Math.PI);
     const coreFlameMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 });
     const coreFlame = new THREE.Mesh(coreFlameGeo, coreFlameMat);
-    coreFlame.position.y = -1.35;
-    flameGroup.add(coreFlame);
+    coreFlame.position.y = -4.0;
+    plumeGroup.add(coreFlame);
 
-    const outerGlowGeo = new THREE.ConeGeometry(0.55, 2.8, 16);
-    outerGlowGeo.rotateX(Math.PI);
-    const outerGlowMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.45 });
-    const outerGlow = new THREE.Mesh(outerGlowGeo, outerGlowMat);
-    outerGlow.position.y = -1.65;
-    flameGroup.add(outerGlow);
+    // Outer Transonic Orange Plume Envelope
+    const outerPlumeGeo = new THREE.ConeGeometry(1.3, 14.0, 16);
+    outerPlumeGeo.rotateX(Math.PI);
+    const outerPlumeMat = new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.45 });
+    const outerPlume = new THREE.Mesh(outerPlumeGeo, outerPlumeMat);
+    outerPlume.position.y = -7.0;
+    plumeGroup.add(outerPlume);
 
-    const flameLight = new THREE.PointLight(0x38bdf8, 3.5, 14);
-    flameLight.position.y = -1.2;
-    flameGroup.add(flameLight);
+    // Dynamic Plume Light (Illuminates Booster & Deck!)
+    const plumeLight = new THREE.PointLight(0xf97316, 5.0, 45);
+    plumeLight.position.y = -2.5;
+    plumeGroup.add(plumeLight);
+    plumeGroup.visible = false;
 
-    lander.add(flameGroup);
-    flameGroup.visible = false;
+    // 4E. 4 Articulated Falcon Carbon-Fiber Landing Legs
+    const landingLegs = [];
+    function createArticulatedLandingLeg(angleY) {
+      const legRoot = new THREE.Group();
+      legRoot.position.set(Math.cos(angleY) * 1.85, 0.8, Math.sin(angleY) * 1.85);
+      legRoot.rotation.y = angleY;
 
-    // Side RCS Jet Plumes
-    function createRCSJet(isRight) {
-      const rcs = new THREE.ConeGeometry(0.12, 0.7, 12);
-      rcs.rotateZ(isRight ? -Math.PI / 2 : Math.PI / 2);
-      const rcsMat = new THREE.MeshBasicMaterial({ color: 0xfacc15, transparent: true, opacity: 0.85 });
-      const rcsMesh = new THREE.Mesh(rcs, rcsMat);
-      rcsMesh.position.set(isRight ? 0.95 : -0.95, 1.85, 0);
-      return rcsMesh;
+      // Leg A-Frame Strut
+      const strutGroup = new THREE.Group();
+      const legGeo = new THREE.BoxGeometry(0.35, 12.0, 0.5);
+      const legMesh = new THREE.Mesh(legGeo, carbonLegMat);
+      legMesh.position.y = 6.0; // Folded up along fuselage
+      legMesh.castShadow = true;
+      strutGroup.add(legMesh);
+
+      // Footpad
+      const footGeo = new THREE.CylinderGeometry(0.4, 0.6, 0.2, 16);
+      const foot = new THREE.Mesh(footGeo, engineMetalMat);
+      foot.position.set(0, 0.1, 0);
+      strutGroup.add(foot);
+
+      legRoot.add(strutGroup);
+      fuselageGroup.add(legRoot);
+
+      landingLegs.push({
+        root: legRoot,
+        strut: strutGroup,
+        deployedAngle: 1.15, // Radians outward when deployed
+      });
+      return legRoot;
     }
-    const leftRCS = createRCSJet(false);
-    const rightRCS = createRCSJet(true);
-    lander.add(leftRCS);
-    lander.add(rightRCS);
-    leftRCS.visible = false;
-    rightRCS.visible = false;
+    createArticulatedLandingLeg(0);
+    createArticulatedLandingLeg(Math.PI / 2);
+    createArticulatedLandingLeg(Math.PI);
+    createArticulatedLandingLeg(-Math.PI / 2);
 
-    // --- 4. State & Playback Management ---
-    let episodes = [];
-    let currentEpisodeIdx = 0;
+    // Touchdown Smoke Cloud Ring
+    const smokeGeo = new THREE.RingGeometry(1, 16, 32);
+    smokeGeo.rotateX(-Math.PI / 2);
+    const smokeMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.0 });
+    const smokeCloud = new THREE.Mesh(smokeGeo, smokeMat);
+    smokeCloud.position.y = 1.85;
+    droneship.add(smokeCloud);
+
+
+    // --- 5. Application State & Telemetry Management ---
+    let activeVehicle = "falcon"; // 'falcon' or 'artemis'
+    let currentEpisode = null;
     let currentStepIdx = 0;
     let isPlaying = false;
     let playbackSpeed = 1.0;
     let cameraMode = 'chase';
-
-    // Auto-Relaunch & Self-Training Flags
-    let autoRelaunchEnabled = true; // ON by default!
-    let activeMode = "expert";       // 500k Expert by default!
-    let isRelaunching = false;
-    let countdownTimer = null;
-
-    const ACTION_NAMES = {
-      0: "[IDLE] Coasting (No Thrust)",
-      1: "[LEFT RCS] Roll Right (+Torque)",
-      2: "[MAIN ENGINE] Vertical Deceleration Thrust",
-      3: "[RIGHT RCS] Roll Left (-Torque)",
-    };
+    let autoRelaunch = true;
+    let isFetching = false;
 
     // DOM Elements
-    const btnPlayPause = document.getElementById('btn-play-pause');
-    const playIcon = document.getElementById('play-icon');
-    const playText = document.getElementById('play-text');
-    const btnRestart = document.getElementById('btn-restart');
-    const btnSpeed = document.getElementById('btn-speed');
-    const scrubber = document.getElementById('scrubber');
-    const timeDisplay = document.getElementById('time-display');
-    const episodeSelect = document.getElementById('episode-select');
+    const btnVehicleFalcon = document.getElementById('btn-vehicle-falcon');
+    const btnVehicleArtemis = document.getElementById('btn-vehicle-artemis');
+    const btnAutoRelaunch = document.getElementById('btn-auto-relaunch');
+    const btnToggleScenarios = document.getElementById('btn-toggle-scenarios');
+    const scenarioDrawer = document.getElementById('scenario-drawer');
+    const btnCloseScenarios = document.getElementById('btn-close-scenarios');
 
-    // Header Mode Buttons
-    const btnModeTrain = document.getElementById('btn-mode-train');
-    const btnModeExpert = document.getElementById('btn-mode-expert');
-    const btnAutoRelaunchToggle = document.getElementById('btn-auto-relaunch-toggle');
-    const btnResetScratchHeader = document.getElementById('btn-reset-scratch-header');
+    const flightPhaseBanner = document.getElementById('flight-phase-banner');
+    const hudVehicleTag = document.getElementById('hud-vehicle-tag');
+    const hudStepTag = document.getElementById('hud-step-tag');
+    const valAltitude = document.getElementById('val-altitude');
+    const valVy = document.getElementById('val-vy');
+    const valVx = document.getElementById('val-vx');
+    const valX = document.getElementById('val-x');
+    const valTilt = document.getElementById('val-tilt');
+    const valThrust = document.getElementById('val-thrust');
+    const gaugeThrottleFill = document.getElementById('gauge-throttle-fill');
+    const gimbalNeedle = document.getElementById('gimbal-needle');
+    const valGimbal = document.getElementById('val-gimbal');
+    const valFuel = document.getElementById('val-fuel');
+    const gaugeFuelFill = document.getElementById('gauge-fuel-fill');
+    const badgeLegLeft = document.getElementById('badge-leg-left');
+    const badgeLegRight = document.getElementById('badge-leg-right');
+
+    const timeScrubber = document.getElementById('time-scrubber');
+    const timeReadout = document.getElementById('time-readout');
+    const btnPlay = document.getElementById('btn-play');
+    const playIcon = document.getElementById('play-icon');
+    const playLabel = document.getElementById('play-label');
+    const btnReplay = document.getElementById('btn-replay');
+    const btnSpeed = document.getElementById('btn-speed');
     const btnRelaunchNow = document.getElementById('btn-relaunch-now');
 
-    // Telemetry HUD Elements
-    const telemetryStep = document.getElementById('telemetry-step');
-    const hudAlt = document.getElementById('hud-alt');
-    const hudPosX = document.getElementById('hud-pos-x');
-    const hudVy = document.getElementById('hud-vy');
-    const hudVx = document.getElementById('hud-vx');
-    const hudAngle = document.getElementById('hud-angle');
-    const hudStepReward = document.getElementById('hud-step-reward');
-    const hudFuelCost = document.getElementById('hud-fuel-cost');
-    const hudImpactPenalty = document.getElementById('hud-impact-penalty');
-    const hudCumulativeReward = document.getElementById('hud-cumulative-reward');
-    const hudAction = document.getElementById('hud-action');
-    const sensorLeft = document.getElementById('sensor-left');
-    const sensorRight = document.getElementById('sensor-right');
+    const camChase = document.getElementById('cam-chase');
+    const camDeck = document.getElementById('cam-deck');
+    const camBooster = document.getElementById('cam-booster');
+    const camOrbit = document.getElementById('cam-orbit');
 
-    const outcomeBanner = document.getElementById('outcome-banner');
-    const outcomeText = document.getElementById('outcome-text');
-    const relaunchNotification = document.getElementById('relaunch-notification');
-    const relaunchMsgTitle = document.getElementById('relaunch-msg-title');
-    const relaunchMsgDesc = document.getElementById('relaunch-msg-desc');
-    const relaunchCountdownSec = document.getElementById('relaunch-countdown-sec');
-    const relaunchProgressFill = document.getElementById('relaunch-progress-fill');
-    const flightHistoryBox = document.getElementById('flight-history-box');
+    const outcomeModal = document.getElementById('outcome-modal');
+    const outcomeTitle = document.getElementById('outcome-title');
+    const outcomeDesc = document.getElementById('outcome-desc');
 
-    // --- 5. Data Fetching & Setup ---
-    async function initApp() {
-      try {
-        // Fetch first flight from server
-        const res = await fetch('/api/next_flight');
-        const firstFlight = await res.json();
-        episodes = [firstFlight];
-        setupEpisodeSelector();
-        loadEpisode(0);
-        if (firstFlight.session_stats) {
-          updateStatsDisplay(firstFlight.session_stats);
-        }
-        // Start playing immediately
-        isPlaying = true;
-        playIcon.textContent = "⏸";
-        playText.textContent = "Pause";
-      } catch (err) {
-        console.warn("Could not fetch /api/next_flight, falling back to static flight_data.json:", err);
-        const res = await fetch('flight_data.json');
-        episodes = await res.json();
-        setupEpisodeSelector();
-        loadEpisode(0);
-        isPlaying = true;
-        playIcon.textContent = "⏸";
-        playText.textContent = "Pause";
-      }
-    }
 
-    function setupEpisodeSelector() {
-      episodeSelect.innerHTML = '';
-      episodes.forEach((ep, idx) => {
-        const opt = document.createElement('option');
-        opt.value = idx;
-        opt.textContent = ep.title || `Flight #${idx + 1}`;
-        episodeSelect.appendChild(opt);
-      });
-      episodeSelect.value = currentEpisodeIdx;
-    }
-
-    function loadEpisode(idx) {
-      if (!episodes[idx]) return;
-      currentEpisodeIdx = idx;
-      currentStepIdx = 0;
-      scrubber.max = episodes[idx].steps.length - 1;
-      scrubber.value = 0;
-      updateOutcomeBanner(episodes[idx].outcome);
-      updateState(0);
-    }
-
-    function updateOutcomeBanner(outcome) {
-      outcomeBanner.className = '';
-      if (!outcome) {
-        outcomeBanner.classList.add('outcome-timeout');
-        outcomeText.textContent = "IN FLIGHT";
-        return;
-      }
-      if (outcome.includes('TOUCHDOWN')) {
-        outcomeBanner.classList.add('outcome-touchdown');
-        outcomeText.textContent = "🚀 " + outcome;
-      } else if (outcome.includes('CRASH')) {
-        outcomeBanner.classList.add('outcome-crash');
-        outcomeText.textContent = "💥 " + outcome;
-      } else {
-        outcomeBanner.classList.add('outcome-timeout');
-        outcomeText.textContent = "⏱ " + outcome;
-      }
-    }
-
-    function updateState(stepIdx) {
-      const ep = episodes[currentEpisodeIdx];
-      if (!ep || !ep.steps || !ep.steps[stepIdx]) return;
-      const s = ep.steps[stepIdx];
-      const isTerminal = (stepIdx >= ep.steps.length - 1);
-
-      // Coordinate mapping from Box2D normalized space with ceiling clamping
-      const worldX = Math.max(-14, Math.min(14, s.x * 12.0));
-      const worldY = Math.max(0, Math.min(15.5, s.y * 10.0 + 0.1));
-      lander.position.set(worldX, worldY, 0);
-      lander.rotation.z = s.angle;
-
-      // Thruster Visuals
-      flameGroup.visible = (s.action === 2);
-      leftRCS.visible = (s.action === 1);
-      rightRCS.visible = (s.action === 3);
-
-      if (flameGroup.visible) {
-        const flicker = 0.85 + Math.random() * 0.3;
-        flameGroup.scale.set(flicker, flicker, flicker);
-      }
-
-      // HUD Telemetry
-      scrubber.value = stepIdx;
-      timeDisplay.textContent = `${stepIdx} / ${ep.steps.length - 1}`;
-      telemetryStep.textContent = `Step ${String(stepIdx).padStart(3, '0')}`;
-      hudAlt.textContent = `${(s.y * 100).toFixed(1)} m`;
-      hudPosX.textContent = `${(s.x * 50).toFixed(1)} m`;
-
-      hudVy.textContent = `${(s.vy * 10).toFixed(2)} m/s`;
-      if (s.vy < -0.4) hudVy.className = "metric-value danger";
-      else if (s.vy < -0.2) hudVy.className = "metric-value warn";
-      else hudVy.className = "metric-value good";
-
-      hudVx.textContent = `${(s.vx * 10).toFixed(2)} m/s`;
-      const degAngle = (s.angle * 180 / Math.PI).toFixed(1);
-      hudAngle.textContent = `${degAngle}°`;
-
-      // Live Step Reward & Negative Penalty breakdown
-      const stepReward = s.reward;
-      hudStepReward.textContent = `${stepReward > 0 ? '+' : ''}${stepReward.toFixed(2)} pts`;
-      hudStepReward.style.color = stepReward > 0 ? '#4ade80' : '#f87171';
-
-      hudFuelCost.textContent = s.fuel_cost < 0 ? `${s.fuel_cost.toFixed(2)} pts` : `0.00 pts`;
-
-      if (isTerminal) {
-        if (ep.outcome && ep.outcome.includes("CRASH")) {
-          hudImpactPenalty.textContent = "-100.00 (CRASH)";
-          hudImpactPenalty.className = "metric-value danger";
-        } else if (ep.outcome && ep.outcome.includes("TOUCHDOWN")) {
-          hudImpactPenalty.textContent = "+100.00 (LANDED)";
-          hudImpactPenalty.className = "metric-value good";
-        } else {
-          hudImpactPenalty.textContent = "0.00";
-        }
-      } else {
-        hudImpactPenalty.textContent = "--";
-        hudImpactPenalty.className = "metric-value";
-      }
-
-      hudCumulativeReward.textContent = `${s.cumulative_reward > 0 ? '+' : ''}${s.cumulative_reward.toFixed(1)} pts`;
-      if (s.cumulative_reward < -50) hudCumulativeReward.className = "metric-value danger";
-      else if (s.cumulative_reward < 100) hudCumulativeReward.className = "metric-value warn";
-      else hudCumulativeReward.className = "metric-value good";
-
-      hudAction.textContent = ACTION_NAMES[s.action] || "[IDLE] Coasting";
-
-      sensorLeft.className = s.left_leg ? "leg-sensor active" : "leg-sensor";
-      sensorLeft.textContent = s.left_leg ? "LEFT LEG: TOUCHDOWN" : "LEFT LEG: FREE";
-
-      sensorRight.className = s.right_leg ? "leg-sensor active" : "leg-sensor";
-      sensorRight.textContent = s.right_leg ? "RIGHT LEG: TOUCHDOWN" : "RIGHT LEG: FREE";
-    }
-
-    // --- 6. Live Auto-Relaunch & Self-Training Pipeline ---
-    async function triggerNextFlight() {
-      if (isRelaunching) return;
-      isRelaunching = true;
-      hideRelaunchCountdown();
+    // --- 6. Telemetry & Simulation Dispatcher ---
+    async function fetchNextFlight(customParams = null) {
+      if (isFetching) return;
+      isFetching = true;
+      outcomeModal.style.display = 'none';
 
       try {
-        const res = await fetch('/api/next_flight');
-        const nextFlight = await res.json();
-
-        episodes.unshift(nextFlight);
-        if (episodes.length > 25) episodes.pop();
-
-        setupEpisodeSelector();
-        loadEpisode(0);
-
-        if (nextFlight.session_stats) {
-          updateStatsDisplay(nextFlight.session_stats);
+        let url = `/api/next_flight?vehicle=${activeVehicle}`;
+        if (customParams) {
+          url = `/api/simulate_rocket?${customParams}`;
         }
+        const res = await fetch(url);
+        const data = await res.json();
+        currentEpisode = data;
+        currentStepIdx = 0;
+        timeScrubber.max = data.steps.length - 1;
+        timeScrubber.value = 0;
+
+        updateEnvironmentVisuals();
+        updateState(0);
 
         isPlaying = true;
         playIcon.textContent = "⏸";
-        playText.textContent = "Pause";
+        playLabel.textContent = "Pause";
       } catch (err) {
-        console.error("Error fetching next flight:", err);
+        console.error("Simulation API fetch failed:", err);
       } finally {
-        isRelaunching = false;
+        isFetching = false;
       }
     }
 
-    function startAutoRelaunchCountdown() {
-      if (!autoRelaunchEnabled || isRelaunching) return;
-
-      const durationMs = 1500;
-      const startTime = performance.now();
-
-      relaunchNotification.style.display = 'block';
-      if (activeMode === 'self_train') {
-        relaunchMsgTitle.textContent = "🧠 Live Self-Training Active";
-        relaunchMsgDesc.textContent = "Learning from mistakes & auto-relaunching...";
+    function updateEnvironmentVisuals() {
+      if (activeVehicle === 'falcon') {
+        oceanGroup.visible = true;
+        lunarGroup.visible = false;
+        scene.fog.color.setHex(0x030712);
+        hudVehicleTag.textContent = "Falcon-9 Telemetry";
       } else {
-        relaunchMsgTitle.textContent = "⚡ Auto-Relaunch Active";
-        relaunchMsgDesc.textContent = "Preparing next randomized descent...";
-      }
-
-      if (countdownTimer) clearInterval(countdownTimer);
-
-      countdownTimer = setInterval(() => {
-        const elapsed = performance.now() - startTime;
-        const remaining = Math.max(0, (durationMs - elapsed) / 1000);
-        relaunchCountdownSec.textContent = `in ${remaining.toFixed(1)}s`;
-        const pct = Math.max(0, 100 - (elapsed / durationMs * 100));
-        relaunchProgressFill.style.width = `${pct}%`;
-
-        if (elapsed >= durationMs) {
-          clearInterval(countdownTimer);
-          countdownTimer = null;
-          hideRelaunchCountdown();
-          triggerNextFlight();
-        }
-      }, 50);
-    }
-
-    function hideRelaunchCountdown() {
-      if (countdownTimer) {
-        clearInterval(countdownTimer);
-        countdownTimer = null;
-      }
-      relaunchNotification.style.display = 'none';
-      relaunchProgressFill.style.width = '100%';
-    }
-
-    function updateStatsDisplay(stats) {
-      document.getElementById('stat-attempts').textContent = `${stats.attempts} Flights`;
-      document.getElementById('stat-trained-steps').textContent = `${stats.trained_timesteps.toLocaleString()} timesteps`;
-      document.getElementById('stat-touchdown-crash').textContent = `${stats.successes} / ${stats.crashes}`;
-      document.getElementById('stat-avg-reward').textContent = `${stats.avg_reward > 0 ? '+' : ''}${stats.avg_reward} pts`;
-
-      if (stats.recent_flights && stats.recent_flights.length > 0) {
-        flightHistoryBox.innerHTML = '';
-        stats.recent_flights.slice(0, 10).forEach(f => {
-          const item = document.createElement('div');
-          const isCrash = f.outcome.includes('CRASH');
-          const isSuccess = f.outcome.includes('TOUCHDOWN');
-          item.className = `history-item ${isCrash ? 'crash' : (isSuccess ? 'success' : '')}`;
-          const icon = isCrash ? '💥' : (isSuccess ? '🚀' : '⏱');
-          item.innerHTML = `
-            <span>${icon} Flight #${f.attempt}</span>
-            <span>${f.reward > 0 ? '+' : ''}${f.reward} pts</span>
-          `;
-          flightHistoryBox.appendChild(item);
-        });
+        oceanGroup.visible = false;
+        lunarGroup.visible = true;
+        scene.fog.color.setHex(0x020208);
+        hudVehicleTag.textContent = "Artemis Lunar Telemetry";
       }
     }
 
-    // --- 7. Header Controls Event Listeners ---
-    btnAutoRelaunchToggle.addEventListener('click', () => {
-      autoRelaunchEnabled = !autoRelaunchEnabled;
-      if (autoRelaunchEnabled) {
-        btnAutoRelaunchToggle.className = 'header-btn auto-relaunch-on';
-        btnAutoRelaunchToggle.textContent = '⚡ Auto-Relaunch: ACTIVE';
-        if (!isPlaying) {
-          triggerNextFlight();
-        }
+    // Update 3D Model Pose & HUD on Every Frame / Step
+    function updateState(stepIdx) {
+      if (!currentEpisode || !currentEpisode.steps || !currentEpisode.steps[stepIdx]) return;
+      const s = currentEpisode.steps[stepIdx];
+      const isTerminal = (stepIdx >= currentEpisode.steps.length - 1);
+
+      // 1. Rocket 3D Position & Rotation
+      // Real coordinates: x (meters), y (center-of-mass altitude)
+      // Droneship deck is at y = 1.8m
+      const deckY = (activeVehicle === 'falcon') ? 1.8 : 0.0;
+      const worldY = Math.max(deckY, s.y - 18.0);
+      rocket.position.set(s.x, worldY, 0);
+      rocket.rotation.z = s.theta;
+
+      // 2. TVC Gimballed Engine Nozzle
+      // Gimbal angle delta in degrees (mapped to radians)
+      const gimbalRad = (s.gimbal_deg || 0) * (Math.PI / 180);
+      gimbalPivot.rotation.z = gimbalRad;
+
+      // 3. Dynamic Volumetric Exhaust Plume & Mach Diamonds
+      const throttle = s.throttle || 0.0;
+      if (throttle > 0.05 && !isTerminal) {
+        plumeGroup.visible = true;
+        // Flame length and width scale directly with throttle!
+        const flameScale = Math.max(0.3, throttle);
+        const flicker = 0.95 + Math.random() * 0.1;
+        plumeGroup.scale.set(flameScale * flicker, flameScale * flicker, flameScale * flicker);
+        plumeLight.intensity = throttle * 6.0;
       } else {
-        btnAutoRelaunchToggle.className = 'header-btn';
-        btnAutoRelaunchToggle.textContent = '⏸ Auto-Relaunch: OFF';
-        hideRelaunchCountdown();
+        plumeGroup.visible = false;
+      }
+
+      // 4. Grid Fins Aerodynamic Cant Animation
+      const finCant = Math.max(-0.35, Math.min(0.35, -s.vx * 0.04));
+      gridFins.forEach(fin => {
+        fin.rotation.z = finCant;
+      });
+
+      // 5. RCS Cold-Gas Thruster Puffs
+      const rcsVal = s.rcs_knm || 0.0;
+      rcsPuffs[0].visible = (rcsVal > 1.0);
+      rcsPuffs[2].visible = (rcsVal < -1.0);
+
+      // 6. Articulated Landing Leg Deployment Animation
+      // When altitude above ground < 45m, legs smoothly deploy outward!
+      const hFoot = s.h_foot !== undefined ? s.h_foot : Math.max(0, s.y - 20.0);
+      const deployProgress = Math.max(0.0, Math.min(1.0, (45.0 - hFoot) / 25.0));
+
+      landingLegs.forEach(leg => {
+        // Swing outward around base root
+        leg.strut.rotation.z = deployProgress * leg.deployedAngle;
+      });
+
+      // 7. Ground Effect Smoke Cloud
+      if (hFoot < 15.0 && throttle > 0.1 && activeVehicle === 'falcon') {
+        const smokeOpacity = Math.max(0, (15.0 - hFoot) / 15.0) * 0.45;
+        smokeMat.opacity = smokeOpacity;
+        smokeCloud.position.x = s.x;
+      } else {
+        smokeMat.opacity = 0.0;
+      }
+
+      // 8. Update HUD Metrics
+      timeScrubber.value = stepIdx;
+      timeReadout.textContent = `${s.t}s / ${currentEpisode.duration_s}s`;
+      hudStepTag.textContent = `T+${s.t}s`;
+      valAltitude.textContent = hFoot.toFixed(1);
+
+      // Vertical speed styling
+      valVy.textContent = `${s.vy > 0 ? '+' : ''}${s.vy.toFixed(1)} m/s`;
+      if (Math.abs(s.vy) <= 2.0) valVy.className = "hud-val good";
+      else if (Math.abs(s.vy) <= 15.0) valVy.className = "hud-val warn";
+      else valVy.className = "hud-val danger";
+
+      valVx.textContent = `${s.vx.toFixed(1)} m/s`;
+      valX.textContent = `${s.x.toFixed(1)} m`;
+      valTilt.textContent = `${s.tilt_deg.toFixed(1)}°`;
+
+      // Throttle & Thrust readout
+      const thrPct = Math.round(throttle * 100);
+      valThrust.textContent = `${s.thrust_kn.toFixed(1)} kN (${thrPct}%)`;
+      gaugeThrottleFill.style.width = `${thrPct}%`;
+
+      // TVC Gimbal needle position
+      const needlePosPct = Math.max(0, Math.min(100, 50 + (s.gimbal_deg / 5.0) * 50));
+      gimbalNeedle.style.left = `${needlePosPct}%`;
+      valGimbal.textContent = `${s.gimbal_deg > 0 ? '+' : ''}${s.gimbal_deg.toFixed(1)}°`;
+
+      // Fuel gauge
+      valFuel.textContent = `${Math.round(s.fuel)} kg`;
+      const fuelPct = Math.max(0, Math.min(100, (s.fuel / 4000.0) * 100));
+      gaugeFuelFill.style.width = `${fuelPct}%`;
+
+      // Contact sensor tags
+      badgeLegLeft.className = s.left_contact ? "leg-badge contact" : "leg-badge";
+      badgeLegLeft.textContent = s.left_contact ? "LEFT LEG: LOCKED" : "LEFT LEG: FREE";
+      badgeLegRight.className = s.right_contact ? "leg-badge contact" : "leg-badge";
+      badgeLegRight.textContent = s.right_contact ? "RIGHT LEG: LOCKED" : "RIGHT LEG: FREE";
+
+      // Phase banner
+      flightPhaseBanner.textContent = s.phase || "AUTONOMOUS FLIGHT";
+
+      // Terminal Outcome Modal
+      if (isTerminal) {
+        outcomeModal.style.display = 'block';
+        outcomeModal.className = currentEpisode.is_success ? "success" : "crash";
+        outcomeTitle.textContent = currentEpisode.outcome;
+        outcomeDesc.textContent = `Final Vy: ${s.vy.toFixed(2)} m/s | Center Offset: ${Math.abs(s.x).toFixed(1)} m | Fuel: ${Math.round(s.fuel)} kg`;
+      }
+    }
+
+
+    // --- 7. Event Listeners ---
+    btnVehicleFalcon.addEventListener('click', () => {
+      activeVehicle = 'falcon';
+      btnVehicleFalcon.classList.add('active');
+      btnVehicleArtemis.classList.remove('active');
+      fetchNextFlight();
+    });
+
+    btnVehicleArtemis.addEventListener('click', () => {
+      activeVehicle = 'artemis';
+      btnVehicleArtemis.classList.add('active');
+      btnVehicleFalcon.classList.remove('active');
+      fetchNextFlight();
+    });
+
+    btnAutoRelaunch.addEventListener('click', () => {
+      autoRelaunch = !autoRelaunch;
+      if (autoRelaunch) {
+        btnAutoRelaunch.classList.add('active');
+        btnAutoRelaunch.textContent = '⚡ Auto-Relaunch: ON';
+        if (!isPlaying) fetchNextFlight();
+      } else {
+        btnAutoRelaunch.classList.remove('active');
+        btnAutoRelaunch.textContent = '⏸ Auto-Relaunch: OFF';
       }
     });
 
-    btnModeTrain.addEventListener('click', async () => {
-      activeMode = "self_train";
-      btnModeTrain.className = 'header-btn active-self-train';
-      btnModeExpert.className = 'header-btn';
-      await fetch('/api/set_mode?mode=self_train');
-      triggerNextFlight();
+    btnToggleScenarios.addEventListener('click', () => {
+      const isVisible = scenarioDrawer.style.display === 'block';
+      scenarioDrawer.style.display = isVisible ? 'none' : 'block';
     });
 
-    btnModeExpert.addEventListener('click', async () => {
-      activeMode = "expert";
-      btnModeExpert.className = 'header-btn active-expert';
-      btnModeTrain.className = 'header-btn';
-      await fetch('/api/set_mode?mode=expert');
-      triggerNextFlight();
+    btnCloseScenarios.addEventListener('click', () => {
+      scenarioDrawer.style.display = 'none';
     });
 
-    btnResetScratchHeader.addEventListener('click', async () => {
-      if (!confirm("Reset policy to untrained random weights? You will watch the rocket crash from scratch and gradually learn!")) return;
-      hideRelaunchCountdown();
-      try {
-        const res = await fetch('/api/reset_training');
-        const flight = await res.json();
-        activeMode = "self_train";
-        btnModeTrain.className = 'header-btn active-self-train';
-        btnModeExpert.className = 'header-btn';
-        episodes.unshift(flight);
-        setupEpisodeSelector();
-        loadEpisode(0);
-        if (flight.session_stats) updateStatsDisplay(flight.session_stats);
-        isPlaying = true;
-        playIcon.textContent = "⏸";
-        playText.textContent = "Pause";
-      } catch (err) {
-        alert("Reset scratch error: " + err);
-      }
-    });
-
-    btnRelaunchNow.addEventListener('click', () => {
-      triggerNextFlight();
-    });
-
-    // Custom Mission Dispatcher Panel
-    const customPanel = document.getElementById('custom-mission-panel');
-    const btnCustomToggle = document.getElementById('btn-custom-toggle');
-    const inputSpawnX = document.getElementById('input-spawn-x');
-    const inputSpawnY = document.getElementById('input-spawn-y');
-    const inputSpawnAngle = document.getElementById('input-spawn-angle');
-    const labelValX = document.getElementById('label-val-x');
-    const labelValY = document.getElementById('label-val-y');
-    const labelValAngle = document.getElementById('label-val-angle');
-    const btnLaunchMission = document.getElementById('btn-launch-mission');
-
-    btnCustomToggle.addEventListener('click', () => {
-      const isHidden = customPanel.style.display === 'none' || customPanel.style.display === '';
-      customPanel.style.display = isHidden ? 'block' : 'none';
-    });
-
-    inputSpawnX.addEventListener('input', (e) => {
-      labelValX.textContent = `${(parseFloat(e.target.value) * 50).toFixed(1)} m`;
-    });
-    inputSpawnY.addEventListener('input', (e) => {
-      labelValY.textContent = `${(parseFloat(e.target.value) * 100).toFixed(1)} m`;
-    });
-    inputSpawnAngle.addEventListener('input', (e) => {
-      labelValAngle.textContent = `${parseFloat(e.target.value).toFixed(1)}°`;
-    });
-
-    window.applySpawnPreset = function(x, y, angle) {
-      inputSpawnX.value = x;
-      inputSpawnY.value = y;
-      inputSpawnAngle.value = angle;
-      labelValX.textContent = `${(x * 50).toFixed(1)} m`;
-      labelValY.textContent = `${(y * 100).toFixed(1)} m`;
-      labelValAngle.textContent = `${angle.toFixed(1)}°`;
+    window.runCustomPreset = function(alt, x, vx, vy, wind) {
+      scenarioDrawer.style.display = 'none';
+      activeVehicle = 'falcon';
+      btnVehicleFalcon.classList.add('active');
+      btnVehicleArtemis.classList.remove('active');
+      const q = `alt=${alt}&x=${x}&vx=${vx}&vy=${vy}&wind=${wind}`;
+      fetchNextFlight(q);
     };
 
-    btnLaunchMission.addEventListener('click', async () => {
-      const x = parseFloat(inputSpawnX.value);
-      const y = parseFloat(inputSpawnY.value);
-      const angle = parseFloat(inputSpawnAngle.value);
-
-      btnLaunchMission.disabled = true;
-      btnLaunchMission.textContent = "🛰️ Computing Trajectory...";
-
-      try {
-        const res = await fetch(`/api/simulate?x=${x}&y=${y}&angle=${angle}`);
-        const customFlight = await res.json();
-
-        episodes.unshift(customFlight);
-        setupEpisodeSelector();
-        loadEpisode(0);
-
-        isPlaying = true;
-        playIcon.textContent = "⏸";
-        playText.textContent = "Pause";
-      } catch (err) {
-        alert("Simulation API error: " + err);
-      } finally {
-        btnLaunchMission.disabled = false;
-        btnLaunchMission.textContent = "🚀 Launch Autonomous Guidance";
-      }
-    });
-
-    // Playback Listeners
-    btnPlayPause.addEventListener('click', () => {
+    btnPlay.addEventListener('click', () => {
       isPlaying = !isPlaying;
       playIcon.textContent = isPlaying ? "⏸" : "▶";
-      playText.textContent = isPlaying ? "Pause" : "Play";
+      playLabel.textContent = isPlaying ? "Pause" : "Play";
     });
 
-    btnRestart.addEventListener('click', () => {
+    btnReplay.addEventListener('click', () => {
       currentStepIdx = 0;
       updateState(0);
       isPlaying = true;
       playIcon.textContent = "⏸";
-      playText.textContent = "Pause";
+      playLabel.textContent = "Pause";
     });
 
-    scrubber.addEventListener('input', (e) => {
-      updateState(parseInt(e.target.value));
+    btnRelaunchNow.addEventListener('click', () => {
+      fetchNextFlight();
     });
 
-    episodeSelect.addEventListener('change', (e) => {
-      loadEpisode(parseInt(e.target.value));
+    timeScrubber.addEventListener('input', (e) => {
+      currentStepIdx = parseInt(e.target.value);
+      updateState(currentStepIdx);
     });
 
     const speedOptions = [0.5, 1.0, 2.0, 4.0];
@@ -1387,14 +1415,15 @@
       btnSpeed.textContent = `${playbackSpeed}x`;
     });
 
-    // Camera Modes
+    // Camera Switcher
     const camButtons = {
-      chase: document.getElementById('btn-cam-follow'),
-      orbit: document.getElementById('btn-cam-orbit'),
-      cockpit: document.getElementById('btn-cam-cockpit'),
+      chase: camChase,
+      deck: camDeck,
+      booster: camBooster,
+      orbit: camOrbit,
     };
 
-    function setCameraMode(mode) {
+    function setCamera(mode) {
       cameraMode = mode;
       Object.keys(camButtons).forEach(k => {
         if (k === mode) camButtons[k].classList.add('active');
@@ -1403,52 +1432,59 @@
       controls.enabled = (mode === 'orbit');
     }
 
-    camButtons.chase.addEventListener('click', () => setCameraMode('chase'));
-    camButtons.orbit.addEventListener('click', () => setCameraMode('orbit'));
-    camButtons.cockpit.addEventListener('click', () => setCameraMode('cockpit'));
+    camChase.addEventListener('click', () => setCamera('chase'));
+    camDeck.addEventListener('click', () => setCamera('deck'));
+    camBooster.addEventListener('click', () => setCamera('booster'));
+    camOrbit.addEventListener('click', () => setCamera('orbit'));
 
-    // --- 8. Animation & Render Loop ---
+
+    // --- 8. Render & Animation Loop ---
     let lastTime = performance.now();
     let stepAccumulator = 0;
-    const stepDuration = 1000 / 50;
+    const stepDuration = 1000 / 40; // 40 FPS step playback
 
     function animate(now) {
       requestAnimationFrame(animate);
       const delta = now - lastTime;
       lastTime = now;
 
-      if (isPlaying && episodes.length > 0) {
+      if (isPlaying && currentEpisode && currentEpisode.steps) {
         stepAccumulator += delta * playbackSpeed;
         while (stepAccumulator >= stepDuration) {
           stepAccumulator -= stepDuration;
-          const ep = episodes[currentEpisodeIdx];
-          if (currentStepIdx < ep.steps.length - 1) {
+          if (currentStepIdx < currentEpisode.steps.length - 1) {
             currentStepIdx++;
             updateState(currentStepIdx);
           } else {
-            // Reached terminal step
+            // Reached terminal touchdown
             isPlaying = false;
             playIcon.textContent = "▶";
-            playText.textContent = "Play";
+            playLabel.textContent = "Play";
 
-            // Trigger continuous auto-relaunch & self-training countdown
-            if (autoRelaunchEnabled && !isRelaunching) {
-              startAutoRelaunchCountdown();
+            if (autoRelaunch && !isFetching) {
+              setTimeout(() => {
+                if (autoRelaunch && !isPlaying) fetchNextFlight();
+              }, 1800);
             }
             break;
           }
         }
       }
 
-      // Camera Positioning with sky height clamping
+      // Camera Positioning Modes
       if (cameraMode === 'chase') {
-        const clampedY = Math.min(Math.max(lander.position.y, 0), 25.0);
-        const targetPos = new THREE.Vector3(lander.position.x, clampedY + 3.0, lander.position.z + 14);
+        const clampedY = Math.min(Math.max(rocket.position.y, 4), 60);
+        const targetPos = new THREE.Vector3(rocket.position.x * 0.8, clampedY + 12.0, 42.0);
         camera.position.lerp(targetPos, 0.08);
-        camera.lookAt(lander.position.x, clampedY + 1.2, lander.position.z);
-      } else if (cameraMode === 'cockpit') {
-        camera.position.set(lander.position.x, lander.position.y + 2.6, lander.position.z + 0.8);
-        camera.lookAt(lander.position.x, lander.position.y - 10, lander.position.z + 5);
+        camera.lookAt(rocket.position.x * 0.5, clampedY + 4.0, 0);
+      } else if (cameraMode === 'deck') {
+        // Iconic low-angle deck camera looking up at the booster
+        camera.position.set(-22, 3.5, 38);
+        camera.lookAt(rocket.position.x, rocket.position.y + 10.0, 0);
+      } else if (cameraMode === 'booster') {
+        // Onboard camera mounted on interstage looking down along fuselage
+        camera.position.set(rocket.position.x + 2.2, rocket.position.y + 36.0, 1.2);
+        camera.lookAt(rocket.position.x, rocket.position.y, 0);
       } else if (cameraMode === 'orbit') {
         controls.update();
       }
@@ -1462,7 +1498,8 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    initApp();
+    // Start App
+    fetchNextFlight();
     animate(performance.now());
   </script>
 </body>

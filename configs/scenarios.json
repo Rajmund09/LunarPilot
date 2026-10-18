@@ -1,0 +1,29 @@
+{
+  "NOMINAL": {
+    "enable_wind": false,
+    "wind_power": 0.0,
+    "turbulence_power": 0.0,
+    "obs_noise_scale": 0.0,
+    "action_delay": 0,
+    "initial_kick_scale": 0.0,
+    "engine_scale": 1.0
+  },
+  "TRAIN_DISTURB": {
+    "enable_wind": true,
+    "wind_power": 5.0,
+    "turbulence_power": 0.5,
+    "obs_noise_scale": 0.02,
+    "action_delay": 1,
+    "initial_kick_scale": 0.5,
+    "engine_scale": 1.0
+  },
+  "HELD_OUT_2X": {
+    "enable_wind": true,
+    "wind_power": 10.0,
+    "turbulence_power": 1.0,
+    "obs_noise_scale": 0.04,
+    "action_delay": 2,
+    "initial_kick_scale": 1.0,
+    "engine_scale": 1.0
+  }
+}
