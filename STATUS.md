@@ -13,17 +13,17 @@
 | **P0.6** Generated documentation | **DONE** | `scripts/make_report.py`, `README.md` | — | Deterministic regeneration of README results block between markers |
 | **P0.7** Fix false claims | **DONE** | `README.md`, `IMPLEMENTATION_PLAN.md`, `docs/AUDIT.md` | — | Fixed gravity, bonus condition, continuous env id, clone url, and removed all unverified metrics |
 | **G0** Gate | **DONE** | `results/metrics/lander_ppo_test.json` | **PASS** | **95.50%** `LANDED_ON_PAD` on 1,000 test seeds (seeds 20000–20999), Wilson 95% CI **[94.03%, 96.62%]** (LB ≥ 90%) |
-| **P1.1** Perturbation toolkit | TODO | — | — | Wind/turbulence, obs noise, action latency, engine-power scaling |
-| **P1.2** Domain-randomized training | TODO | — | — | Train with perturbations |
-| **P1.3** Stress-grid evaluation | TODO | — | — | Grid eval; heatmaps to `results/figures/` |
-| **G1** Gate | TODO | — | PENDING | ≥85% LANDED_ON_PAD on HELD_OUT_2X |
-| **P2.1** Dynamics core | TODO | — | — | `dynamics.py`, `atmosphere.py`, `config.py`; pure functions; RK4 |
-| **P2.2** Contact model | TODO | — | — | `contact.py`; foot-spring; Coulomb friction; substeps |
-| **P2.3** Actuators | TODO | — | — | `actuators.py`; throttle lag; gimbal; RCS |
-| **P2.4** Gymnasium env | TODO | — | — | `RocketLand2D-v0`; check_env; rgb_array |
-| **P2.5** Start distribution & feasibility | TODO | — | — | Feasible fraction published |
-| **P2.6** Classical controllers | TODO | — | — | null; suicide_burn |
-| **G2a** Gate | TODO | — | PENDING | suicide_burn ≥90% LANDED_ON_PAD on NOMINAL |
+| **P1.1** Perturbation toolkit | **DONE** | `src/lunar_pilot/perturbations.py`, `tests/unit/test_perturbations.py`, `configs/scenarios.json` | — | Observation noise, action latency, initial velocity kick, engine scaling |
+| **P1.2** Domain-randomized training | **DONE** | `scripts/train_robust_lander.py`, `models/best/best_robust_model.zip`, `models/registry.json` | — | Trained under TRAIN_DISTURB; robust checkpoint selected via val seeds (86.0%) |
+| **P1.3** Stress-grid evaluation | **DONE** | `scripts/run_stress_grid.py`, `results/figures/stress_grid_heatmap.png`, `results/metrics/robustness_g1.json` | — | 4x4 grid heatmaps; evaluated on 1,000 test seeds |
+| **G1** Gate | **DONE** | `results/metrics/robustness_g1.json` | **FAIL (70.10%)** | Achieved 70.10% (Wilson CI: [67.19%, 72.86%]) vs 85% target; 3.5x improvement over 19.9% baseline; logged per Rule 2 |
+| **P2.1** Dynamics core | **DONE** | `src/rocketland/dynamics.py`, `src/rocketland/atmosphere.py`, `src/rocketland/config.py`, `tests/unit/rocketland/test_dynamics.py` | — | Pure RK4 integration; Tsiolkovsky burn, free fall, and gimbal sign verified |
+| **P2.2** Contact model | **DONE** | `src/rocketland/contact.py` | — | Foot kinematics; unilateral spring-damper contact; Coulomb friction |
+| **P2.3** Actuators | **DONE** | `src/rocketland/actuators.py` | — | Throttle first-order lag & rate limit; gimbal rate limit; RCS torque |
+| **P2.4** Gymnasium env | **DONE** | `src/rocketland/env.py`, `tests/unit/rocketland/test_env.py` | — | `RocketLand2DEnv`; passes gymnasium env_checker; continuous Box spaces |
+| **P2.5** Start distribution & feasibility | **DONE** | `configs/rocketland/scenarios.json` | — | Initial state distributions & feasibility envelopes |
+| **P2.6** Classical controllers | **DONE** | `src/rocketland/controllers/suicide_burn.py` | — | Analytical suicide burn with velocity profile & pad centering |
+| **G2a** Gate | **DONE** | `results/metrics/rocketland_g2a.json` | **PASS (98.00%)** | **98.00%** `LANDED_ON_PAD` on 1,000 test seeds (seeds 20000–20999), Wilson 95% CI **[96.93%, 98.70%]** (exceeds ≥90% threshold) |
 | **P2.7** RL training (rocket) | TODO | — | — | PPO+SAC; VecNormalize; curriculum; 5 seeds |
 | **P2.8** Disturbances & realism | TODO | — | — | Wind OU; sensors; estimator; param randomization; moving pad |
 | **P2.9** MPC / convex guidance | SKIPPED | — | — | Time-boxed; logged here not silently dropped |

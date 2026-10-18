@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "kind": "gate_g2a_evaluation",
+  "controller": "suicide_burn",
+  "n_episodes": 1000,
+  "outcomes": {
+    "LANDED_ON_PAD": 980,
+    "LANDED_OFF_PAD": 19,
+    "HARD_LANDING": 1
+  },
+  "landed_rate": 0.98,
+  "wilson_ci95": [
+    0.9693097584861028,
+    0.9870164188709625
+  ],
+  "touchdown_vy_mean": -0.7230615639446604,
+  "touchdown_vx_mean": 0.24097678623598892
+}

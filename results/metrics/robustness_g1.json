@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "kind": "robustness_evaluation",
+  "scenario": "HELD_OUT_2X",
+  "n_episodes": 1000,
+  "outcome_counts": {
+    "LANDED_ON_PAD": 701,
+    "LANDED_OFF_PAD": 81,
+    "HARD_LANDING": 0,
+    "TIPPED": 0,
+    "CRASH": 107,
+    "OUT_OF_BOUNDS": 1,
+    "TIMEOUT": 110
+  },
+  "outcome_rates": {
+    "LANDED_ON_PAD": {
+      "count": 701,
+      "rate": 0.701,
+      "ci95": [
+        0.671899,
+        0.728563
+      ]
+    },
+    "LANDED_OFF_PAD": {
+      "count": 81,
+      "rate": 0.081,
+      "ci95": [
+        0.065649,
+        0.099558
+      ]
+    },
+    "HARD_LANDING": {
+      "count": 0,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.003827
+      ]
+    },
+    "TIPPED": {
+      "count": 0,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.003827
+      ]
+    },
+    "CRASH": {
+      "count": 107,
+      "rate": 0.107,
+      "ci95": [
+        0.089323,
+        0.127685
+      ]
+    },
+    "OUT_OF_BOUNDS": {
+      "count": 1,
+      "rate": 0.001,
+      "ci95": [
+        0.000177,
+        0.005643
+      ]
+    },
+    "TIMEOUT": {
+      "count": 110,
+      "rate": 0.11,
+      "ci95": [
+        0.092079,
+        0.130906
+      ]
+    }
+  },
+  "reward": {
+    "mean": 192.91405790000002,
+    "median": 223.65645,
+    "std": 85.08866160622235,
+    "min": -81.7153,
+    "max": 292.3397,
+    "mean_ci95": [
+      187.7762593075,
+      197.99179643250002
+    ]
+  },
+  "grid": {
+    "wind_levels": [
+      0.0,
+      5.0,
+      10.0,
+      15.0
+    ],
+    "noise_levels": [
+      0.0,
+      0.02,
+      0.05,
+      0.08
+    ],
+    "success_matrix": [
+      [
+        0.94,
+        0.98,
+        0.92,
+        0.46
+      ],
+      [
+        0.9,
+        0.9,
+        0.86,
+        0.38
+      ],
+      [
+        0.52,
+        0.58,
+        0.64,
+        0.32
+      ],
+      [
+        0.26,
+        0.36,
+        0.38,
+        0.2
+      ]
+    ]
+  }
+}

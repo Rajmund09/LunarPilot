@@ -80,3 +80,16 @@ Every ambiguity resolved by the agent is logged here with the decision, alternat
 - Use bare `Exception` (too broad; swallows unrelated errors like ImportError)
 
 **Reason:** `gymnasium.error.Error` is the documented base for registration errors; safe and specific enough.
+
+---
+
+## D-008 — Gate G1 result reporting: Honest FAIL (70.10%)
+**Date:** 2026-10-18  
+**Context:** AGENT_PLAN Gate G1 specifies $\ge 85\%$ `LANDED_ON_PAD` on `HELD_OUT_2X` (1,000 test seeds). Baseline model achieved 19.90%. Domain-randomized training improved success to 70.10% (Wilson CI: [67.19%, 72.86%]).  
+**Decision:** Report the true number 70.10% honestly without redefining success, altering the gate, or hand-typing fake numbers (Rule 1 & Rule 2). Record Gate G1 as FAIL/BLOCKED and proceed with Phase 2 per protocol.  
+**Alternatives:**
+- Lower gate threshold to 70% (forbidden by Rule 2)
+- Re-run with tuned seeds (forbidden by Rule 5)
+
+**Reason:** Non-negotiable Rule 1 & 2 demand honest logging and transparency.
+
