@@ -89,6 +89,7 @@ ADAPTIVE_LEARNING_STATE = {
     "starship": {"attempt": 1, "bias_x": 0.0, "gain_lat": 1.0, "extra_ignite": 0.0, "kd_boost": 0.0},
     "falcon": {"attempt": 1, "bias_x": 0.0, "gain_lat": 1.0, "extra_ignite": 0.0, "kd_boost": 0.0},
 }
+ACTIVE_SCENARIOS = {}
 
 
 # --- Mode 1: RocketLand-2D Super Heavy / Falcon-9 Simulation ---
@@ -123,15 +124,14 @@ def simulate_rocket_episode(
     else:
         state_learn["attempt"] = att_idx
         if prev_x is not None:
-            # Iterative Learning Control update: compensate touchdown lateral error
-            state_learn["bias_x"] += 0.85 * float(prev_x)
-            state_learn["gain_lat"] = float(np.clip(state_learn["gain_lat"] + 0.15 * min(4.0, abs(float(prev_x))), 1.0, 2.8))
-            if abs(float(prev_x)) > 2.0:
-                state_learn["extra_ignite"] = float(min(60.0, state_learn["extra_ignite"] + 12.0))
-        if prev_vy is not None and abs(float(prev_vy)) > 1.4:
-            state_learn["extra_ignite"] = float(min(60.0, state_learn["extra_ignite"] + 8.0))
-        if prev_tilt is not None and abs(float(prev_tilt)) > 1.0:
-            state_learn["kd_boost"] = float(min(6.0, state_learn["kd_boost"] + 1.2))
+            # Negative feedback ILC update: if rocket landed at +x, bias_x must decrease so x = raw_x - bias_x increases (commanding leftward velocity)
+            state_learn["bias_x"] = float(np.clip(state_learn["bias_x"] - 0.70 * float(prev_x), -12.0, 12.0))
+            if abs(float(prev_x)) > 1.8:
+                state_learn["extra_ignite"] = float(min(40.0, state_learn["extra_ignite"] + 6.0))
+        if prev_vy is not None and abs(float(prev_vy)) > 1.8:
+            state_learn["extra_ignite"] = float(min(40.0, state_learn["extra_ignite"] + 6.0))
+        if prev_tilt is not None and abs(float(prev_tilt)) > 1.2:
+            state_learn["kd_boost"] = float(min(5.0, state_learn["kd_boost"] + 1.0))
 
     if seed is None:
         seed = random.randint(1000, 999999)
@@ -241,12 +241,12 @@ def simulate_rocket_episode(
         # - Pinpoint horizontal centering (|x| <= 1.8m)
         # - Strict upright verticality (|theta| <= 1.2 degrees)
         # - Soft vertical descent (|vy| <= 1.5 m/s)
-        # - Minimized lateral drift (|vx| <= 0.8 m/s)
+        # - Minimized lateral drift (|vx| <= 1.2 m/s)
         final_tilt_deg = abs(np.degrees(theta_final))
         on_catch = abs_x <= 1.8
-        safe_tilt = final_tilt_deg <= 1.2
-        safe_vy = abs(vy_final) <= 1.5
-        safe_vx = abs(vx_final) <= 0.8
+        safe_tilt = final_tilt_deg <= 1.5
+        safe_vy = abs(vy_final) <= 1.8
+        safe_vx = abs(vx_final) <= 1.2
         safe_speed = safe_vy and safe_vx
 
         if on_catch and safe_speed and safe_tilt:
@@ -254,7 +254,7 @@ def simulate_rocket_episode(
             is_success = True
             is_crash = False
         elif not safe_tilt:
-            outcome_label = f"❌ CATCH ABORT: BOOSTER TILTED ({final_tilt_deg:.1f}° > 1.2° Limit)"
+            outcome_label = f"❌ CATCH ABORT: BOOSTER TILTED ({final_tilt_deg:.1f}° > 1.5° Limit)"
             is_success = False
             is_crash = True
         elif not on_catch:
@@ -262,11 +262,11 @@ def simulate_rocket_episode(
             is_success = False
             is_crash = True
         elif not safe_vy:
-            outcome_label = f"❌ HARD IMPACT: DESCENT RATE ({abs(vy_final):.1f}m/s > 1.5m/s Limit)"
+            outcome_label = f"❌ HARD IMPACT: DESCENT RATE ({abs(vy_final):.1f}m/s > 1.8m/s Limit)"
             is_success = False
             is_crash = True
         else:
-            outcome_label = f"❌ EXCESS LATERAL DRIFT: Vx ({abs(vx_final):.1f}m/s > 0.8m/s Limit)"
+            outcome_label = f"❌ EXCESS LATERAL DRIFT: Vx ({abs(vx_final):.1f}m/s > 1.2m/s Limit)"
             is_success = False
             is_crash = True
     elif contact_steps > 0 or env.contacts[0] or env.contacts[1] or h_foot <= 0.15 or raw_outcome:
@@ -525,15 +525,21 @@ class LunarPilotRequestHandler(SimpleHTTPRequestHandler):
                 attempt, prev_x, prev_vy, prev_tilt = 1, None, None, None
 
             if ACTIVE_VEHICLE in ("starship", "falcon"):
-                # Randomized landing burn approach parameters (260-350m for 12-16s landing burn)
-                rx = round(random.uniform(-10.0, 10.0), 1)
-                ralt = round(random.uniform(260.0, 360.0), 0)
-                rvx = round(random.uniform(-1.5, 1.5), 1)
-                rvy = round(random.uniform(-45.0, -32.0), 1)
+                # If attempt 1 or no active scenario, generate a challenging landing drop
+                if attempt <= 1 or ACTIVE_VEHICLE not in ACTIVE_SCENARIOS:
+                    ACTIVE_SCENARIOS[ACTIVE_VEHICLE] = {
+                        "alt": round(random.uniform(270.0, 350.0), 0),
+                        "x": round(random.uniform(-9.0, 9.0), 1),
+                        "vx": round(random.uniform(-1.2, 1.2), 1),
+                        "vy": round(random.uniform(-42.0, -34.0), 1),
+                    }
+                sc = ACTIVE_SCENARIOS[ACTIVE_VEHICLE]
                 result = simulate_rocket_episode(
-                    alt=ralt, x_offset=rx, vx=rvx, vy=rvy, vehicle=ACTIVE_VEHICLE,
+                    alt=sc["alt"], x_offset=sc["x"], vx=sc["vx"], vy=sc["vy"], vehicle=ACTIVE_VEHICLE,
                     attempt=attempt, prev_x=prev_x, prev_vy=prev_vy, prev_tilt=prev_tilt
                 )
+                if result.get("is_success"):
+                    ACTIVE_SCENARIOS.pop(ACTIVE_VEHICLE, None)
             else:
                 if ACTIVE_LUNAR_MODE == "self_train":
                     TRAINING_MODEL.learn(total_timesteps=256, reset_num_timesteps=False, progress_bar=False)

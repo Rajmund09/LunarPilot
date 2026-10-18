@@ -94,9 +94,7 @@ class SuicideBurnController:
             self.ignited = True
 
         if not self.ignited:
-            # High-altitude unpowered aerodynamic glide banking
-            max_glide = min(16.0, 4.0 + 0.5 * abs(x))
-            glide_tilt_deg = -np.clip((0.30 * x + 0.50 * vx) * self.gain_lat, -max_glide, max_glide)
+            glide_tilt_deg = np.clip((0.20 * x + 0.30 * vx), -4.0, 4.0)
             theta_target = np.radians(glide_tilt_deg)
             a_throttle = -1.0
         else:
@@ -109,43 +107,32 @@ class SuicideBurnController:
             thrust_req = (m_total * (a_cmd + self.cfg.g)) / cos_tilt
             thr_frac = thrust_req / self.cfg.thrust_max
             a_throttle = float(-1.0 + np.clip((thr_frac - self.cfg.throttle_min) / (1.0 - self.cfg.throttle_min), 0.0, 1.0) * 2.0)
-            if h_foot < 12.0 and vy < -0.5:
-                a_throttle = max(-0.85, a_throttle)
 
-            # Continuous progressive lateral velocity tracking
-            if h_foot > 50.0:
-                vx_target = float(np.clip(-0.45 * x * self.gain_lat, -4.5, 4.5))
-                max_tilt = np.radians(14.0)
-            elif h_foot > 20.0:
-                vx_target = float(np.clip(-0.35 * x * self.gain_lat, -2.5, 2.5))
-                max_tilt = np.radians(5.0)
-            elif h_foot > 8.0:
-                vx_target = float(np.clip(-0.25 * x, -0.8, 0.8))
-                max_tilt = np.radians(1.2)
-            elif h_foot > 2.5:
-                vx_target = float(np.clip(-0.10 * x, -0.25, 0.25))
-                max_tilt = np.radians(0.30)
+            # Continuous progressive lateral velocity tracking without overshoot
+            vx_target = float(np.clip(-0.25 * x, -2.5, 2.5))
+            if h_foot > 30.0:
+                max_tilt = np.radians(6.0)
+            elif h_foot > 10.0:
+                max_tilt = np.radians(3.0)
+            elif h_foot > 2.0:
+                max_tilt = np.radians(1.0)
             else:
                 vx_target = 0.0
-                max_tilt = 0.0
+                max_tilt = np.radians(0.2)
 
             vx_err = vx - vx_target
-            theta_target = float(np.clip(0.065 * vx_err, -max_tilt, max_tilt))
+            theta_target = float(np.clip(0.06 * vx_err, -max_tilt, max_tilt))
 
         # 3. Attitude control: stiff critically damped TVC gimbal and RCS reaction jets
         theta_error = theta - theta_target
         if h_foot < 25.0:
-            kp_g, kd_g = 10.0, 7.2 + self.kd_boost
-            kp_rcs, kd_rcs = 11.0, 7.8 + self.kd_boost
+            kp_g, kd_g = 11.0, 8.0 + self.kd_boost
+            kp_rcs, kd_rcs = 12.0, 8.5 + self.kd_boost
         else:
             kp_g, kd_g = 6.0, 4.2
             kp_rcs, kd_rcs = 6.5, 4.5
 
         gimbal_cmd = kp_g * theta_error + kd_g * omega
-        # Direct lateral TVC trim in terminal descent (2m <= h < 15m) to cancel horizontal drift
-        if 2.0 <= h_foot < 15.0:
-            gimbal_cmd -= 0.18 * vx
-
         a_gimbal = float(np.clip(gimbal_cmd, -1.0, 1.0))
         rcs_cmd = -(kp_rcs * theta_error + kd_rcs * omega)
         a_rcs = float(np.clip(rcs_cmd, -1.0, 1.0))

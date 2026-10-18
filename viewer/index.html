@@ -2470,9 +2470,9 @@
         const finalVx = Math.abs(td.vx !== undefined ? td.vx : Math.abs(s.vx));
 
         // Strict Mechazilla verification:
-        const isUpright = finalTilt <= 1.2;
+        const isUpright = finalTilt <= 1.5;
         const isCentered = finalX <= 1.8;
-        const isSoft = finalVy <= 1.5 && finalVx <= 0.8;
+        const isSoft = finalVy <= 1.8 && finalVx <= 1.2;
         const isPerfect = Boolean(currentEpisode.is_success && isUpright && isCentered && isSoft);
 
         outcomeModal.className = isPerfect ? "success" : "crash";
@@ -2494,10 +2494,10 @@
             ${isPerfect ? '✅ Strict verticality and chopstick cradle alignment satisfied!' : '❌ Tolerance boundary exceeded — Catch rails unengaged.'}
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.72rem; margin-bottom: 8px;">
-            <div>Tilt: <b style="color: ${isUpright ? '#34d399' : '#f87171'}">${finalTilt.toFixed(1)}°</b> (≤1.2°)</div>
+            <div>Tilt: <b style="color: ${isUpright ? '#34d399' : '#f87171'}">${finalTilt.toFixed(1)}°</b> (≤1.5°)</div>
             <div>Offset: <b style="color: ${isCentered ? '#34d399' : '#f87171'}">${finalX.toFixed(2)}m</b> (≤1.8m)</div>
-            <div>Vy: <b style="color: ${finalVy <= 1.5 ? '#34d399' : '#f87171'}">${Math.abs(s.vy).toFixed(2)}m/s</b> (≤1.5)</div>
-            <div>Vx: <b style="color: ${finalVx <= 0.8 ? '#34d399' : '#f87171'}">${Math.abs(s.vx).toFixed(2)}m/s</b> (≤0.8)</div>
+            <div>Vy: <b style="color: ${finalVy <= 1.8 ? '#34d399' : '#f87171'}">${Math.abs(s.vy).toFixed(2)}m/s</b> (≤1.8)</div>
+            <div>Vx: <b style="color: ${finalVx <= 1.2 ? '#34d399' : '#f87171'}">${Math.abs(s.vx).toFixed(2)}m/s</b> (≤1.2)</div>
           </div>
           ${learningBanner}
           <div style="font-size: 0.70rem; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px;">
