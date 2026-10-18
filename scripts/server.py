@@ -393,11 +393,11 @@ class LunarPilotRequestHandler(SimpleHTTPRequestHandler):
                 ACTIVE_VEHICLE = vehicle
 
             if ACTIVE_VEHICLE == "falcon":
-                # Randomized nominal entry parameters
-                rx = round(random.uniform(-18.0, 18.0), 1)
-                ralt = round(random.uniform(700.0, 1100.0), 0)
-                rvx = round(random.uniform(-4.0, 4.0), 1)
-                rvy = round(random.uniform(-80.0, -50.0), 1)
+                # Randomized landing burn approach parameters (260-350m for 12-16s landing burn)
+                rx = round(random.uniform(-10.0, 10.0), 1)
+                ralt = round(random.uniform(260.0, 360.0), 0)
+                rvx = round(random.uniform(-1.5, 1.5), 1)
+                rvy = round(random.uniform(-45.0, -32.0), 1)
                 result = simulate_rocket_episode(alt=ralt, x_offset=rx, vx=rvx, vy=rvy)
             else:
                 if ACTIVE_LUNAR_MODE == "self_train":
