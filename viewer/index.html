@@ -1684,6 +1684,9 @@
     let autoLearnConverged = false;
     let learnAttemptCount = 1;
     let lastCustomQuery = null;
+    let lastTouchdownX = null;
+    let lastTouchdownVy = null;
+    let lastTouchdownTilt = null;
 
     const hudVehicleTag = document.getElementById('hud-vehicle-tag');
     const hudStepTag = document.getElementById('hud-step-tag');
@@ -1737,9 +1740,13 @@
       outcomeModal.style.display = 'none';
 
       try {
-        let url = `/api/next_flight?vehicle=${activeVehicle}`;
+        let learnParams = `vehicle=${activeVehicle}&attempt=${learnAttemptCount}`;
+        if (lastTouchdownX !== null && lastTouchdownX !== undefined) {
+          learnParams += `&prev_x=${encodeURIComponent(lastTouchdownX)}&prev_vy=${encodeURIComponent(lastTouchdownVy || 0)}&prev_tilt=${encodeURIComponent(lastTouchdownTilt || 0)}`;
+        }
+        let url = `/api/next_flight?${learnParams}`;
         if (customQuery) {
-          url = `/api/simulate_rocket?${customQuery}&vehicle=${activeVehicle}`;
+          url = `/api/simulate_rocket?${customQuery}&${learnParams}`;
         }
         const res = await fetch(url);
         const data = await res.json();
@@ -1995,12 +2002,17 @@
       if (isTerminal) {
         outcomeModal.style.display = 'block';
         const td = currentEpisode.touchdown || {
+          x: s.x,
           tilt_deg: s.tilt_deg,
           abs_x: Math.abs(s.x),
           vy: s.vy,
           vx: s.vx,
           fuel_remaining_kg: s.fuel
         };
+        lastTouchdownX = td.x !== undefined ? td.x : s.x;
+        lastTouchdownVy = td.vy !== undefined ? td.vy : s.vy;
+        lastTouchdownTilt = td.tilt_deg !== undefined ? td.tilt_deg : s.tilt_deg;
+
         const finalTilt = Math.abs(td.tilt_deg !== undefined ? td.tilt_deg : s.tilt_deg);
         const finalX = Math.abs(td.abs_x !== undefined ? td.abs_x : Math.abs(s.x));
         const finalVy = Math.abs(td.vy !== undefined ? td.vy : Math.abs(s.vy));
@@ -2015,6 +2027,17 @@
         outcomeModal.className = isPerfect ? "success" : "crash";
         outcomeTitle.textContent = isPerfect ? "🎯 PERFECT MECHAZILLA CATCH" : (currentEpisode.outcome || "❌ CATCH ABORT / MISSED");
 
+        const learn = currentEpisode.learning || null;
+        let learningBanner = '';
+        if (learn) {
+          learningBanner = `
+            <div style="background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 4px; padding: 5px 8px; margin-bottom: 6px; font-size: 0.70rem; color: #93c5fd; text-align: left;">
+              <b style="color: #60a5fa;">🧠 Adaptive Learning Control:</b> ${learn.feedback}<br/>
+              <span style="color: #cbd5e1;">Target Bias: <b>${learn.bias_x >= 0 ? '+' : ''}${learn.bias_x.toFixed(2)}m</b> &nbsp;|&nbsp; Lateral Authority: <b>${learn.gain_lat.toFixed(2)}x</b></span>
+            </div>
+          `;
+        }
+
         outcomeDesc.innerHTML = `
           <div style="margin-bottom: 6px; font-weight: 600; color: ${isPerfect ? '#34d399' : '#f87171'}">
             ${isPerfect ? '✅ Strict verticality and chopstick cradle alignment satisfied!' : '❌ Tolerance boundary exceeded — Catch rails unengaged.'}
@@ -2022,14 +2045,15 @@
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.72rem; margin-bottom: 8px;">
             <div>Tilt: <b style="color: ${isUpright ? '#34d399' : '#f87171'}">${finalTilt.toFixed(1)}°</b> (≤1.2°)</div>
             <div>Offset: <b style="color: ${isCentered ? '#34d399' : '#f87171'}">${finalX.toFixed(2)}m</b> (≤1.8m)</div>
-            <div>Vy: <b style="color: ${finalVy <= 1.5 ? '#34d399' : '#f87171'}">${(s.vy).toFixed(2)}m/s</b> (≤1.5)</div>
-            <div>Vx: <b style="color: ${finalVx <= 0.8 ? '#34d399' : '#f87171'}">${(s.vx).toFixed(2)}m/s</b> (≤0.8)</div>
+            <div>Vy: <b style="color: ${finalVy <= 1.5 ? '#34d399' : '#f87171'}">${Math.abs(s.vy).toFixed(2)}m/s</b> (≤1.5)</div>
+            <div>Vx: <b style="color: ${finalVx <= 0.8 ? '#34d399' : '#f87171'}">${Math.abs(s.vx).toFixed(2)}m/s</b> (≤0.8)</div>
           </div>
+          ${learningBanner}
           <div style="font-size: 0.70rem; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px;">
             ${isPerfect ? 
               `🎉 <b>LEARNING COMPLETE!</b> Attempt #${learnAttemptCount} achieved perfect catch. Loop completed.` :
               (autoLearnActive ? 
-                `🔁 <b>Attempt #${learnAttemptCount} Missed:</b> Auto-relaunching & refining guidance in 2.0s...` : 
+                `🔁 <b>Attempt #${learnAttemptCount} Missed:</b> Auto-adapting guidance and relaunching in 2.0s...` : 
                 `Auto-Relaunch is paused. Click "🚀 Launch Next" or enable loop.`)}
           </div>
         `;
@@ -2042,7 +2066,7 @@
           flightPhaseBanner.style.borderColor = "#10b981";
           flightPhaseBanner.style.color = "#34d399";
         } else if (autoLearnActive && !autoLearnConverged) {
-          flightPhaseBanner.textContent = `⚠️ ATTEMPT #${learnAttemptCount} MISSED — AUTO-REFINING & RELAUNCHING...`;
+          flightPhaseBanner.textContent = `⚠️ ATTEMPT #${learnAttemptCount} MISSED — ADAPTING GUIDANCE & RELAUNCHING...`;
           flightPhaseBanner.style.borderColor = "#f43f5e";
           flightPhaseBanner.style.color = "#fda4af";
         }
@@ -2061,6 +2085,9 @@
       autoLearnConverged = false;
       learnAttemptCount = 1;
       lastCustomQuery = null;
+      lastTouchdownX = null;
+      lastTouchdownVy = null;
+      lastTouchdownTilt = null;
       btnAutoRelaunch.className = "action-btn active";
       btnAutoRelaunch.innerHTML = "🔁 Auto-Learn Loop: ON";
       fetchNextFlight();
@@ -2074,6 +2101,9 @@
       autoLearnConverged = false;
       learnAttemptCount = 1;
       lastCustomQuery = null;
+      lastTouchdownX = null;
+      lastTouchdownVy = null;
+      lastTouchdownTilt = null;
       btnAutoRelaunch.className = "action-btn active";
       btnAutoRelaunch.innerHTML = "🔁 Auto-Learn Loop: ON";
       fetchNextFlight();
@@ -2087,6 +2117,9 @@
       autoLearnConverged = false;
       learnAttemptCount = 1;
       lastCustomQuery = null;
+      lastTouchdownX = null;
+      lastTouchdownVy = null;
+      lastTouchdownTilt = null;
       btnAutoRelaunch.className = "action-btn active";
       btnAutoRelaunch.innerHTML = "🔁 Auto-Learn Loop: ON";
       fetchNextFlight();
@@ -2135,6 +2168,9 @@
       customDropPanel.style.display = 'none';
       autoLearnConverged = false;
       learnAttemptCount = 1;
+      lastTouchdownX = null;
+      lastTouchdownVy = null;
+      lastTouchdownTilt = null;
       btnAutoRelaunch.className = "action-btn active";
       btnAutoRelaunch.innerHTML = "🔁 Auto-Learn Loop: ON";
       lastCustomQuery = `alt=${sliderAlt.value}&x=${sliderX.value}&tilt=${sliderTilt.value}&vy=${sliderVy.value}&vx=${sliderVx.value}&wind=${sliderWind.value}`;
@@ -2169,6 +2205,11 @@
       scenarioDrawer.style.display = 'none';
       autoLearnConverged = false;
       learnAttemptCount = 1;
+      lastTouchdownX = null;
+      lastTouchdownVy = null;
+      lastTouchdownTilt = null;
+      btnAutoRelaunch.className = "action-btn active";
+      btnAutoRelaunch.innerHTML = "🔁 Auto-Learn Loop: ON";
       lastCustomQuery = `alt=${alt}&x=${x}&vx=${vx}&vy=${vy}&wind=${wind}&tilt=0`;
       fetchNextFlight(lastCustomQuery);
     };
@@ -2189,7 +2230,13 @@
     });
 
     btnRelaunchNow.addEventListener('click', () => {
-      fetchNextFlight();
+      learnAttemptCount++;
+      const seed = Math.floor(Math.random() * 900000) + 1000;
+      if (lastCustomQuery) {
+        fetchNextFlight(`${lastCustomQuery}&seed=${seed}`);
+      } else {
+        fetchNextFlight(`seed=${seed}`);
+      }
     });
 
     timeScrubber.addEventListener('input', (e) => {

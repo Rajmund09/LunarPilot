@@ -85,10 +85,53 @@ SESSION_STATS = {
 }
 
 
+ADAPTIVE_LEARNING_STATE = {
+    "starship": {"attempt": 1, "bias_x": 0.0, "gain_lat": 1.0, "extra_ignite": 0.0, "kd_boost": 0.0},
+    "falcon": {"attempt": 1, "bias_x": 0.0, "gain_lat": 1.0, "extra_ignite": 0.0, "kd_boost": 0.0},
+}
+
+
 # --- Mode 1: RocketLand-2D Super Heavy / Falcon-9 Simulation ---
-def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, tilt=None, wind=0.0, seed=None, vehicle="starship"):
-    """Simulates Super Heavy / Falcon-9 descent onto Mechazilla catch tower or autonomous drone ship."""
-    global SESSION_STATS
+def simulate_rocket_episode(
+    alt=None,
+    x_offset=None,
+    vx=None,
+    vy=None,
+    tilt=None,
+    wind=0.0,
+    seed=None,
+    vehicle="starship",
+    attempt=1,
+    prev_x=None,
+    prev_vy=None,
+    prev_tilt=None,
+):
+    """Simulates Super Heavy / Falcon-9 descent with real adaptive Iterative Learning Control (ILC)."""
+    global SESSION_STATS, ADAPTIVE_LEARNING_STATE
+
+    state_learn = ADAPTIVE_LEARNING_STATE.setdefault(
+        vehicle, {"attempt": 1, "bias_x": 0.0, "gain_lat": 1.0, "extra_ignite": 0.0, "kd_boost": 0.0}
+    )
+
+    att_idx = int(attempt) if attempt is not None else 1
+    if att_idx <= 1:
+        state_learn["attempt"] = 1
+        state_learn["bias_x"] = 0.0
+        state_learn["gain_lat"] = 1.0
+        state_learn["extra_ignite"] = 0.0
+        state_learn["kd_boost"] = 0.0
+    else:
+        state_learn["attempt"] = att_idx
+        if prev_x is not None:
+            # Iterative Learning Control update: compensate touchdown lateral error
+            state_learn["bias_x"] += 0.85 * float(prev_x)
+            state_learn["gain_lat"] = float(np.clip(state_learn["gain_lat"] + 0.15 * min(4.0, abs(float(prev_x))), 1.0, 2.8))
+            if abs(float(prev_x)) > 2.0:
+                state_learn["extra_ignite"] = float(min(60.0, state_learn["extra_ignite"] + 12.0))
+        if prev_vy is not None and abs(float(prev_vy)) > 1.4:
+            state_learn["extra_ignite"] = float(min(60.0, state_learn["extra_ignite"] + 8.0))
+        if prev_tilt is not None and abs(float(prev_tilt)) > 1.0:
+            state_learn["kd_boost"] = float(min(6.0, state_learn["kd_boost"] + 1.2))
 
     if seed is None:
         seed = random.randint(1000, 999999)
@@ -96,7 +139,14 @@ def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, tilt=None
     ROCKET_CONFIG.wind_base = float(wind)
     ROCKET_CONFIG.wind_gust_std = 0.0 if float(wind) != 0.0 else 0.4
     env = RocketLand2DEnv(ROCKET_CONFIG)
-    ctrl = SuicideBurnController(ROCKET_CONFIG)
+    ctrl = SuicideBurnController(
+        ROCKET_CONFIG,
+        margin=1.15,
+        bias_x=state_learn["bias_x"],
+        gain_lat=state_learn["gain_lat"],
+        extra_ignite=state_learn["extra_ignite"],
+        kd_boost=state_learn["kd_boost"],
+    )
     obs, info = env.reset(seed=seed)
 
     # Custom initial state override or realistic approach parameters
@@ -282,11 +332,25 @@ def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, tilt=None
         "total_steps": step,
         "duration_s": round(step * dt_c, 2),
         "touchdown": {
+            "x": round(float(env.state[0]), 2),
             "vy": round(float(vy_final), 2),
             "vx": round(float(td.get("vx", env.state[2])), 2),
             "abs_x": round(float(abs_x), 2),
             "tilt_deg": round(float(np.degrees(td.get("theta", env.state[4]))), 2),
             "fuel_remaining_kg": round(float(env.state[6]), 1),
+        },
+        "learning": {
+            "attempt": att_idx,
+            "bias_x": round(state_learn["bias_x"], 2),
+            "gain_lat": round(state_learn["gain_lat"], 2),
+            "extra_ignite": round(state_learn["extra_ignite"], 1),
+            "kd_boost": round(state_learn["kd_boost"], 1),
+            "converged": is_success,
+            "feedback": (
+                f"Attempt #{att_idx}: Adapted target lead bias {state_learn['bias_x']:+.2f}m & bank gain {state_learn['gain_lat']:.2f}x to eliminate previous error"
+                if att_idx > 1 and prev_x is not None
+                else f"Attempt #{att_idx}: Initial baseline trajectory tracking"
+            ),
         },
         "steps": steps_data,
         "session_stats": SESSION_STATS,
@@ -452,13 +516,24 @@ class LunarPilotRequestHandler(SimpleHTTPRequestHandler):
             if vehicle in ("starship", "falcon", "artemis"):
                 ACTIVE_VEHICLE = vehicle
 
+            try:
+                attempt = int(query.get("attempt", [1])[0])
+                prev_x = float(query.get("prev_x")[0]) if "prev_x" in query else None
+                prev_vy = float(query.get("prev_vy")[0]) if "prev_vy" in query else None
+                prev_tilt = float(query.get("prev_tilt")[0]) if "prev_tilt" in query else None
+            except (ValueError, TypeError):
+                attempt, prev_x, prev_vy, prev_tilt = 1, None, None, None
+
             if ACTIVE_VEHICLE in ("starship", "falcon"):
                 # Randomized landing burn approach parameters (260-350m for 12-16s landing burn)
                 rx = round(random.uniform(-10.0, 10.0), 1)
                 ralt = round(random.uniform(260.0, 360.0), 0)
                 rvx = round(random.uniform(-1.5, 1.5), 1)
                 rvy = round(random.uniform(-45.0, -32.0), 1)
-                result = simulate_rocket_episode(alt=ralt, x_offset=rx, vx=rvx, vy=rvy, vehicle=ACTIVE_VEHICLE)
+                result = simulate_rocket_episode(
+                    alt=ralt, x_offset=rx, vx=rvx, vy=rvy, vehicle=ACTIVE_VEHICLE,
+                    attempt=attempt, prev_x=prev_x, prev_vy=prev_vy, prev_tilt=prev_tilt
+                )
             else:
                 if ACTIVE_LUNAR_MODE == "self_train":
                     TRAINING_MODEL.learn(total_timesteps=256, reset_num_timesteps=False, progress_bar=False)
@@ -481,10 +556,19 @@ class LunarPilotRequestHandler(SimpleHTTPRequestHandler):
                 tilt = float(query.get("tilt", [0.0])[0])
                 wind = float(query.get("wind", [0.0])[0])
                 vehicle = query.get("vehicle", [ACTIVE_VEHICLE])[0]
-            except ValueError:
-                alt, x, vx, vy, tilt, wind, vehicle = 850.0, 0.0, 0.0, -65.0, 0.0, 0.0, ACTIVE_VEHICLE
+                attempt = int(query.get("attempt", [1])[0])
+                prev_x = float(query.get("prev_x")[0]) if "prev_x" in query else None
+                prev_vy = float(query.get("prev_vy")[0]) if "prev_vy" in query else None
+                prev_tilt = float(query.get("prev_tilt")[0]) if "prev_tilt" in query else None
+            except (ValueError, TypeError):
+                alt, x, vx, vy, tilt, wind, vehicle, attempt, prev_x, prev_vy, prev_tilt = (
+                    850.0, 0.0, 0.0, -65.0, 0.0, 0.0, ACTIVE_VEHICLE, 1, None, None, None
+                )
 
-            result = simulate_rocket_episode(alt=alt, x_offset=x, vx=vx, vy=vy, tilt=tilt, wind=wind, vehicle=vehicle)
+            result = simulate_rocket_episode(
+                alt=alt, x_offset=x, vx=vx, vy=vy, tilt=tilt, wind=wind, vehicle=vehicle,
+                attempt=attempt, prev_x=prev_x, prev_vy=prev_vy, prev_tilt=prev_tilt
+            )
             self._send_json(result)
             return
 
