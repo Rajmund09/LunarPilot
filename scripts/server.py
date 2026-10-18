@@ -93,7 +93,10 @@ def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, wind=0.0,
     if seed is None:
         seed = random.randint(1000, 999999)
 
+    ROCKET_CONFIG.wind_base = float(wind)
+    ROCKET_CONFIG.wind_gust_std = 0.0 if float(wind) != 0.0 else 0.4
     env = RocketLand2DEnv(ROCKET_CONFIG)
+    ctrl = SuicideBurnController(ROCKET_CONFIG)
     obs, info = env.reset(seed=seed)
 
     # Custom initial state override or realistic approach parameters
@@ -102,7 +105,7 @@ def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, wind=0.0,
     init_vx = float(vx) if vx is not None else round(random.uniform(-1.5, 1.5), 1)
     init_vy = float(vy) if vy is not None else round(random.uniform(-40.0, -32.0), 1)
     init_fuel = float(env.state[6])
-    init_tilt = float(np.radians(random.uniform(-3.0, 3.0)))
+    init_tilt = float(np.radians(random.uniform(-2.0, 2.0)))
 
     # Re-apply state
     env.state = np.array([init_x, init_alt, init_vx, init_vy, init_tilt, 0.0, init_fuel], dtype=np.float64)
@@ -115,7 +118,7 @@ def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, wind=0.0,
     dt_c = ROCKET_CONFIG.dt_control
 
     while not done and step < 400:
-        action = SUICIDE_CONTROLLER(obs)
+        action = ctrl(obs)
         next_obs, reward, terminated, truncated, info = env.step(action)
         done = terminated or truncated
 

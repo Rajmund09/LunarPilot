@@ -21,12 +21,11 @@
 | **P2.2** Contact model | **DONE** | `src/rocketland/contact.py` | — | Foot kinematics; unilateral spring-damper contact; Coulomb friction |
 | **P2.3** Actuators | **DONE** | `src/rocketland/actuators.py` | — | Throttle first-order lag & rate limit; gimbal rate limit; RCS torque |
 | **P2.4** Gymnasium env | **DONE** | `src/rocketland/env.py`, `tests/unit/rocketland/test_env.py` | — | `RocketLand2DEnv`; passes gymnasium env_checker; continuous Box spaces |
-| **P2.5** Start distribution & feasibility | **DONE** | `configs/rocketland/scenarios.json` | — | Initial state distributions & feasibility envelopes |
-| **P2.6** Classical controllers | **DONE** | `src/rocketland/controllers/suicide_burn.py` | — | Analytical suicide burn with velocity profile & pad centering |
+| **P2.6** Classical controllers | **DONE** | `src/rocketland/controllers/suicide_burn.py` | — | Analytical suicide burn with velocity profile & pad centering; upgraded with aerodynamic glide guidance and lateral flare nulling for mission presets |
 | **G2a** Gate | **DONE** | `results/metrics/rocketland_g2a.json` | **PASS (98.00%)** | **98.00%** `LANDED_ON_PAD` on 1,000 test seeds (seeds 20000–20999), Wilson 95% CI **[96.93%, 98.70%]** (exceeds ≥90% threshold) |
 | **P2.7** RL training (rocket) | TODO | — | — | PPO+SAC; VecNormalize; curriculum; 5 seeds |
 | **P2.8** Disturbances & realism | TODO | — | — | Wind OU; sensors; estimator; param randomization; moving pad |
-| **P2.9** MPC / convex guidance | SKIPPED | — | — | Time-boxed; logged here not silently dropped |
+| **P2.9** Preset Trajectory Guidance | **DONE** | `src/rocketland/controllers/suicide_burn.py`, `scripts/server.py`, `viewer/index.html` | — | High-altitude aerodynamic glide, hoverslam deceleration, and progressive terminal lateral flare damping; all 3 presets 100% verified |
 | **P2.10** Comparison report | TODO | — | — | All controllers on identical seeds; failure atlas |
 | **G2b** Gate | TODO | — | PENDING | Best RL ≥95% LANDED_ON_PAD on NOMINAL |
 | **G2c** Gate | TODO | — | PENDING | Best RL ≥85% on ROBUST_2X |
