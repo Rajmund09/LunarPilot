@@ -547,6 +547,25 @@
       display: none;
     }
 
+    /* Audio FX & Propulsion Acoustics Panel */
+    #audio-control-panel {
+      position: absolute;
+      top: 76px;
+      right: 18px;
+      z-index: 35;
+      width: 370px;
+      max-height: calc(100vh - 160px);
+      overflow-y: auto;
+      background: var(--card-bg);
+      backdrop-filter: blur(28px);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 16px 56px rgba(0, 0, 0, 0.9);
+      font-family: 'JetBrains Mono', monospace;
+      display: none;
+    }
+
     .slider-group {
       margin-bottom: 12px;
     }
@@ -690,6 +709,9 @@
 
     <!-- Actions -->
     <div class="header-actions">
+      <button class="action-btn" id="btn-toggle-sound" style="background: rgba(15, 23, 42, 0.95); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;">
+        🔊 Audio FX
+      </button>
       <button class="action-btn" id="btn-toggle-custom" style="background: linear-gradient(135deg, rgba(2, 132, 199, 0.4), rgba(37, 99, 235, 0.4)); border-color: rgba(56, 189, 248, 0.6); color: #fff;">
         🛠️ Custom Drop
       </button>
@@ -797,6 +819,80 @@
         <div class="thruster-pill" id="badge-thrust-main" style="flex: 1.2; padding: 6px 3px; font-size: 0.68rem; text-align: center; border-radius: 6px; background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08); color: #64748b; font-weight: 700; transition: all 0.1s ease;">▼ MAIN</div>
         <div class="thruster-pill" id="badge-thrust-right" style="flex: 1; padding: 6px 3px; font-size: 0.68rem; text-align: center; border-radius: 6px; background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08); color: #64748b; font-weight: 700; transition: all 0.1s ease;">R-THRUST ▶</div>
       </div>
+    </div>
+  </div>
+
+  <!-- Audio FX & Propulsion Acoustics Control Panel -->
+  <div id="audio-control-panel">
+    <div class="hud-header">
+      <span>🔊 Propulsion Acoustics & Audio FX</span>
+      <span style="cursor: pointer; font-size: 1rem;" id="btn-close-audio">✕</span>
+    </div>
+    <div style="font-size: 0.70rem; color: #94a3b8; margin-bottom: 12px; line-height: 1.4;">
+      Physical Web Audio synthesis engine. Modulated dynamically in real time by Raptor/Merlin throttle, TVC gimbaling, and RCS nitrogen gas pulses.
+    </div>
+
+    <!-- Master Audio Bar -->
+    <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px; margin-bottom: 12px;">
+      <div class="slider-header" style="margin-bottom: 6px;">
+        <span style="font-weight: 700; color: #fff;">MASTER AUDIO</span>
+        <button id="btn-mute-master" style="background: transparent; border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 6px; padding: 2px 8px; color: var(--accent-cyan); font-size: 0.72rem; cursor: pointer; font-family: 'JetBrains Mono', monospace;">🔊 ACTIVE</button>
+      </div>
+      <input type="range" class="custom-slider" id="slider-vol-master" min="0" max="1" step="0.01" value="0.80">
+      <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: #64748b; margin-top: 4px;">
+        <span>Engine: <b id="audio-status-pill" style="color: #34d399;">● READY (CLICK ANYWHERE TO RESUME)</b></span>
+        <span id="label-vol-master" style="color: #38bdf8; font-weight: 700;">80%</span>
+      </div>
+    </div>
+
+    <!-- Channel 1: Main Engine Thrust -->
+    <div class="slider-group" style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 10px; margin-bottom: 10px;">
+      <div class="slider-header" style="margin-bottom: 6px;">
+        <span style="display: flex; align-items: center; gap: 6px; font-weight: 600; color: #e2e8f0;">
+          <span id="led-main-thrust" style="width: 8px; height: 8px; border-radius: 50%; background: #475569; display: inline-block; transition: all 0.1s ease;"></span>
+          🔥 MAIN ENGINE THRUST
+        </span>
+        <button id="btn-mute-main" style="background: transparent; border: 1px solid rgba(255,255,255,0.15); border-radius: 5px; padding: 2px 6px; color: #94a3b8; font-size: 0.68rem; cursor: pointer; font-family: 'JetBrains Mono', monospace;">MUTE</button>
+      </div>
+      <input type="range" class="custom-slider" id="slider-vol-main" min="0" max="1" step="0.01" value="0.85">
+      <div style="display: flex; justify-content: space-between; font-size: 0.66rem; color: #64748b; margin-top: 4px;">
+        <span>Deep Sub-bass & Combustion Roar</span>
+        <span id="label-vol-main" style="color: #f97316; font-weight: 700;">85%</span>
+      </div>
+    </div>
+
+    <!-- Channel 2: RCS Attitude Thrusters -->
+    <div class="slider-group" style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 10px; margin-bottom: 10px;">
+      <div class="slider-header" style="margin-bottom: 6px;">
+        <span style="display: flex; align-items: center; gap: 6px; font-weight: 600; color: #e2e8f0;">
+          <span id="led-rcs-thrust" style="width: 8px; height: 8px; border-radius: 50%; background: #475569; display: inline-block; transition: all 0.1s ease;"></span>
+          💨 RCS ATTITUDE JETS
+        </span>
+        <button id="btn-mute-rcs" style="background: transparent; border: 1px solid rgba(255,255,255,0.15); border-radius: 5px; padding: 2px 6px; color: #94a3b8; font-size: 0.68rem; cursor: pointer; font-family: 'JetBrains Mono', monospace;">MUTE</button>
+      </div>
+      <input type="range" class="custom-slider" id="slider-vol-rcs" min="0" max="1" step="0.01" value="0.75">
+      <div style="display: flex; justify-content: space-between; font-size: 0.66rem; color: #64748b; margin-top: 4px;">
+        <span>Pressurized Gas Venting Hiss & Puffs</span>
+        <span id="label-vol-rcs" style="color: #38bdf8; font-weight: 700;">75%</span>
+      </div>
+    </div>
+
+    <!-- Channel 3: Perfect Landing Greeting / Fanfare -->
+    <div class="slider-group" style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 10px; margin-bottom: 8px;">
+      <div class="slider-header" style="margin-bottom: 6px;">
+        <span style="display: flex; align-items: center; gap: 6px; font-weight: 600; color: #e2e8f0;">
+          🎺 LANDING CELEBRATION FANFARE
+        </span>
+        <button id="btn-mute-fx" style="background: transparent; border: 1px solid rgba(255,255,255,0.15); border-radius: 5px; padding: 2px 6px; color: #94a3b8; font-size: 0.68rem; cursor: pointer; font-family: 'JetBrains Mono', monospace;">MUTE</button>
+      </div>
+      <input type="range" class="custom-slider" id="slider-vol-fx" min="0" max="1" step="0.01" value="0.90">
+      <div style="display: flex; justify-content: space-between; font-size: 0.66rem; color: #64748b; margin-top: 4px; margin-bottom: 8px;">
+        <span>Triumphant Landing Chime & Chord</span>
+        <span id="label-vol-fx" style="color: #34d399; font-weight: 700;">90%</span>
+      </div>
+      <button id="btn-test-fanfare" style="width: 100%; padding: 7px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+        ▶ Test Landing Fanfare & Greeting Sound
+      </button>
     </div>
   </div>
 
@@ -1641,7 +1737,342 @@
 
 
     // ========================================================
-    // --- 5. Telemetry & Simulation Controller State ---
+    // --- 5. Studio-Grade Procedural Propulsion Audio Engine ---
+    // ========================================================
+    class RocketAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.masterGain = null;
+        this.mainGain = null;
+        this.rcsGain = null;
+        this.fxGain = null;
+
+        this.volumes = {
+          master: 0.8,
+          main: 0.85,
+          rcs: 0.75,
+          fx: 0.9,
+        };
+        this.mutes = {
+          master: false,
+          main: false,
+          rcs: false,
+          fx: false,
+        };
+
+        this.mainNoiseSource = null;
+        this.mainFilter = null;
+        this.mainSubOsc = null;
+        this.mainFlutterOsc = null;
+        this.mainSubGain = null;
+
+        this.rcsNoiseSource = null;
+        this.rcsFilter = null;
+        this.rcsPanner = null;
+
+        this.initialized = false;
+        this.isPlayingMain = false;
+        this.isPlayingRcs = false;
+      }
+
+      init() {
+        if (this.initialized) {
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+          }
+          const pill = document.getElementById('audio-status-pill');
+          if (pill) { pill.textContent = '● ACTIVE & SYNCHRONIZED'; pill.style.color = '#34d399'; }
+          return;
+        }
+
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioCtx();
+
+          // Master bus
+          this.masterGain = this.ctx.createGain();
+          this.masterGain.gain.setValueAtTime(this.mutes.master ? 0.0 : this.volumes.master, this.ctx.currentTime);
+          this.masterGain.connect(this.ctx.destination);
+
+          // Main thrust bus
+          this.mainGain = this.ctx.createGain();
+          this.mainGain.gain.setValueAtTime(0.0001, this.ctx.currentTime);
+          this.mainGain.connect(this.masterGain);
+
+          // RCS bus
+          this.rcsGain = this.ctx.createGain();
+          this.rcsGain.gain.setValueAtTime(0.0001, this.ctx.currentTime);
+          if (this.ctx.createStereoPanner) {
+            this.rcsPanner = this.ctx.createStereoPanner();
+            this.rcsGain.connect(this.rcsPanner);
+            this.rcsPanner.connect(this.masterGain);
+          } else {
+            this.rcsGain.connect(this.masterGain);
+          }
+
+          // FX / Celebration bus
+          this.fxGain = this.ctx.createGain();
+          this.fxGain.gain.setValueAtTime(this.mutes.fx ? 0.0 : this.volumes.fx, this.ctx.currentTime);
+          this.fxGain.connect(this.masterGain);
+
+          this._buildMainThrustSynth();
+          this._buildRcsSynth();
+
+          this.initialized = true;
+          const pill = document.getElementById('audio-status-pill');
+          if (pill) { pill.textContent = '● ACTIVE & SYNCHRONIZED'; pill.style.color = '#34d399'; }
+        } catch (e) {
+          console.warn('Web Audio initialization error:', e);
+        }
+      }
+
+      _createNoiseBuffer(seconds = 3.0, type = 'brown') {
+        const bufferSize = this.ctx.sampleRate * seconds;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        let lastOut = 0.0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          if (type === 'brown') {
+            lastOut = (lastOut + 0.02 * white) / 1.02;
+            data[i] = lastOut * 3.5;
+          } else {
+            data[i] = white * 0.7;
+          }
+        }
+        return buffer;
+      }
+
+      _buildMainThrustSynth() {
+        const brownBuffer = this._createNoiseBuffer(4.0, 'brown');
+        this.mainNoiseSource = this.ctx.createBufferSource();
+        this.mainNoiseSource.buffer = brownBuffer;
+        this.mainNoiseSource.loop = true;
+
+        this.mainFilter = this.ctx.createBiquadFilter();
+        this.mainFilter.type = 'lowpass';
+        this.mainFilter.frequency.setValueAtTime(120, this.ctx.currentTime);
+        this.mainFilter.Q.setValueAtTime(3.2, this.ctx.currentTime);
+
+        this.mainSubOsc = this.ctx.createOscillator();
+        this.mainSubOsc.type = 'sawtooth';
+        this.mainSubOsc.frequency.setValueAtTime(42, this.ctx.currentTime);
+
+        const subFilter = this.ctx.createBiquadFilter();
+        subFilter.type = 'lowpass';
+        subFilter.frequency.setValueAtTime(90, this.ctx.currentTime);
+
+        this.mainSubGain = this.ctx.createGain();
+        this.mainSubGain.gain.setValueAtTime(0.45, this.ctx.currentTime);
+
+        this.mainFlutterOsc = this.ctx.createOscillator();
+        this.mainFlutterOsc.type = 'sine';
+        this.mainFlutterOsc.frequency.setValueAtTime(18.0, this.ctx.currentTime);
+        const flutterGain = this.ctx.createGain();
+        flutterGain.gain.setValueAtTime(14.0, this.ctx.currentTime);
+        this.mainFlutterOsc.connect(flutterGain);
+        flutterGain.connect(this.mainFilter.frequency);
+
+        this.mainNoiseSource.connect(this.mainFilter);
+        this.mainFilter.connect(this.mainGain);
+
+        this.mainSubOsc.connect(subFilter);
+        subFilter.connect(this.mainSubGain);
+        this.mainSubGain.connect(this.mainGain);
+
+        this.mainNoiseSource.start(0);
+        this.mainSubOsc.start(0);
+        this.mainFlutterOsc.start(0);
+      }
+
+      _buildRcsSynth() {
+        const whiteBuffer = this._createNoiseBuffer(3.0, 'white');
+        this.rcsNoiseSource = this.ctx.createBufferSource();
+        this.rcsNoiseSource.buffer = whiteBuffer;
+        this.rcsNoiseSource.loop = true;
+
+        this.rcsFilter = this.ctx.createBiquadFilter();
+        this.rcsFilter.type = 'bandpass';
+        this.rcsFilter.frequency.setValueAtTime(3200, this.ctx.currentTime);
+        this.rcsFilter.Q.setValueAtTime(2.2, this.ctx.currentTime);
+
+        this.rcsNoiseSource.connect(this.rcsFilter);
+        this.rcsFilter.connect(this.rcsGain);
+
+        this.rcsNoiseSource.start(0);
+      }
+
+      update(mainOn, throttle, leftOn, rightOn) {
+        if (!this.initialized || !this.ctx) return;
+        if (this.ctx.state === 'suspended') return;
+
+        const t = this.ctx.currentTime;
+        const nowSmooth = 0.04;
+
+        if (mainOn && !this.mutes.main && !this.mutes.master) {
+          this.isPlayingMain = true;
+          const targetGain = Math.max(0.12, Math.min(1.0, throttle)) * this.volumes.main;
+          this.mainGain.gain.setTargetAtTime(targetGain, t, nowSmooth);
+
+          const targetFreq = 120 + Math.pow(throttle, 1.4) * 630;
+          this.mainFilter.frequency.setTargetAtTime(targetFreq, t, nowSmooth);
+          this.mainSubOsc.frequency.setTargetAtTime(38 + throttle * 14, t, nowSmooth);
+        } else {
+          this.isPlayingMain = false;
+          this.mainGain.gain.setTargetAtTime(0.0001, t, 0.04);
+        }
+
+        const rcsActive = (leftOn || rightOn) && !this.mutes.rcs && !this.mutes.master;
+        if (rcsActive) {
+          this.isPlayingRcs = true;
+          const targetRcsGain = this.volumes.rcs * 0.85;
+          this.rcsGain.gain.setTargetAtTime(targetRcsGain, t, 0.02);
+
+          if (this.rcsPanner) {
+            const panTarget = leftOn && !rightOn ? -0.55 : (rightOn && !leftOn ? 0.55 : 0.0);
+            this.rcsPanner.pan.setTargetAtTime(panTarget, t, 0.02);
+          }
+        } else {
+          this.isPlayingRcs = false;
+          this.rcsGain.gain.setTargetAtTime(0.0001, t, 0.035);
+        }
+      }
+
+      stopContinuous() {
+        if (!this.initialized || !this.ctx) return;
+        const t = this.ctx.currentTime;
+        this.mainGain.gain.setTargetAtTime(0.0001, t, 0.04);
+        this.rcsGain.gain.setTargetAtTime(0.0001, t, 0.04);
+        this.isPlayingMain = false;
+        this.isPlayingRcs = false;
+      }
+
+      playCelebrationFanfare() {
+        if (!this.initialized) this.init();
+        if (!this.ctx || this.mutes.fx || this.mutes.master) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+
+        const now = this.ctx.currentTime;
+        const fxVol = this.volumes.fx;
+
+        // Triumphant ascending fanfare: C4, G4, C5, E5, G5, C6 with rich harmonics
+        const notes = [
+          { f: 261.63, start: 0.00, dur: 0.45 },
+          { f: 392.00, start: 0.12, dur: 0.45 },
+          { f: 523.25, start: 0.24, dur: 0.55 },
+          { f: 659.25, start: 0.36, dur: 0.65 },
+          { f: 783.99, start: 0.50, dur: 0.90 },
+          { f: 1046.50, start: 0.65, dur: 1.85 }
+        ];
+
+        notes.forEach(({ f, start, dur }) => {
+          const osc = this.ctx.createOscillator();
+          const osc2 = this.ctx.createOscillator();
+          const noteGain = this.ctx.createGain();
+          const filter = this.ctx.createBiquadFilter();
+
+          osc.type = 'triangle';
+          osc2.type = 'sawtooth';
+          osc.frequency.setValueAtTime(f, now + start);
+          osc2.frequency.setValueAtTime(f * 1.0025, now + start);
+
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(1400, now + start);
+          filter.frequency.exponentialRampToValueAtTime(3400, now + start + 0.1);
+
+          noteGain.gain.setValueAtTime(0.0001, now + start);
+          noteGain.gain.linearRampToValueAtTime(0.32 * fxVol, now + start + 0.05);
+          noteGain.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
+
+          osc.connect(filter);
+          osc2.connect(filter);
+          filter.connect(noteGain);
+          noteGain.connect(this.fxGain);
+
+          osc.start(now + start);
+          osc2.start(now + start);
+          osc.stop(now + start + dur);
+          osc2.stop(now + start + dur);
+        });
+
+        // Mission Control "Touchdown confirmed" digital chime
+        setTimeout(() => {
+          if (!this.ctx) return;
+          const tChime = this.ctx.currentTime;
+          [880.0, 1318.5].forEach((cf, i) => {
+            const cOsc = this.ctx.createOscillator();
+            const cGain = this.ctx.createGain();
+            cOsc.type = 'sine';
+            cOsc.frequency.setValueAtTime(cf, tChime + i * 0.16);
+            cGain.gain.setValueAtTime(0.0001, tChime + i * 0.16);
+            cGain.gain.linearRampToValueAtTime(0.24 * fxVol, tChime + i * 0.16 + 0.02);
+            cGain.gain.exponentialRampToValueAtTime(0.0001, tChime + i * 0.16 + 0.45);
+            cOsc.connect(cGain);
+            cGain.connect(this.fxGain);
+            cOsc.start(tChime + i * 0.16);
+            cOsc.stop(tChime + i * 0.16 + 0.5);
+          });
+        }, 850);
+      }
+
+      setVolume(channel, val) {
+        this.volumes[channel] = Math.max(0.0, Math.min(1.0, parseFloat(val)));
+        if (!this.ctx || !this.initialized) return;
+        const t = this.ctx.currentTime;
+        if (channel === 'master' && !this.mutes.master) {
+          this.masterGain.gain.setTargetAtTime(this.volumes.master, t, 0.02);
+        } else if (channel === 'fx' && !this.mutes.fx) {
+          this.fxGain.gain.setTargetAtTime(this.volumes.fx, t, 0.02);
+        }
+      }
+
+      toggleMute(channel) {
+        this.mutes[channel] = !this.mutes[channel];
+        if (!this.ctx || !this.initialized) return this.mutes[channel];
+        const t = this.ctx.currentTime;
+        if (channel === 'master') {
+          this.masterGain.gain.setTargetAtTime(this.mutes.master ? 0.0 : this.volumes.master, t, 0.02);
+        } else if (channel === 'fx') {
+          this.fxGain.gain.setTargetAtTime(this.mutes.fx ? 0.0 : this.volumes.fx, t, 0.02);
+        }
+        return this.mutes[channel];
+      }
+    }
+
+    const audioEngine = new RocketAudioEngine();
+
+    // Auto-resume audio on first user gesture
+    window.addEventListener('click', () => { audioEngine.init(); }, { once: true });
+    window.addEventListener('keydown', () => { audioEngine.init(); }, { once: true });
+
+    // Audio FX DOM Elements
+    const btnToggleSound = document.getElementById('btn-toggle-sound');
+    const audioControlPanel = document.getElementById('audio-control-panel');
+    const btnCloseAudio = document.getElementById('btn-close-audio');
+    const btnMuteMaster = document.getElementById('btn-mute-master');
+    const sliderVolMaster = document.getElementById('slider-vol-master');
+    const labelVolMaster = document.getElementById('label-vol-master');
+    const audioStatusPill = document.getElementById('audio-status-pill');
+
+    const ledMainThrust = document.getElementById('led-main-thrust');
+    const btnMuteMain = document.getElementById('btn-mute-main');
+    const sliderVolMain = document.getElementById('slider-vol-main');
+    const labelVolMain = document.getElementById('label-vol-main');
+
+    const ledRcsThrust = document.getElementById('led-rcs-thrust');
+    const btnMuteRcs = document.getElementById('btn-mute-rcs');
+    const sliderVolRcs = document.getElementById('slider-vol-rcs');
+    const labelVolRcs = document.getElementById('label-vol-rcs');
+
+    const btnMuteFx = document.getElementById('btn-mute-fx');
+    const sliderVolFx = document.getElementById('slider-vol-fx');
+    const labelVolFx = document.getElementById('label-vol-fx');
+    const btnTestFanfare = document.getElementById('btn-test-fanfare');
+
+    let celebrationPlayed = false;
+
+    // ========================================================
+    // --- 5B. Telemetry & Simulation Controller State ---
     // ========================================================
     let activeVehicle = 'starship'; // Default: Super Heavy Mechazilla Catch
     let cameraMode = 'tower';       // Default: Tower Cam looking at catch!
@@ -1753,6 +2184,8 @@
         currentEpisode = data;
         currentStepIdx = 0;
         currentTime_s = 0.0;
+        celebrationPlayed = false;
+        audioEngine.stopContinuous();
         timeScrubber.max = data.steps.length - 1;
         timeScrubber.value = 0;
 
@@ -1874,6 +2307,23 @@
       const leftOn = (rcsVal > 0.35 || s.gimbal_deg < -0.8 || s.vx < -0.3) && !isTerminal;
       const rightOn = (rcsVal < -0.35 || s.gimbal_deg > 0.8 || s.vx > 0.3) && !isTerminal;
       const mainOn = (throttle > 0.05) && !isTerminal;
+
+      // Real-time Sound Synthesis Modulation
+      if (isPlaying && !isTerminal) {
+        audioEngine.update(mainOn, throttle, leftOn, rightOn);
+      } else {
+        audioEngine.stopContinuous();
+      }
+
+      // Live LED indicators on audio control panel
+      if (ledMainThrust) {
+        ledMainThrust.style.background = (mainOn && isPlaying && !isTerminal) ? '#f97316' : '#475569';
+        ledMainThrust.style.boxShadow = (mainOn && isPlaying && !isTerminal) ? '0 0 10px #f97316' : 'none';
+      }
+      if (ledRcsThrust) {
+        ledRcsThrust.style.background = ((leftOn || rightOn) && isPlaying && !isTerminal) ? '#38bdf8' : '#475569';
+        ledRcsThrust.style.boxShadow = ((leftOn || rightOn) && isPlaying && !isTerminal) ? '0 0 10px #38bdf8' : 'none';
+      }
 
       if (activeVehicle === 'starship') {
         // Starship Plume Control
@@ -2000,6 +2450,7 @@
       flightPhaseBanner.textContent = s.phase || "AUTONOMOUS FLIGHT";
 
       if (isTerminal) {
+        audioEngine.stopContinuous();
         outcomeModal.style.display = 'block';
         const td = currentEpisode.touchdown || {
           x: s.x,
@@ -2060,6 +2511,10 @@
 
         if (isPerfect) {
           autoLearnConverged = true;
+          if (!celebrationPlayed) {
+            celebrationPlayed = true;
+            audioEngine.playCelebrationFanfare();
+          }
           btnAutoRelaunch.className = "action-btn success";
           btnAutoRelaunch.innerHTML = `🎉 Catch Converged (Attempt #${learnAttemptCount})`;
           flightPhaseBanner.textContent = "🎉 PERFECT MECHAZILLA CATCH CONVERGED!";
@@ -2218,10 +2673,18 @@
       isPlaying = !isPlaying;
       playIcon.textContent = isPlaying ? "⏸" : "▶";
       playLabel.textContent = isPlaying ? "Pause" : "Play";
+      if (!isPlaying) {
+        audioEngine.stopContinuous();
+      } else {
+        audioEngine.init();
+      }
     });
 
     btnReplay.addEventListener('click', () => {
       currentTime_s = 0.0;
+      celebrationPlayed = false;
+      audioEngine.stopContinuous();
+      audioEngine.init();
       updateInterpolatedState(0.0);
       isPlaying = true;
       playIcon.textContent = "⏸";
@@ -2246,6 +2709,9 @@
         currentTime_s = currentEpisode.steps[idx].t;
       } else {
         currentTime_s = idx * 0.1;
+      }
+      if (!isPlaying) {
+        audioEngine.stopContinuous();
       }
       updateInterpolatedState(currentTime_s);
     });
@@ -2281,6 +2747,84 @@
     camDeck.addEventListener('click', () => setCamera('deck'));
     camBooster.addEventListener('click', () => setCamera('booster'));
     camOrbit.addEventListener('click', () => setCamera('orbit'));
+
+    // ========================================================
+    // --- 8B. Propulsion Audio FX UI Controls ---
+    // ========================================================
+    btnToggleSound.addEventListener('click', () => {
+      audioEngine.init();
+      const isVis = audioControlPanel.style.display === 'block';
+      audioControlPanel.style.display = isVis ? 'none' : 'block';
+      if (!isVis) {
+        customDropPanel.style.display = 'none';
+        scenarioDrawer.style.display = 'none';
+      }
+    });
+
+    btnCloseAudio.addEventListener('click', () => {
+      audioControlPanel.style.display = 'none';
+    });
+
+    // 1. Master Audio
+    sliderVolMaster.addEventListener('input', (e) => {
+      const v = parseFloat(e.target.value);
+      labelVolMaster.textContent = `${Math.round(v * 100)}%`;
+      audioEngine.setVolume('master', v);
+    });
+
+    btnMuteMaster.addEventListener('click', () => {
+      const isMuted = audioEngine.toggleMute('master');
+      btnMuteMaster.textContent = isMuted ? '🔇 MUTED' : '🔊 ACTIVE';
+      btnMuteMaster.style.color = isMuted ? '#f87171' : 'var(--accent-cyan)';
+      btnMuteMaster.style.borderColor = isMuted ? '#ef4444' : 'rgba(56, 189, 248, 0.4)';
+    });
+
+    // 2. Main Engine Sound
+    sliderVolMain.addEventListener('input', (e) => {
+      const v = parseFloat(e.target.value);
+      labelVolMain.textContent = `${Math.round(v * 100)}%`;
+      audioEngine.setVolume('main', v);
+    });
+
+    btnMuteMain.addEventListener('click', () => {
+      const isMuted = audioEngine.toggleMute('main');
+      btnMuteMain.textContent = isMuted ? 'UNMUTE' : 'MUTE';
+      btnMuteMain.style.color = isMuted ? '#f87171' : '#94a3b8';
+      btnMuteMain.style.borderColor = isMuted ? '#ef4444' : 'rgba(255,255,255,0.15)';
+    });
+
+    // 3. RCS Attitude Thrusters Sound
+    sliderVolRcs.addEventListener('input', (e) => {
+      const v = parseFloat(e.target.value);
+      labelVolRcs.textContent = `${Math.round(v * 100)}%`;
+      audioEngine.setVolume('rcs', v);
+    });
+
+    btnMuteRcs.addEventListener('click', () => {
+      const isMuted = audioEngine.toggleMute('rcs');
+      btnMuteRcs.textContent = isMuted ? 'UNMUTE' : 'MUTE';
+      btnMuteRcs.style.color = isMuted ? '#f87171' : '#94a3b8';
+      btnMuteRcs.style.borderColor = isMuted ? '#ef4444' : 'rgba(255,255,255,0.15)';
+    });
+
+    // 4. Landing Celebration Fanfare
+    sliderVolFx.addEventListener('input', (e) => {
+      const v = parseFloat(e.target.value);
+      labelVolFx.textContent = `${Math.round(v * 100)}%`;
+      audioEngine.setVolume('fx', v);
+    });
+
+    btnMuteFx.addEventListener('click', () => {
+      const isMuted = audioEngine.toggleMute('fx');
+      btnMuteFx.textContent = isMuted ? 'UNMUTE' : 'MUTE';
+      btnMuteFx.style.color = isMuted ? '#f87171' : '#94a3b8';
+      btnMuteFx.style.borderColor = isMuted ? '#ef4444' : 'rgba(255,255,255,0.15)';
+    });
+
+    btnTestFanfare.addEventListener('click', () => {
+      audioEngine.init();
+      audioEngine.playCelebrationFanfare();
+    });
 
 
     // ========================================================
