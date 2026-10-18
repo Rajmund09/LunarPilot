@@ -73,7 +73,7 @@ else:
 ROCKET_CONFIG = RocketConfig.from_json("configs/rocketland/vehicle.json")
 SUICIDE_CONTROLLER = SuicideBurnController(ROCKET_CONFIG)
 
-ACTIVE_VEHICLE = "falcon"  # Default is the high-fidelity Falcon-9 simulation!
+ACTIVE_VEHICLE = "starship"  # Default is the Super Heavy Mechazilla catch simulation!
 ACTIVE_LUNAR_MODE = "expert"
 
 SESSION_STATS = {
@@ -85,9 +85,9 @@ SESSION_STATS = {
 }
 
 
-# --- Mode 1: RocketLand-2D Falcon-9 Drone Ship Simulation ---
-def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, wind=0.0, seed=None):
-    """Simulates Falcon-9 descent onto an autonomous spaceport drone ship."""
+# --- Mode 1: RocketLand-2D Super Heavy / Falcon-9 Simulation ---
+def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, wind=0.0, seed=None, vehicle="starship"):
+    """Simulates Super Heavy / Falcon-9 descent onto Mechazilla catch tower or autonomous drone ship."""
     global SESSION_STATS
 
     if seed is None:
@@ -209,11 +209,17 @@ def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, wind=0.0,
         outcome_str = raw_outcome or "TIMEOUT"
 
     if outcome_str == "LANDED_ON_PAD":
-        outcome_label = "TOUCHDOWN (Safe Landing on Droneship!)"
+        if vehicle == "starship":
+            outcome_label = "MECHAZILLA CATCH (Booster Secured by Launch Tower Chopsticks!)"
+        else:
+            outcome_label = "TOUCHDOWN (Safe Landing on Droneship!)"
         is_success = True
         is_crash = False
     elif outcome_str == "LANDED_OFF_PAD":
-        outcome_label = "TOUCHDOWN (Off-Pad Oceanic Landing)"
+        if vehicle == "starship":
+            outcome_label = "OFF-TOWER TOUCHDOWN (Missed Catch Envelope)"
+        else:
+            outcome_label = "TOUCHDOWN (Off-Pad Oceanic Landing)"
         is_success = False
         is_crash = False
     elif "HARD_LANDING" in outcome_str or "CRASH" in outcome_str or "TIPPED" in outcome_str:
@@ -233,9 +239,10 @@ def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, wind=0.0,
     else:
         SESSION_STATS["timeout_count"] += 1
 
+    veh_name = "Starship Super Heavy (Mechazilla Catch)" if vehicle == "starship" else "Falcon 9 (RocketLand-2D)"
     flight_summary = {
         "attempt": SESSION_STATS["total_attempts"],
-        "vehicle": "Falcon 9 (RocketLand-2D)",
+        "vehicle": veh_name,
         "outcome": outcome_label,
         "steps": step,
         "final_vy": round(float(vy_final), 2),
@@ -248,9 +255,9 @@ def simulate_rocket_episode(alt=None, x_offset=None, vx=None, vy=None, wind=0.0,
 
     return {
         "episode_id": f"FLIGHT-{SESSION_STATS['total_attempts']}",
-        "vehicle": "falcon",
-        "vehicle_name": "Falcon 9 Orbital Booster",
-        "environment": "droneship",
+        "vehicle": vehicle,
+        "vehicle_name": "Starship Super Heavy Booster" if vehicle == "starship" else "Falcon 9 Orbital Booster",
+        "environment": "mechazilla" if vehicle == "starship" else "droneship",
         "title": f"Flight #{SESSION_STATS['total_attempts']} — {outcome_label.split('(')[0].strip()}",
         "outcome": outcome_label,
         "is_success": is_success,
@@ -425,16 +432,16 @@ class LunarPilotRequestHandler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/next_flight":
             query = urllib.parse.parse_qs(parsed.query)
             vehicle = query.get("vehicle", [ACTIVE_VEHICLE])[0]
-            if vehicle in ("falcon", "artemis"):
+            if vehicle in ("starship", "falcon", "artemis"):
                 ACTIVE_VEHICLE = vehicle
 
-            if ACTIVE_VEHICLE == "falcon":
+            if ACTIVE_VEHICLE in ("starship", "falcon"):
                 # Randomized landing burn approach parameters (260-350m for 12-16s landing burn)
                 rx = round(random.uniform(-10.0, 10.0), 1)
                 ralt = round(random.uniform(260.0, 360.0), 0)
                 rvx = round(random.uniform(-1.5, 1.5), 1)
                 rvy = round(random.uniform(-45.0, -32.0), 1)
-                result = simulate_rocket_episode(alt=ralt, x_offset=rx, vx=rvx, vy=rvy)
+                result = simulate_rocket_episode(alt=ralt, x_offset=rx, vx=rvx, vy=rvy, vehicle=ACTIVE_VEHICLE)
             else:
                 if ACTIVE_LUNAR_MODE == "self_train":
                     TRAINING_MODEL.learn(total_timesteps=256, reset_num_timesteps=False, progress_bar=False)
@@ -446,7 +453,7 @@ class LunarPilotRequestHandler(SimpleHTTPRequestHandler):
             self._send_json(result)
             return
 
-        # 2. Simulate Falcon Rocket with custom parameters
+        # 2. Simulate Rocket with custom parameters
         if parsed.path == "/api/simulate_rocket":
             query = urllib.parse.parse_qs(parsed.query)
             try:
@@ -455,10 +462,11 @@ class LunarPilotRequestHandler(SimpleHTTPRequestHandler):
                 vx = float(query.get("vx", [0.0])[0])
                 vy = float(query.get("vy", [-65.0])[0])
                 wind = float(query.get("wind", [0.0])[0])
+                vehicle = query.get("vehicle", [ACTIVE_VEHICLE])[0]
             except ValueError:
-                alt, x, vx, vy, wind = 850.0, 0.0, 0.0, -65.0, 0.0
+                alt, x, vx, vy, wind, vehicle = 850.0, 0.0, 0.0, -65.0, 0.0, ACTIVE_VEHICLE
 
-            result = simulate_rocket_episode(alt=alt, x_offset=x, vx=vx, vy=vy, wind=wind)
+            result = simulate_rocket_episode(alt=alt, x_offset=x, vx=vx, vy=vy, wind=wind, vehicle=vehicle)
             self._send_json(result)
             return
 

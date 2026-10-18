@@ -5,14 +5,19 @@ import urllib.request
 def test_api_endpoints_live():
     base_url = "http://localhost:8080"
 
-    # 1. Test next_flight endpoint (Falcon)
-    req = urllib.request.urlopen(f"{base_url}/api/next_flight?vehicle=falcon")
+    # 1. Test next_flight endpoint (Starship & Falcon)
+    req = urllib.request.urlopen(f"{base_url}/api/next_flight?vehicle=starship")
     assert req.status == 200
     data = json.loads(req.read().decode())
     assert "vehicle" in data
-    assert data["vehicle"] == "falcon"
+    assert data["vehicle"] == "starship"
     assert "steps" in data
     assert len(data["steps"]) > 0
+
+    req = urllib.request.urlopen(f"{base_url}/api/next_flight?vehicle=falcon")
+    assert req.status == 200
+    data = json.loads(req.read().decode())
+    assert data["vehicle"] == "falcon"
 
     # 2. Test next_flight endpoint (Artemis)
     req = urllib.request.urlopen(f"{base_url}/api/next_flight?vehicle=artemis")
