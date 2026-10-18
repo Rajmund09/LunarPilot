@@ -398,6 +398,20 @@
       box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
     }
 
+    .thruster-pill.active-rcs {
+      background: rgba(56, 189, 248, 0.25) !important;
+      border-color: #38bdf8 !important;
+      color: #38bdf8 !important;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.6) !important;
+    }
+
+    .thruster-pill.active-main {
+      background: rgba(249, 115, 22, 0.25) !important;
+      border-color: #f97316 !important;
+      color: #fb923c !important;
+      box-shadow: 0 0 12px rgba(249, 115, 22, 0.6) !important;
+    }
+
     /* Bottom Timeline Dock */
     #timeline-dock {
       position: absolute;
@@ -672,6 +686,16 @@
     <div class="leg-sensor-row">
       <div class="leg-badge" id="badge-leg-left">LEFT LEG: FREE</div>
       <div class="leg-badge" id="badge-leg-right">RIGHT LEG: FREE</div>
+    </div>
+
+    <!-- Active Attitude Thrusters Live Status -->
+    <div style="margin-top: 10px;">
+      <div class="hud-label" style="font-size: 0.68rem; margin-bottom: 4px; letter-spacing: 0.5px; color: #94a3b8;">ATTITUDE THRUSTERS & BALANCING</div>
+      <div style="display: flex; gap: 4px;">
+        <div class="thruster-pill" id="badge-thrust-left" style="flex: 1; padding: 6px 3px; font-size: 0.68rem; text-align: center; border-radius: 6px; background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08); color: #64748b; font-weight: 700; transition: all 0.1s ease;">◀ L-THRUST</div>
+        <div class="thruster-pill" id="badge-thrust-main" style="flex: 1.2; padding: 6px 3px; font-size: 0.68rem; text-align: center; border-radius: 6px; background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08); color: #64748b; font-weight: 700; transition: all 0.1s ease;">▼ MAIN</div>
+        <div class="thruster-pill" id="badge-thrust-right" style="flex: 1; padding: 6px 3px; font-size: 0.68rem; text-align: center; border-radius: 6px; background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08); color: #64748b; font-weight: 700; transition: all 0.1s ease;">R-THRUST ▶</div>
+      </div>
     </div>
   </div>
 
@@ -953,12 +977,12 @@
     lunarGroup.add(earthMesh);
 
 
-    // --- 4. Complex 3D Falcon-9 Orbital Booster Model ---
-    // Root group positioned so that when rocket.position.y = 0, the feet rest on deck at y = 0.0!
+    // --- 4. 3D Vehicle Models: Falcon 9 Booster & Artemis Lunar Lander ---
+    // Root group positioned so that when rocket.position.y = 0, the feet rest on ground at y = 0.0!
     const rocket = new THREE.Group();
     scene.add(rocket);
 
-    // Materials
+    // --- Materials for Vehicles ---
     const fuselageWhiteMat = new THREE.MeshStandardMaterial({
       color: 0xf8fafc,
       roughness: 0.35,
@@ -984,40 +1008,56 @@
       roughness: 0.5,
       metalness: 0.7,
     });
+    const goldMylarMat = new THREE.MeshStandardMaterial({
+      color: 0xd4af37,
+      roughness: 0.25,
+      metalness: 0.85,
+    });
+    const lunarCabinMat = new THREE.MeshStandardMaterial({
+      color: 0xf1f5f9,
+      roughness: 0.4,
+      metalness: 0.2,
+    });
+    const windowGlassMat = new THREE.MeshStandardMaterial({
+      color: 0x0284c7,
+      roughness: 0.1,
+      metalness: 0.9,
+    });
 
-    // 4A. Fuselage Assembly (Diameter 3.7m, Length 40m)
-    // Feet touch deck at y = 0. Base of fuselage starts at y = 0.8.
-    const fuselageGroup = new THREE.Group();
-    rocket.add(fuselageGroup);
+    // ==========================================
+    // 4A. FALCON 9 ORBITAL BOOSTER (40m height)
+    // ==========================================
+    const falconGroup = new THREE.Group();
+    rocket.add(falconGroup);
 
     // Octaweb Engine Shield Ring (y = 0.8 to 2.0)
     const octawebGeo = new THREE.CylinderGeometry(1.85, 1.70, 1.2, 32);
     const octaweb = new THREE.Mesh(octawebGeo, engineMetalMat);
     octaweb.position.y = 1.4;
     octaweb.castShadow = true;
-    fuselageGroup.add(octaweb);
+    falconGroup.add(octaweb);
 
     // Main Cylindrical Propellant Tanks (y = 2.0 to 34.0, height 32m)
     const mainBodyGeo = new THREE.CylinderGeometry(1.85, 1.85, 32, 32);
     const mainBody = new THREE.Mesh(mainBodyGeo, fuselageWhiteMat);
     mainBody.position.y = 18.0;
     mainBody.castShadow = true;
-    fuselageGroup.add(mainBody);
+    falconGroup.add(mainBody);
 
     // Carbon Composite Interstage (Top black ring, y = 34.0 to 40.0)
     const interstageGeo = new THREE.CylinderGeometry(1.85, 1.85, 6.0, 32);
     const interstage = new THREE.Mesh(interstageGeo, interstageBlackMat);
     interstage.position.y = 37.0;
     interstage.castShadow = true;
-    fuselageGroup.add(interstage);
+    falconGroup.add(interstage);
 
     // Top Aerodynamic Nose Dome
     const domeGeo = new THREE.SphereGeometry(1.85, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
     const dome = new THREE.Mesh(domeGeo, interstageBlackMat);
     dome.position.y = 40.0;
-    fuselageGroup.add(dome);
+    falconGroup.add(dome);
 
-    // External Vertical Raceway / Avionics Spine (Dark conduits running down flanks)
+    // External Vertical Raceway / Avionics Spine
     function createRaceway(angle) {
       const racewayGeo = new THREE.BoxGeometry(0.2, 32, 0.3);
       const raceway = new THREE.Mesh(racewayGeo, interstageBlackMat);
@@ -1025,10 +1065,10 @@
       raceway.rotation.y = -angle;
       return raceway;
     }
-    fuselageGroup.add(createRaceway(0));
-    fuselageGroup.add(createRaceway(Math.PI));
+    falconGroup.add(createRaceway(0));
+    falconGroup.add(createRaceway(Math.PI));
 
-    // 4B. 4 Titanium Grid Fins (Top of Booster at y = 37.5)
+    // 4 Titanium Grid Fins (Top of Booster at y = 37.5)
     const gridFins = [];
     function createGridFin(angleY) {
       const pivot = new THREE.Group();
@@ -1042,7 +1082,6 @@
       frame.castShadow = true;
       finFrame.add(frame);
 
-      // Inner Grid Ribs
       for (let r = 0.3; r < 1.7; r += 0.3) {
         const rib = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.25, 1.1), titaniumFinMat);
         rib.position.x = r;
@@ -1050,7 +1089,7 @@
       }
 
       pivot.add(finFrame);
-      fuselageGroup.add(pivot);
+      falconGroup.add(pivot);
       gridFins.push(finFrame);
       return pivot;
     }
@@ -1059,31 +1098,38 @@
     createGridFin(Math.PI);
     createGridFin(-Math.PI / 2);
 
-    // 4C. Cold-Gas Nitrogen RCS Thruster Quads
-    const rcsPuffs = [];
-    function createRCSEmitter(angleY) {
-      const puffGeo = new THREE.ConeGeometry(0.4, 3.2, 12);
-      puffGeo.rotateZ(Math.PI / 2);
-      const puffMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.9 });
-      const puff = new THREE.Mesh(puffGeo, puffMat);
-      puff.position.set(Math.cos(angleY) * 3.2, 38.5, Math.sin(angleY) * 3.2);
-      puff.rotation.y = angleY;
-      puff.visible = false;
-      fuselageGroup.add(puff);
-      rcsPuffs.push(puff);
-      return puff;
+    // Prominent Cold-Gas Nitrogen RCS Thruster Jets on Falcon
+    function createFalconRCSTube(isLeft) {
+      const rcsGroup = new THREE.Group();
+      const posX = isLeft ? -1.95 : 1.95;
+      rcsGroup.position.set(posX, 37.5, 0);
+
+      const block = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.3, 0.3), titaniumFinMat);
+      rcsGroup.add(block);
+
+      const jetGeo = new THREE.ConeGeometry(0.5, 4.5, 12);
+      jetGeo.rotateZ(isLeft ? Math.PI / 2 : -Math.PI / 2);
+      const jetMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.95 });
+      const jet = new THREE.Mesh(jetGeo, jetMat);
+      jet.position.x = isLeft ? -2.25 : 2.25;
+      rcsGroup.add(jet);
+
+      const rcsLight = new THREE.PointLight(0x38bdf8, 3.5, 18);
+      rcsLight.position.x = isLeft ? -2.0 : 2.0;
+      rcsGroup.add(rcsLight);
+
+      rcsGroup.visible = false;
+      falconGroup.add(rcsGroup);
+      return rcsGroup;
     }
-    createRCSEmitter(0);
-    createRCSEmitter(Math.PI / 2);
-    createRCSEmitter(Math.PI);
-    createRCSEmitter(-Math.PI / 2);
+    const falconLeftRcs = createFalconRCSTube(true);
+    const falconRightRcs = createFalconRCSTube(false);
 
-    // 4D. TVC Gimballed Merlin 1D Engine Assembly (Base at y = 0.8)
+    // TVC Gimballed Merlin 1D Engine Assembly (Base at y = 0.8)
     const gimbalPivot = new THREE.Group();
-    gimbalPivot.position.set(0, 0.8, 0); // Gimbal pivot axis
-    fuselageGroup.add(gimbalPivot);
+    gimbalPivot.position.set(0, 0.8, 0);
+    falconGroup.add(gimbalPivot);
 
-    // Merlin Nozzle Bell
     const nozzleGeo = new THREE.CylinderGeometry(0.35, 0.95, 1.5, 32, 1, true);
     const nozzleMat = new THREE.MeshStandardMaterial({
       color: 0x334155,
@@ -1101,7 +1147,6 @@
     plumeGroup.position.y = -1.5;
     gimbalPivot.add(plumeGroup);
 
-    // Inner White Incandescent Core
     const coreFlameGeo = new THREE.ConeGeometry(0.75, 10.0, 16);
     coreFlameGeo.rotateX(Math.PI);
     const coreFlameMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 });
@@ -1109,7 +1154,6 @@
     coreFlame.position.y = -5.0;
     plumeGroup.add(coreFlame);
 
-    // Mach Shock Diamond Discs
     const diamondMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.9 });
     for (let d = 2.0; d < 8.0; d += 2.2) {
       const diamond = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.5, 16), diamondMat);
@@ -1118,7 +1162,6 @@
       plumeGroup.add(diamond);
     }
 
-    // Outer Expanding Transonic Plume
     const outerPlumeGeo = new THREE.ConeGeometry(1.6, 18.0, 16);
     outerPlumeGeo.rotateX(Math.PI);
     const outerPlumeMat = new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.45 });
@@ -1126,42 +1169,36 @@
     outerPlume.position.y = -9.0;
     plumeGroup.add(outerPlume);
 
-    // Dynamic Plume Light
     const plumeLight = new THREE.PointLight(0xf97316, 6.0, 80);
     plumeLight.position.y = -2.5;
     plumeGroup.add(plumeLight);
     plumeGroup.visible = false;
 
-    // 4E. 4 Articulated Carbon-Fiber Landing Legs
+    // 4 Articulated Carbon-Fiber Landing Legs for Falcon
     const landingLegs = [];
     function createArticulatedLandingLeg(angleY) {
       const legRoot = new THREE.Group();
       legRoot.position.set(Math.cos(angleY) * 1.85, 0.8, Math.sin(angleY) * 1.85);
       legRoot.rotation.y = angleY;
 
-      // Leg A-Frame Strut
       const strutGroup = new THREE.Group();
       const legGeo = new THREE.BoxGeometry(0.35, 11.0, 0.45);
       const legMesh = new THREE.Mesh(legGeo, carbonLegMat);
-      legMesh.position.y = 5.5; // Folded up along booster flank
+      legMesh.position.y = 5.5;
       legMesh.castShadow = true;
       strutGroup.add(legMesh);
 
-      // Footpad
-      const foot = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.4, 0.55, 0.15, 16),
-        engineMetalMat
-      );
+      const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.55, 0.15, 16), engineMetalMat);
       foot.position.set(0, 0.05, 0);
       strutGroup.add(foot);
 
       legRoot.add(strutGroup);
-      fuselageGroup.add(legRoot);
+      falconGroup.add(legRoot);
 
       landingLegs.push({
         root: legRoot,
         strut: strutGroup,
-        deployedAngle: 1.15, // Outward rotation in radians
+        deployedAngle: 1.15,
       });
       return legRoot;
     }
@@ -1169,6 +1206,171 @@
     createArticulatedLandingLeg(Math.PI / 2);
     createArticulatedLandingLeg(Math.PI);
     createArticulatedLandingLeg(-Math.PI / 2);
+
+    // ==========================================
+    // 4B. ARTEMIS HUMAN LUNAR LANDER (6m height)
+    // ==========================================
+    const artemisGroup = new THREE.Group();
+    rocket.add(artemisGroup);
+    artemisGroup.visible = false;
+
+    // 1. Octagonal Gold Mylar Foil Descent Base (y = 0.5 to 2.2)
+    const descentBaseGeo = new THREE.CylinderGeometry(2.2, 2.5, 1.8, 8);
+    const descentBase = new THREE.Mesh(descentBaseGeo, goldMylarMat);
+    descentBase.position.y = 1.35;
+    descentBase.castShadow = true;
+    artemisGroup.add(descentBase);
+
+    // 4 Gold Spherical Propellant Tanks
+    const tankGeo = new THREE.SphereGeometry(0.65, 16, 16);
+    for (let i = 0; i < 4; i++) {
+      const ang = (i * Math.PI) / 2 + Math.PI / 4;
+      const tank = new THREE.Mesh(tankGeo, goldMylarMat);
+      tank.position.set(Math.cos(ang) * 1.75, 1.4, Math.sin(ang) * 1.75);
+      tank.castShadow = true;
+      artemisGroup.add(tank);
+    }
+
+    // 2. White Pressurized Crew Cabin (Ascent Stage)
+    const cabinGeo = new THREE.BoxGeometry(2.6, 1.9, 2.4);
+    const cabin = new THREE.Mesh(cabinGeo, lunarCabinMat);
+    cabin.position.y = 2.85;
+    cabin.castShadow = true;
+    artemisGroup.add(cabin);
+
+    // Cockpit Triangular / Angled Windows (Front visor at +Z)
+    const winLeft = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.45, 0.1), windowGlassMat);
+    winLeft.position.set(-0.55, 3.1, 1.25);
+    winLeft.rotation.y = -0.15;
+    artemisGroup.add(winLeft);
+
+    const winRight = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.45, 0.1), windowGlassMat);
+    winRight.position.set(0.55, 3.1, 1.25);
+    winRight.rotation.y = 0.15;
+    artemisGroup.add(winRight);
+
+    // Top Docking Collar
+    const dockRing = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.35, 16), engineMetalMat);
+    dockRing.position.y = 3.95;
+    artemisGroup.add(dockRing);
+
+    // High-Gain Parabolic Communications Dish Antenna
+    const dishGeo = new THREE.SphereGeometry(0.55, 16, 8, 0, Math.PI * 2, 0, Math.PI / 3);
+    const dish = new THREE.Mesh(dishGeo, goldMylarMat);
+    dish.position.set(0.9, 4.35, -0.6);
+    dish.rotation.x = -Math.PI / 3;
+    artemisGroup.add(dish);
+
+    // 3. Cantilevered Lunar Landing Legs (4 Outrigger Legs)
+    function createLunarLeg(angleY) {
+      const legPivot = new THREE.Group();
+      legPivot.rotation.y = angleY;
+
+      const strutGeo = new THREE.CylinderGeometry(0.08, 0.08, 3.2, 12);
+      const strut = new THREE.Mesh(strutGeo, titaniumFinMat);
+      strut.position.set(0, 0.8, 2.1);
+      strut.rotation.x = 0.75;
+      strut.castShadow = true;
+      legPivot.add(strut);
+
+      const padGeo = new THREE.CylinderGeometry(0.45, 0.55, 0.1, 16);
+      const pad = new THREE.Mesh(padGeo, goldMylarMat);
+      pad.position.set(0, 0.05, 3.2);
+      legPivot.add(pad);
+
+      artemisGroup.add(legPivot);
+    }
+    createLunarLeg(Math.PI / 4);
+    createLunarLeg((3 * Math.PI) / 4);
+    createLunarLeg((-3 * Math.PI) / 4);
+    createLunarLeg(-Math.PI / 4);
+
+    // 4. Central Main Descent Engine & Plume
+    const artemisNozzle = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.25, 0.75, 1.0, 24, 1, true),
+      engineMetalMat
+    );
+    artemisNozzle.position.y = 0.35;
+    artemisGroup.add(artemisNozzle);
+
+    const artemisMainPlume = new THREE.Group();
+    artemisMainPlume.position.y = -0.15;
+    artemisGroup.add(artemisMainPlume);
+
+    const artemisFlameGeo = new THREE.ConeGeometry(0.6, 5.0, 16);
+    artemisFlameGeo.rotateX(Math.PI);
+    const artemisFlame = new THREE.Mesh(
+      artemisFlameGeo,
+      new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.85 })
+    );
+    artemisFlame.position.y = -2.5;
+    artemisMainPlume.add(artemisFlame);
+
+    const artemisFlameCore = new THREE.Mesh(
+      new THREE.ConeGeometry(0.35, 3.0, 16),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 })
+    );
+    artemisFlameCore.rotation.x = Math.PI;
+    artemisFlameCore.position.y = -1.5;
+    artemisMainPlume.add(artemisFlameCore);
+
+    const artemisMainLight = new THREE.PointLight(0xf97316, 5.0, 30);
+    artemisMainLight.position.y = -1.0;
+    artemisMainPlume.add(artemisMainLight);
+    artemisMainPlume.visible = false;
+
+    // 5. PROMINENT LEFT ATTITUDE THRUSTER POD & VISIBLE PLUME JET
+    function createArtemisThrusterCluster(isLeft) {
+      const cluster = new THREE.Group();
+      const posX = isLeft ? -1.9 : 1.9;
+      cluster.position.set(posX, 2.7, 0);
+
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.15, 0.15), engineMetalMat);
+      arm.position.x = isLeft ? 0.25 : -0.25;
+      cluster.add(arm);
+
+      const quadBlock = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.25, 0.25), titaniumFinMat);
+      cluster.add(quadBlock);
+
+      const nozzleCone = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.12, 0.25, 12, 1, true),
+        engineMetalMat
+      );
+      nozzleCone.rotation.z = isLeft ? Math.PI / 2 : -Math.PI / 2;
+      nozzleCone.position.x = isLeft ? -0.15 : 0.15;
+      cluster.add(nozzleCone);
+
+      const plumeJetGroup = new THREE.Group();
+
+      const plumeConeGeo = new THREE.ConeGeometry(0.45, 3.5, 16);
+      plumeConeGeo.rotateZ(isLeft ? Math.PI / 2 : -Math.PI / 2);
+      const plumeMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.9 });
+      const plumeMesh = new THREE.Mesh(plumeConeGeo, plumeMat);
+      plumeMesh.position.x = isLeft ? -1.9 : 1.9;
+      plumeJetGroup.add(plumeMesh);
+
+      const coreJetGeo = new THREE.ConeGeometry(0.25, 2.2, 16);
+      coreJetGeo.rotateZ(isLeft ? Math.PI / 2 : -Math.PI / 2);
+      const coreJet = new THREE.Mesh(
+        coreJetGeo,
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 })
+      );
+      coreJet.position.x = isLeft ? -1.25 : 1.25;
+      plumeJetGroup.add(coreJet);
+
+      const jetLight = new THREE.PointLight(0x38bdf8, 4.0, 15);
+      jetLight.position.x = isLeft ? -1.5 : 1.5;
+      plumeJetGroup.add(jetLight);
+
+      plumeJetGroup.visible = false;
+      cluster.add(plumeJetGroup);
+
+      artemisGroup.add(cluster);
+      return plumeJetGroup;
+    }
+
+    const artemisLeftPlume = createArtemisThrusterCluster(true);
+    const artemisRightPlume = createArtemisThrusterCluster(false);
 
 
     // --- 5. Application State & Telemetry ---
@@ -1207,6 +1409,9 @@
     const gaugeFuelFill = document.getElementById('gauge-fuel-fill');
     const badgeLegLeft = document.getElementById('badge-leg-left');
     const badgeLegRight = document.getElementById('badge-leg-right');
+    const badgeThrustLeft = document.getElementById('badge-thrust-left');
+    const badgeThrustMain = document.getElementById('badge-thrust-main');
+    const badgeThrustRight = document.getElementById('badge-thrust-right');
 
     const timeScrubber = document.getElementById('time-scrubber');
     const timeReadout = document.getElementById('time-readout');
@@ -1261,11 +1466,15 @@
 
     function updateEnvironmentVisuals() {
       if (activeVehicle === 'falcon') {
+        falconGroup.visible = true;
+        artemisGroup.visible = false;
         oceanGroup.visible = true;
         lunarGroup.visible = false;
         scene.fog.color.setHex(0x020617);
         hudVehicleTag.textContent = "Falcon-9 Telemetry";
       } else {
+        falconGroup.visible = false;
+        artemisGroup.visible = true;
         oceanGroup.visible = false;
         lunarGroup.visible = true;
         scene.fog.color.setHex(0x020208);
@@ -1314,55 +1523,86 @@
           left_contact: alpha > 0.5 ? s1.left_contact : s0.left_contact,
           right_contact: alpha > 0.5 ? s1.right_contact : s0.right_contact,
           phase: alpha > 0.5 ? s1.phase : s0.phase,
+          action: s0.action,
         };
       }
 
       currentStepIdx = idx;
 
       // 1. Precise Rocket 3D Position
-      const hFoot = Math.max(0.0, s.h_foot !== undefined ? s.h_foot : s.y - 20.0);
+      const hFoot = Math.max(0.0, s.h_foot !== undefined ? s.h_foot : (s.y - 20.0));
       rocket.position.set(s.x, hFoot, 0);
       rocket.rotation.z = s.theta;
 
-      // 2. TVC Gimballed Engine Nozzle
+      // 2. TVC Gimballed Engine Nozzle (Falcon 9)
       const gimbalRad = (s.gimbal_deg || 0.0) * (Math.PI / 180);
       gimbalPivot.rotation.z = gimbalRad;
 
-      // 3. Dynamic Volumetric Exhaust Plume
+      // 3. Dynamic Exhaust Plumes & Attitude Thrusters
       const throttle = s.throttle || 0.0;
-      if (throttle > 0.05 && !isTerminal) {
-        plumeGroup.visible = true;
-        const flameScale = Math.max(0.35, throttle);
-        const flicker = 0.96 + Math.random() * 0.08;
-        plumeGroup.scale.set(flameScale * flicker, flameScale * flicker, flameScale * flicker);
-        plumeLight.intensity = throttle * 6.5;
+
+      if (activeVehicle === 'falcon') {
+        if (throttle > 0.05 && !isTerminal) {
+          plumeGroup.visible = true;
+          const flameScale = Math.max(0.35, throttle);
+          const flicker = 0.96 + Math.random() * 0.08;
+          plumeGroup.scale.set(flameScale * flicker, flameScale * flicker, flameScale * flicker);
+          plumeLight.intensity = throttle * 6.5;
+        } else {
+          plumeGroup.visible = false;
+        }
+
+        // 4. Grid Fins Aerodynamic Deflection (Visibly cant to steer!)
+        const finCant = Math.max(-0.4, Math.min(0.4, -s.vx * 0.08 - s.gimbal_deg * 0.04));
+        gridFins[0].rotation.z = finCant;
+        gridFins[2].rotation.z = -finCant;
+        gridFins[1].rotation.x = Math.sin(time_s * 4.0) * 0.08;
+        gridFins[3].rotation.x = -Math.sin(time_s * 4.0) * 0.08;
+
+        // 5. Left & Right Cold-Gas Nitrogen Thrusters
+        const rcsVal = s.rcs_knm || 0.0;
+        const leftOn = (rcsVal > 0.4 || s.gimbal_deg < -1.0 || s.vx < -0.3) && !isTerminal;
+        const rightOn = (rcsVal < -0.4 || s.gimbal_deg > 1.0 || s.vx > 0.3) && !isTerminal;
+        const mainOn = (throttle > 0.05) && !isTerminal;
+
+        falconLeftRcs.visible = leftOn;
+        falconRightRcs.visible = rightOn;
+
+        if (badgeThrustLeft) badgeThrustLeft.className = leftOn ? "thruster-pill active-rcs" : "thruster-pill";
+        if (badgeThrustMain) badgeThrustMain.className = mainOn ? "thruster-pill active-main" : "thruster-pill";
+        if (badgeThrustRight) badgeThrustRight.className = rightOn ? "thruster-pill active-rcs" : "thruster-pill";
+
+        // 6. Articulated Landing Leg Deployment Animation
+        const deployProgress = Math.max(0.0, Math.min(1.0, (45.0 - hFoot) / 25.0));
+        landingLegs.forEach(leg => {
+          leg.strut.rotation.z = deployProgress * leg.deployedAngle;
+        });
+
+        // 7. Ground Effect Smoke Cloud
+        if (hFoot < 15.0 && throttle > 0.1) {
+          smokeMat.opacity = Math.max(0, (15.0 - hFoot) / 15.0) * 0.55;
+          smokeCloud.position.x = s.x;
+        } else {
+          smokeMat.opacity = 0.0;
+        }
       } else {
+        // ARTEMIS LUNAR LANDER MODE
+        const act = s.action !== undefined ? s.action : 0;
+        const leftOn = (act === 1) && !isTerminal;
+        const mainOn = (act === 2 || throttle > 0.2) && !isTerminal;
+        const rightOn = (act === 3) && !isTerminal;
+
+        artemisLeftPlume.visible = leftOn;
+        artemisRightPlume.visible = rightOn;
+        artemisMainPlume.visible = mainOn;
+
+        if (badgeThrustLeft) badgeThrustLeft.className = leftOn ? "thruster-pill active-rcs" : "thruster-pill";
+        if (badgeThrustMain) badgeThrustMain.className = mainOn ? "thruster-pill active-main" : "thruster-pill";
+        if (badgeThrustRight) badgeThrustRight.className = rightOn ? "thruster-pill active-rcs" : "thruster-pill";
+
         plumeGroup.visible = false;
-      }
-
-      // 4. Grid Fins Aerodynamic Deflection (Visibly cant to steer!)
-      const finCant = Math.max(-0.4, Math.min(0.4, -s.vx * 0.08 - s.gimbal_deg * 0.04));
-      gridFins[0].rotation.z = finCant;
-      gridFins[2].rotation.z = -finCant;
-      gridFins[1].rotation.x = Math.sin(time_s * 4.0) * 0.08;
-      gridFins[3].rotation.x = -Math.sin(time_s * 4.0) * 0.08;
-
-      // 5. RCS Cold-Gas Nitrogen Puffs (Visibly fires on active torque!)
-      const rcsVal = s.rcs_knm || 0.0;
-      rcsPuffs[0].visible = (rcsVal > 0.8 || s.gimbal_deg < -1.5);
-      rcsPuffs[2].visible = (rcsVal < -0.8 || s.gimbal_deg > 1.5);
-
-      // 6. Articulated Landing Leg Deployment Animation
-      const deployProgress = Math.max(0.0, Math.min(1.0, (45.0 - hFoot) / 25.0));
-      landingLegs.forEach(leg => {
-        leg.strut.rotation.z = deployProgress * leg.deployedAngle;
-      });
-
-      // 7. Ground Effect Smoke Cloud
-      if (hFoot < 15.0 && throttle > 0.1 && activeVehicle === 'falcon') {
-        smokeMat.opacity = Math.max(0, (15.0 - hFoot) / 15.0) * 0.55;
-        smokeCloud.position.x = s.x;
-      } else {
+        falconLeftRcs.visible = false;
+        falconRightRcs.visible = false;
         smokeMat.opacity = 0.0;
       }
 
@@ -1566,20 +1806,39 @@
 
       // Smooth Dynamic Camera Tracking
       if (cameraMode === 'chase') {
-        // Dramatic 3D isometric chase camera (fills screen, shows full vehicle perspective!)
-        const targetCamX = rocket.position.x * 0.5 + 14.0;
-        const targetCamY = rocket.position.y + 10.0;
-        const targetCamZ = 24.0;
-        camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.08);
-        camera.lookAt(rocket.position.x, rocket.position.y + 5.0, 0);
+        if (activeVehicle === 'falcon') {
+          // Falcon 9 is 40m tall: frame from Z = 58m, looking at height Y = rocket.y + 18m
+          // The ENTIRE 40m booster is now completely framed from nose to landing pad!
+          const targetCamX = rocket.position.x * 0.4 + 22.0;
+          const targetCamY = rocket.position.y + 20.0;
+          const targetCamZ = 58.0;
+          camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.08);
+          camera.lookAt(rocket.position.x, rocket.position.y + 18.0, 0);
+        } else {
+          // Artemis Lunar Lander is 6m tall: frame from Z = 16m, looking at height Y = rocket.y + 2.4m
+          // The entire Lunar Lander and its left/right attitude thrusters are fully framed!
+          const targetCamX = rocket.position.x * 0.5 + 8.0;
+          const targetCamY = rocket.position.y + 3.8;
+          const targetCamZ = 16.0;
+          camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.08);
+          camera.lookAt(rocket.position.x, rocket.position.y + 2.4, 0);
+        }
       } else if (cameraMode === 'deck') {
-        // Low-angle deck camera looking up at the incoming booster
-        camera.position.set(-18, 2.2, 24);
-        camera.lookAt(rocket.position.x, Math.max(1.5, rocket.position.y + 3.0), 0);
+        if (activeVehicle === 'falcon') {
+          camera.position.set(-24, 2.2, 34);
+          camera.lookAt(rocket.position.x, Math.max(1.5, rocket.position.y + 10.0), 0);
+        } else {
+          camera.position.set(-10, 1.5, 12);
+          camera.lookAt(rocket.position.x, Math.max(1.0, rocket.position.y + 2.0), 0);
+        }
       } else if (cameraMode === 'booster') {
-        // Interstage camera looking down along the fuselage
-        camera.position.set(rocket.position.x + 2.2, rocket.position.y + 36.0, 0.8);
-        camera.lookAt(rocket.position.x, rocket.position.y - 10.0, 0);
+        if (activeVehicle === 'falcon') {
+          camera.position.set(rocket.position.x + 2.4, rocket.position.y + 38.0, 0.8);
+          camera.lookAt(rocket.position.x, rocket.position.y - 10.0, 0);
+        } else {
+          camera.position.set(rocket.position.x + 1.2, rocket.position.y + 4.8, 1.2);
+          camera.lookAt(rocket.position.x, rocket.position.y - 2.0, 0);
+        }
       } else if (cameraMode === 'orbit') {
         controls.update();
       }
