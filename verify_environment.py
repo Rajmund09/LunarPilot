@@ -43,7 +43,7 @@ def verify():
         print("  - On Windows, install swig via conda/pip or ensure Visual C++ Build Tools exist.")
         sys.exit(1)
 
-    print(f"[OK] Environment successfully instantiated!")
+    print("[OK] Environment successfully instantiated!")
 
     print("\n[2/4] Inspecting Spaces...")
     obs, info = env.reset(seed=42)
@@ -61,7 +61,7 @@ def verify():
     truncated_count = 0
     total_steps = 0
 
-    for step in range(100):
+    for _step in range(100):
         action = env.action_space.sample()
         obs, reward, terminated, truncated, info = env.step(action)
         total_steps += 1

@@ -22,6 +22,16 @@
       "trained_on": "TRAIN_DISTURB",
       "eval_file": "results/metrics/robustness_g1.json",
       "registered_utc": "2026-10-18T06:37:24.224800+00:00"
+    },
+    {
+      "id": "ppo_rocketland_v1",
+      "name": "PPO RocketLand-2D Guidance Policy",
+      "env": "RocketLand-2D",
+      "path": "models\\rocketland_ppo\\rocket_ppo_best.zip",
+      "sha256": "331fe507df6aef95411d457c556bd8af99394e9a76cc675f4c7962ad250c0dfb",
+      "trained_on": "RocketLand-2D NOMINAL + BC Pretrain",
+      "val_success_rate": 0.0,
+      "eval_file": "results/metrics/rocketland_g2b.json"
     }
   ]
 }

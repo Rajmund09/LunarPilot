@@ -8,6 +8,7 @@ RocketLand-2D — Actuator Models (Appendix C & E)
 """
 
 from __future__ import annotations
+
 import numpy as np
 
 from rocketland.config import RocketConfig

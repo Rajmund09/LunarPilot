@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "nominal_success_rate": 0.0,
+  "nominal_ci95": [
+    0.0,
+    0.003826898586390522
+  ],
+  "robust_success_rate": 0.0,
+  "robust_ci95": [
+    0.0,
+    0.003826898586390522
+  ],
+  "g2b_passed": false,
+  "g2c_passed": false
+}

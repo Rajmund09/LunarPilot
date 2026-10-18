@@ -5,7 +5,6 @@ Tests for Phase 1 perturbation toolkit:
 - Initial velocity kicks
 """
 
-import numpy as np
 import gymnasium as gym
 
 from lunar_pilot.perturbations import PerturbedLunarLanderWrapper

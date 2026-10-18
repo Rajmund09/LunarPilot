@@ -6,6 +6,7 @@ Pure functions with zero gym dependencies:
 """
 
 from __future__ import annotations
+
 import numpy as np
 
 from rocketland.atmosphere import air_density

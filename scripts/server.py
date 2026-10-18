@@ -30,12 +30,12 @@ SRC_DIR = Path(__file__).resolve().parent.parent / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
+from lunar_pilot.outcomes import Outcome, classify_lunarlander_episode
 from lunar_pilot.utils import get_supported_env_id
-from lunar_pilot.outcomes import classify_lunarlander_episode, Outcome
 from rocketland.config import RocketConfig
+from rocketland.controllers.suicide_burn import SuicideBurnController
 from rocketland.env import RocketLand2DEnv
 from rocketland.sensors import make_observation
-from rocketland.controllers.suicide_burn import SuicideBurnController
 
 # --- Preload Models & Environments ---
 ENV_ID = get_supported_env_id("LunarLander-v3")
@@ -332,7 +332,7 @@ def simulate_lunar_episode(target_x=None, target_y=None, tilt_deg=None, seed=Non
             "omega_deg": round(float(np.degrees(ang_vel)), 2),
             "throttle": throttle,
             "thrust_kn": 45.0 if throttle > 0.5 else 0.0,
-            "gimbal_deg": 0.0,
+            "gimbal_deg": gimbal,
             "rcs_knm": rcs * 5.0,
             "fuel": round(max(0.0, 1000.0 - step * 1.5), 1),
             "left_contact": bool(left_leg),

@@ -7,9 +7,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-import numpy as np
-import matplotlib.pyplot as plt
+
 import gymnasium as gym
+import matplotlib.pyplot as plt
+import numpy as np
 
 from lunar_pilot.evaluation import run_episodes, summarize
 from lunar_pilot.perturbations import PerturbedLunarLanderWrapper
@@ -33,9 +34,9 @@ def run_stress_grid():
     print("[*] Running Robustness Stress Grid Evaluation...")
     for i, w in enumerate(wind_levels):
         for j, n in enumerate(noise_levels):
-            def env_factory():
-                base = gym.make("LunarLander-v3", enable_wind=(w > 0.0), wind_power=w, turbulence_power=w * 0.1)
-                return PerturbedLunarLanderWrapper(base, obs_noise_scale=n, seed=42)
+            def env_factory(cur_w=w, cur_n=n):
+                base = gym.make("LunarLander-v3", enable_wind=(cur_w > 0.0), wind_power=cur_w, turbulence_power=cur_w * 0.1)
+                return PerturbedLunarLanderWrapper(base, obs_noise_scale=cur_n, seed=42)
 
             records = run_episodes(
                 policy,

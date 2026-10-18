@@ -8,10 +8,10 @@ Registers robust model in models/registry.json.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-import hashlib
 
 import gymnasium as gym
 from stable_baselines3 import PPO
@@ -21,7 +21,6 @@ from stable_baselines3.common.env_util import make_vec_env
 from lunar_pilot.evaluation import run_episodes, summarize
 from lunar_pilot.perturbations import PerturbedLunarLanderWrapper
 from lunar_pilot.policies import SB3Policy
-from lunar_pilot.provenance import make_provenance
 from lunar_pilot.telemetry import TrainingTelemetryCallback
 
 

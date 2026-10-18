@@ -5,6 +5,7 @@ rho(y) = rho0 * exp(-y / H)
 """
 
 from __future__ import annotations
+
 import numpy as np
 
 

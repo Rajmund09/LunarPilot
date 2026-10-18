@@ -4,6 +4,9 @@ Provides sensor observation with Gaussian noise, bias, and optional delay.
 """
 
 from __future__ import annotations
+
+from collections import deque
+
 import numpy as np
 
 from rocketland.config import RocketConfig
@@ -62,3 +65,59 @@ def make_observation(
         obs += noise
 
     return obs
+
+
+class SensorSuite:
+    """
+    Realistic sensor model with per-channel noise, systematic bias, and transport delay.
+    """
+    def __init__(
+        self,
+        cfg: RocketConfig,
+        noise_std: float = 0.01,
+        bias_std: float = 0.005,
+        delay_steps: int = 0,
+        seed: int | None = None,
+    ):
+        self.cfg = cfg
+        self.noise_std = float(noise_std)
+        self.bias_std = float(bias_std)
+        self.delay_steps = int(delay_steps)
+        self.rng = np.random.default_rng(seed)
+        self.bias = self.rng.normal(0.0, self.bias_std, size=(12,)).astype(np.float32)
+        # Binary switches have zero bias
+        self.bias[10] = 0.0
+        self.bias[11] = 0.0
+        self.buffer: deque[np.ndarray] = deque(maxlen=max(1, self.delay_steps + 1))
+
+    def reset(self, seed: int | None = None):
+        if seed is not None:
+            self.rng = np.random.default_rng(seed)
+        self.bias = self.rng.normal(0.0, self.bias_std, size=(12,)).astype(np.float32)
+        self.bias[10] = 0.0
+        self.bias[11] = 0.0
+        self.buffer.clear()
+
+    def observe(
+        self,
+        state: np.ndarray,
+        throttle: float,
+        gimbal_deg: float,
+        contacts: tuple[bool, bool],
+    ) -> np.ndarray:
+        raw_obs = make_observation(
+            state, throttle, gimbal_deg, contacts, self.cfg, obs_noise_scale=0.0, rng=self.rng
+        )
+        corrupted = raw_obs.copy()
+        if self.noise_std > 0.0:
+            noise = self.rng.normal(0.0, self.noise_std, size=(12,)).astype(np.float32)
+            noise[10] = 0.0
+            noise[11] = 0.0
+            corrupted += noise + self.bias
+        else:
+            corrupted += self.bias
+
+        self.buffer.append(corrupted)
+        if len(self.buffer) > self.delay_steps:
+            return self.buffer[0]
+        return corrupted

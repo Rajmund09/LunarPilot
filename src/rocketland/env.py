@@ -9,17 +9,17 @@ RocketLand-2D — Gymnasium Environment (P2.4, Appendix E & F)
 from __future__ import annotations
 
 from typing import Any
-import numpy as np
+
 import gymnasium as gym
+import numpy as np
 from gymnasium import spaces
 
-from rocketland.config import RocketConfig
-from rocketland.actuators import ActuatorState
-from rocketland.atmosphere import air_density
-from rocketland.contact import contact_forces, foot_positions
-from rocketland.dynamics import rk4_step, derivatives
-from rocketland.sensors import make_observation
 from lunar_pilot.outcomes import Outcome
+from rocketland.actuators import ActuatorState
+from rocketland.config import RocketConfig
+from rocketland.contact import contact_forces, foot_positions
+from rocketland.dynamics import derivatives
+from rocketland.sensors import make_observation
 
 
 class RocketLand2DEnv(gym.Env):

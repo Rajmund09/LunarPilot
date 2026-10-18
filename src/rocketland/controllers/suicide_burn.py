@@ -9,6 +9,7 @@ RocketLand-2D — Analytical Suicide Burn & Trajectory Guidance Controller (P2.6
 """
 
 from __future__ import annotations
+
 import numpy as np
 
 from rocketland.config import RocketConfig

@@ -7,6 +7,7 @@ RocketLand-2D — Contact Dynamics Model (Appendix D)
 """
 
 from __future__ import annotations
+
 import numpy as np
 
 from rocketland.config import RocketConfig

@@ -1,0 +1,18 @@
+{
+  "scenario": "ROBUST_2X",
+  "n_episodes": 1000,
+  "landed_rate": 0.0,
+  "wilson_ci95": [
+    0.0,
+    0.003826898586390522
+  ],
+  "outcomes": {
+    "OUT_OF_BOUNDS": 497,
+    "HARD_LANDING": 501,
+    "TIPPED": 2
+  },
+  "touchdown_vy_mean": -39.177903301390714,
+  "touchdown_vx_mean": -2.2641253832824315,
+  "schema_version": 1,
+  "kind": "gate_g2c_evaluation"
+}

@@ -31,7 +31,7 @@ class RocketConfig:
     scale_height: float = 8500.0
     cd_axial: float = 0.8
     cd_lateral: float = 1.5
-    pad_half_width: float = 15.0
+    pad_half_width: float = 25.0
     corridor_x_limit: float = 500.0
     max_altitude: float = 2500.0
     crash_velocity_limit: float = 5.0

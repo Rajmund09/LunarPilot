@@ -5,6 +5,7 @@ Records rewards, episode lengths, crash rates, and landing success rates.
 """
 
 import sys
+
 if hasattr(sys.stdout, "reconfigure"):
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -12,8 +13,9 @@ if hasattr(sys.stdout, "reconfigure"):
     except Exception:
         pass
 
-import os
 import json
+import os
+
 import gymnasium as gym
 import numpy as np
 

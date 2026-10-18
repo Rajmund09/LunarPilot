@@ -1,10 +1,11 @@
-import numpy as np
-from rocketland.config import RocketConfig
-from rocketland.env import RocketLand2DEnv
-from rocketland.controllers.suicide_burn import SuicideBurnController
-from stable_baselines3 import PPO
 import gymnasium as gym
+import numpy as np
+from stable_baselines3 import PPO
+
 from lunar_pilot.utils import get_supported_env_id
+from rocketland.config import RocketConfig
+from rocketland.controllers.suicide_burn import SuicideBurnController
+from rocketland.env import RocketLand2DEnv
 
 cfg = RocketConfig.from_json('configs/rocketland/vehicle.json')
 
@@ -21,7 +22,7 @@ while not done and step < 500:
     obs, r, term, trunc, info = env_null.step(np.array([-1.0, 0.0, 0.0])) # Engine completely OFF
     done = term or trunc
     step += 1
-print(f"[TEST 1A: ZERO CONTROL / FREE FALL]")
+print("[TEST 1A: ZERO CONTROL / FREE FALL]")
 print(f"  Result: {info.get('outcome')}")
 print(f"  Touchdown Speed: {env_null.state[3]:.1f} m/s (Crashed into ocean at catastrophic speed)")
 
@@ -39,8 +40,8 @@ while not done:
     obs, r, term, trunc, info = env_right.step(act)
     done = term or trunc
 
-print(f"\n[TEST 1B: START OFFSET +8.0 METERS TO THE RIGHT]")
-print(f"  Initial Position: X = +8.0 m, Vx = +1.2 m/s")
+print("\n[TEST 1B: START OFFSET +8.0 METERS TO THE RIGHT]")
+print("  Initial Position: X = +8.0 m, Vx = +1.2 m/s")
 print(f"  Max TVC Steering Gimbal: {max(gimbals):.1f}° (nozzle angled to push vehicle back left)")
 print(f"  Final Touchdown Position: X = {env_right.state[0]:.2f} m (Centered on pad!)")
 print(f"  Final Touchdown Speed: Vy = {env_right.state[3]:.2f} m/s")
@@ -59,8 +60,8 @@ while not done:
     obs, r, term, trunc, info = env_left.step(act)
     done = term or trunc
 
-print(f"\n[TEST 1C: START OFFSET -8.0 METERS TO THE LEFT]")
-print(f"  Initial Position: X = -8.0 m, Vx = -1.2 m/s")
+print("\n[TEST 1C: START OFFSET -8.0 METERS TO THE LEFT]")
+print("  Initial Position: X = -8.0 m, Vx = -1.2 m/s")
 print(f"  Min TVC Steering Gimbal: {min(gimbals_neg):.1f}° (nozzle angled opposite direction to push vehicle right)")
 print(f"  Final Touchdown Position: X = {env_left.state[0]:.2f} m (Centered on pad!)")
 print(f"  Final Touchdown Speed: Vy = {env_left.state[3]:.2f} m/s")
@@ -79,7 +80,7 @@ obs, _ = env_lunar.reset(seed=101)
 env_lunar.unwrapped.lander.angle = float(np.radians(20.0)) # Tilt left
 obs, _, _, _, _ = env_lunar.step(0)
 act_tilt_left, _ = model.predict(obs, deterministic=True)
-print(f"[TEST 2A: TILTED +20°]")
+print("[TEST 2A: TILTED +20°]")
 print(f"  Model Observation Tilt: {np.degrees(obs[4]):.1f}°")
 print(f"  PPO Action Output: {int(act_tilt_left)} -> {['Coast', 'Fire LEFT Engine', 'Fire MAIN Engine', 'Fire RIGHT Engine'][int(act_tilt_left)]}")
 
@@ -88,7 +89,7 @@ obs, _ = env_lunar.reset(seed=101)
 env_lunar.unwrapped.lander.angle = float(np.radians(-20.0)) # Tilt right
 obs, _, _, _, _ = env_lunar.step(0)
 act_tilt_right, _ = model.predict(obs, deterministic=True)
-print(f"\n[TEST 2B: TILTED -20°]")
+print("\n[TEST 2B: TILTED -20°]")
 print(f"  Model Observation Tilt: {np.degrees(obs[4]):.1f}°")
 print(f"  PPO Action Output: {int(act_tilt_right)} -> {['Coast', 'Fire LEFT Engine', 'Fire MAIN Engine', 'Fire RIGHT Engine'][int(act_tilt_right)]}")
 
