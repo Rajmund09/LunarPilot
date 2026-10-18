@@ -67,7 +67,8 @@ def run_episodes(
             touchdown: dict | None = None
             done = False
 
-            while not done:
+            max_steps = 1000
+            while not done and ep_len < max_steps:
                 action = policy_fn(obs)
                 action_counts[action] = action_counts.get(action, 0) + 1
                 obs, reward, terminated, truncated, info = env.step(action)
@@ -75,9 +76,19 @@ def run_episodes(
                 ep_len += 1
                 done = terminated or truncated
 
-                if done:
-                    outcome = info.get("outcome")
-                    touchdown = info.get("touchdown")
+            if not done and ep_len >= max_steps:
+                # Force truncation if environment didn't truncate
+                truncated = True
+                done = True
+                info["outcome"] = "TIMEOUT"
+                info["touchdown"] = {
+                    "x": float(obs[0]), "y": float(obs[1]), "vx": float(obs[2]), "vy": float(obs[3]),
+                    "theta": float(obs[4]), "omega": float(obs[5]), "abs_x": abs(float(obs[0])),
+                    "left_contact": bool(obs[6] > 0.5), "right_contact": bool(obs[7] > 0.5),
+                }
+
+            outcome = info.get("outcome")
+            touchdown = info.get("touchdown")
 
             env.close()
 

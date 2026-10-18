@@ -111,8 +111,10 @@ def classify_lunarlander_episode(
     if uw.game_over:
         return Outcome.CRASH, touchdown
 
-    # Branch 3: out of bounds (normalised x >= 1.0 means lander left the visible area)
-    if abs(x) >= 1.0:
+    raw_x = x
+    if hasattr(uw, "lander") and uw.lander and hasattr(uw.lander, "position"):
+        raw_x = (float(uw.lander.position.x) - 10.0) / 10.0
+    if abs(x) >= 1.0 or abs(raw_x) >= 1.0:
         return Outcome.OUT_OF_BOUNDS, touchdown
 
     # Branch 4: lander came to rest (not awake)

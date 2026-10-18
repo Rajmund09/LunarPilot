@@ -54,24 +54,28 @@ class LunarCeilingWrapper(gym.Wrapper):
 
 TRAINING_ENV = LunarCeilingWrapper(gym.make(ENV_ID))
 
-# Default live training model starts from 200k checkpoint (descends towards lunar pad, does not fly up!)
-if os.path.exists(CHECKPOINT_200K):
-    print(f"[*] Initializing Live Self-Training Agent from Cadet Checkpoint: {CHECKPOINT_200K}")
+# Default live training model starts from best trained model
+if os.path.exists(BEST_MODEL_PATH):
+    print(f"[*] Initializing Live Agent from Best Model: {BEST_MODEL_PATH}")
+    TRAINING_MODEL = PPO.load(BEST_MODEL_PATH, env=TRAINING_ENV)
+    CURRENT_STAGE = "expert"
+elif os.path.exists(CHECKPOINT_200K):
+    print(f"[*] Initializing Live Agent from Checkpoint: {CHECKPOINT_200K}")
     TRAINING_MODEL = PPO.load(CHECKPOINT_200K, env=TRAINING_ENV)
     CURRENT_STAGE = "cadet"
 else:
-    print("[*] Checkpoint 200k not found, initializing fresh training agent")
+    print("[*] Initializing fresh training agent")
     TRAINING_MODEL = PPO("MlpPolicy", TRAINING_ENV, n_steps=256, batch_size=64, n_epochs=4, learning_rate=5e-4, verbose=0)
     CURRENT_STAGE = "scratch"
 
-ACTIVE_MODE = "self_train"
+ACTIVE_MODE = "expert"
 
 SESSION_STATS = {
     "total_attempts": 0,
     "success_count": 0,
     "crash_count": 0,
     "timeout_count": 0,
-    "trained_timesteps": 200000 if CURRENT_STAGE == "cadet" else 0,
+    "trained_timesteps": 500000 if CURRENT_STAGE == "expert" else 0,
     "all_rewards": [],
     "recent_flights": [],
 }
@@ -108,7 +112,7 @@ def simulate_episode(model, target_x=None, target_y=None, tilt_deg=None, seed=No
     step = 0
     lost_in_space = False
 
-    while not done and step < 600:
+    while not done and step < 1000:
         action, _ = model.predict(obs, deterministic=True)
         action = int(action)
 
@@ -156,18 +160,41 @@ def simulate_episode(model, target_x=None, target_y=None, tilt_deg=None, seed=No
         obs = next_obs
         step += 1
 
+    from lunar_pilot.outcomes import classify_lunarlander_episode, Outcome
+
     x, y, vx, vy, angle, ang_vel, left_leg, right_leg = [float(v) for v in obs]
-    is_success = cumulative_reward >= 80 and (bool(left_leg) or bool(right_leg)) and not lost_in_space
-    is_crash = done and (cumulative_reward <= -80 or lost_in_space)
 
     if lost_in_space:
         outcome = "ABORT: LOST IN SPACE (-100 Penalty)"
-    elif is_success:
-        outcome = "TOUCHDOWN (Safe Landing!)"
-    elif is_crash:
-        outcome = "CRASHED (-100 Penalty)"
+        is_success = False
+        is_crash = True
     else:
-        outcome = "OUT OF TIME"
+        try:
+            detected_outcome, _ = classify_lunarlander_episode(env, terminated, truncated, obs)
+            if detected_outcome == Outcome.LANDED_ON_PAD:
+                outcome = "TOUCHDOWN (Safe Landing!)"
+                is_success = True
+                is_crash = False
+            elif detected_outcome == Outcome.LANDED_OFF_PAD:
+                outcome = "TOUCHDOWN (Off-Pad)"
+                is_success = False
+                is_crash = False
+            elif detected_outcome == Outcome.CRASH:
+                outcome = "CRASHED (-100 Penalty)"
+                is_success = False
+                is_crash = True
+            elif detected_outcome == Outcome.OUT_OF_BOUNDS:
+                outcome = "OUT OF BOUNDS"
+                is_success = False
+                is_crash = True
+            else:
+                outcome = "OUT OF TIME"
+                is_success = False
+                is_crash = False
+        except Exception:
+            is_success = cumulative_reward >= 80 and (bool(left_leg) or bool(right_leg))
+            is_crash = done and cumulative_reward <= -80
+            outcome = "TOUCHDOWN (Safe Landing!)" if is_success else ("CRASHED (-100 Penalty)" if is_crash else "OUT OF TIME")
 
     SESSION_STATS["total_attempts"] += 1
     SESSION_STATS["all_rewards"].append(round(cumulative_reward, 1))
