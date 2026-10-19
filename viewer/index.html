@@ -861,6 +861,183 @@
       border-color: rgba(255, 255, 255, 0.16);
       color: #fff;
     }
+
+    /* Attempt History & ILC Convergence Drawer */
+    #attempt-history-panel {
+      position: absolute;
+      top: 72px;
+      right: 16px;
+      z-index: 40;
+      width: 560px;
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
+      background: var(--panel-bg-elevated);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 16px;
+      box-shadow: 0 24px 64px -8px rgba(0, 0, 0, 0.95), 0 0 0 1px var(--panel-border-subtle);
+      display: none;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .badge-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 9px;
+      background: rgba(56, 189, 248, 0.18);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+
+    .hud-attempt-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.64rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 5px;
+      padding: 4px 8px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      letter-spacing: 0.04em;
+    }
+
+    .history-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .history-summary-cell {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+
+    .history-summary-cell .cell-title {
+      font-size: 0.60rem;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+
+    .history-summary-cell .cell-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #fff;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .history-table-container {
+      border: 1px solid var(--panel-border);
+      border-radius: 7px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.25);
+      margin-bottom: 10px;
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .history-table th {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-tertiary);
+      font-weight: 600;
+      text-align: left;
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--panel-border);
+      text-transform: uppercase;
+      font-size: 0.62rem;
+      letter-spacing: 0.05em;
+    }
+
+    .history-table td {
+      padding: 7px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text-secondary);
+    }
+
+    .history-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .history-table tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .delta-good {
+      color: var(--nominal-text);
+      font-weight: 600;
+    }
+
+    .delta-bad {
+      color: var(--alert-text);
+      font-weight: 600;
+    }
+
+    .table-btn-replay {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--panel-border);
+      color: var(--text-primary);
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 0.62rem;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: var(--transition-smooth);
+    }
+
+    .table-btn-replay:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: #fff;
+    }
+
+    .view-history-btn {
+      width: 100%;
+      padding: 7px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent-cyan);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: var(--transition-smooth);
+    }
+
+    .view-history-btn:hover {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: rgba(56, 189, 248, 0.6);
+      color: #fff;
+    }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -900,6 +1077,10 @@
 
     <!-- Header Operations Controls -->
     <div class="header-actions">
+      <button class="action-btn" id="btn-toggle-history" style="border-color: rgba(56, 189, 248, 0.35);">
+        <span>Attempts</span>
+        <span class="badge-count" id="badge-attempt-count">1</span>
+      </button>
       <button class="action-btn" id="btn-toggle-sound">
         <span>Acoustics</span>
       </button>
@@ -925,6 +1106,12 @@
     <div class="hud-header">
       <span id="hud-vehicle-tag">Super Heavy Telemetry</span>
       <span id="hud-step-tag">T+0.0s</span>
+    </div>
+
+    <!-- Live Attempt & Learning Status Pill -->
+    <div class="hud-attempt-pill" id="hud-attempt-pill">
+      <span id="hud-attempt-label">ATTEMPT #1 &bull; BASELINE</span>
+      <span id="hud-attempt-status" style="color: var(--caution-text);">LEARNING ACTIVE</span>
     </div>
 
     <!-- Altitude Primary Metric -->
@@ -1179,10 +1366,85 @@
     </button>
   </div>
 
+  <!-- Attempt History & Learning Proof Drawer -->
+  <div id="attempt-history-panel">
+    <div class="hud-header">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 0.74rem; color: #fff; font-weight: 700;">FLIGHT ATTEMPT LOG & ILC PROGRESSION</span>
+        <span class="badge-count" id="history-total-badge">1</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button id="btn-clear-history" style="background: transparent; border: 1px solid var(--panel-border); border-radius: 4px; padding: 2px 7px; color: var(--text-tertiary); font-size: 0.65rem; cursor: pointer; font-family: 'JetBrains Mono', monospace;">Clear</button>
+        <span style="cursor: pointer; font-size: 0.95rem;" id="btn-close-history">✕</span>
+      </div>
+    </div>
+    <div style="font-size: 0.70rem; color: var(--text-tertiary); margin-bottom: 12px; line-height: 1.4;">
+      Telemetry records proving vehicle convergence across attempts. Iterative Learning Control (ILC) adjusts target lead bias and bank authority to systematically eliminate previous touchdown errors.
+    </div>
+
+    <!-- Summary Metrics Grid -->
+    <div class="history-summary-grid">
+      <div class="history-summary-cell">
+        <div class="cell-title">Total Attempts</div>
+        <div class="cell-value" id="summary-attempts">1</div>
+      </div>
+      <div class="history-summary-cell">
+        <div class="cell-title">Error Δ (Pad Offset)</div>
+        <div class="cell-value" id="summary-delta-x" style="color: var(--nominal-text);">--</div>
+      </div>
+      <div class="history-summary-cell">
+        <div class="cell-title">Tilt Δ (Verticality)</div>
+        <div class="cell-value" id="summary-delta-tilt" style="color: var(--nominal-text);">--</div>
+      </div>
+      <div class="history-summary-cell">
+        <div class="cell-title">Convergence</div>
+        <div class="cell-value" id="summary-convergence" style="color: var(--caution-text);">In Progress</div>
+      </div>
+    </div>
+
+    <!-- Visual Error Reduction Bar Chart -->
+    <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid var(--panel-border); border-radius: 7px; padding: 10px; margin-bottom: 12px;">
+      <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-tertiary); margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase;">
+        <span>Lateral Pad Offset Progression (|X| vs 1.8m Catch Limit)</span>
+        <span id="chart-best-offset" style="color: var(--nominal-text);">Target: &le;1.8m</span>
+      </div>
+      <div id="history-chart-container" style="display: flex; flex-direction: column; gap: 6px;">
+        <!-- Dynamic attempt error bars render here -->
+      </div>
+    </div>
+
+    <!-- Full Telemetry Records Table -->
+    <div class="history-table-container">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Offset (X)</th>
+            <th>Tilt (θ)</th>
+            <th>Vy</th>
+            <th>ILC Correction</th>
+            <th>Outcome</th>
+            <th>Replay</th>
+          </tr>
+        </thead>
+        <tbody id="history-table-body">
+          <!-- Dynamic attempt rows render here -->
+        </tbody>
+      </table>
+    </div>
+
+    <div style="font-size: 0.65rem; color: var(--text-dim); text-align: center; font-family: 'JetBrains Mono', monospace;">
+      Click "Replay" on any attempt above to inspect its flight trajectory and controls.
+    </div>
+  </div>
+
   <!-- Touchdown Outcome Modal -->
   <div id="outcome-modal">
     <div style="font-weight: 600; margin-bottom: 6px; font-size: 0.82rem; letter-spacing: 0.04em;" id="outcome-title">TOUCHDOWN</div>
     <div style="font-size: 0.72rem; color: var(--text-secondary); line-height: 1.5;" id="outcome-desc">Evaluating landing criteria...</div>
+    <button class="view-history-btn" id="btn-outcome-history">
+      <span>📊 Inspect Attempt Records & Improvement Proof</span>
+    </button>
   </div>
 
   <!-- Bottom Timeline Dock -->
@@ -2870,6 +3132,222 @@
     const outcomeTitle = document.getElementById('outcome-title');
     const outcomeDesc = document.getElementById('outcome-desc');
 
+    // Attempt History DOM Elements & State
+    const btnToggleHistory = document.getElementById('btn-toggle-history');
+    const badgeAttemptCount = document.getElementById('badge-attempt-count');
+    const attemptHistoryPanel = document.getElementById('attempt-history-panel');
+    const btnCloseHistory = document.getElementById('btn-close-history');
+    const btnClearHistory = document.getElementById('btn-clear-history');
+    const historyTotalBadge = document.getElementById('history-total-badge');
+    const summaryAttempts = document.getElementById('summary-attempts');
+    const summaryDeltaX = document.getElementById('summary-delta-x');
+    const summaryDeltaTilt = document.getElementById('summary-delta-tilt');
+    const summaryConvergence = document.getElementById('summary-convergence');
+    const historyChartContainer = document.getElementById('history-chart-container');
+    const historyTableBody = document.getElementById('history-table-body');
+    const hudAttemptPill = document.getElementById('hud-attempt-pill');
+    const hudAttemptLabel = document.getElementById('hud-attempt-label');
+    const hudAttemptStatus = document.getElementById('hud-attempt-status');
+    const btnOutcomeHistory = document.getElementById('btn-outcome-history');
+
+    let flightAttemptsHistory = [];
+    let recordedAttemptSet = new Set();
+
+    function recordCompletedAttempt(s, td, isPerfect) {
+      const epId = (currentEpisode && currentEpisode.episode_id) || `ATTEMPT-${learnAttemptCount}`;
+      if (recordedAttemptSet.has(epId)) return;
+      recordedAttemptSet.add(epId);
+
+      const finalTilt = Math.abs(td.tilt_deg !== undefined ? td.tilt_deg : s.tilt_deg);
+      const finalX = Math.abs(td.abs_x !== undefined ? td.abs_x : Math.abs(s.x));
+      const rawX = td.x !== undefined ? td.x : s.x;
+      const finalVy = Math.abs(td.vy !== undefined ? td.vy : Math.abs(s.vy));
+      const finalVx = Math.abs(td.vx !== undefined ? td.vx : Math.abs(s.vx));
+
+      const rec = {
+        attempt: learnAttemptCount,
+        episodeId: epId,
+        vehicle: activeVehicle,
+        rawX: rawX,
+        absX: finalX,
+        tilt: finalTilt,
+        vy: finalVy,
+        vx: finalVx,
+        fuel: td.fuel_remaining_kg || s.fuel,
+        learning: currentEpisode && currentEpisode.learning ? { ...currentEpisode.learning } : null,
+        isSuccess: isPerfect,
+        steps: currentEpisode && currentEpisode.steps ? [...currentEpisode.steps] : [],
+        duration_s: currentEpisode ? currentEpisode.duration_s : (s.t || 0.0),
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      };
+
+      flightAttemptsHistory.push(rec);
+      updateAttemptHistoryUI();
+    }
+
+    function updateAttemptHistoryUI() {
+      const total = flightAttemptsHistory.length;
+      if (total === 0) return;
+
+      badgeAttemptCount.textContent = total;
+      historyTotalBadge.textContent = total;
+      summaryAttempts.textContent = total;
+
+      const latest = flightAttemptsHistory[total - 1];
+      const first = flightAttemptsHistory[0];
+
+      if (total > 1) {
+        const errorReductionM = first.absX - latest.absX;
+        const errorReductionPct = first.absX > 0.01 ? Math.round((errorReductionM / first.absX) * 100) : 0;
+        
+        if (errorReductionM >= 0) {
+          summaryDeltaX.textContent = `-${errorReductionM.toFixed(2)}m (${errorReductionPct}%)`;
+          summaryDeltaX.style.color = "var(--nominal-text)";
+        } else {
+          summaryDeltaX.textContent = `+${Math.abs(errorReductionM).toFixed(2)}m`;
+          summaryDeltaX.style.color = "var(--alert-text)";
+        }
+
+        const tiltReduction = first.tilt - latest.tilt;
+        summaryDeltaTilt.textContent = `${tiltReduction >= 0 ? '-' : '+'}${Math.abs(tiltReduction).toFixed(1)}°`;
+        summaryDeltaTilt.style.color = tiltReduction >= 0 ? "var(--nominal-text)" : "var(--alert-text)";
+      } else {
+        summaryDeltaX.textContent = "Baseline";
+        summaryDeltaX.style.color = "var(--text-tertiary)";
+        summaryDeltaTilt.textContent = "Baseline";
+        summaryDeltaTilt.style.color = "var(--text-tertiary)";
+      }
+
+      const anyConverged = flightAttemptsHistory.some(r => r.isSuccess);
+      if (anyConverged) {
+        summaryConvergence.textContent = "Converged";
+        summaryConvergence.style.color = "var(--nominal-text)";
+      } else {
+        summaryConvergence.textContent = `Attempt #${total}`;
+        summaryConvergence.style.color = "var(--caution-text)";
+      }
+
+      // HUD Attempt Pill
+      if (total === 1) {
+        hudAttemptLabel.textContent = `ATTEMPT #1 • BASELINE TRAJECTORY`;
+        hudAttemptStatus.textContent = latest.isSuccess ? "CONVERGED" : "INITIAL PASS";
+        hudAttemptStatus.style.color = latest.isSuccess ? "var(--nominal-text)" : "var(--caution-text)";
+      } else {
+        const deltaM = first.absX - latest.absX;
+        const pct = first.absX > 0.01 ? Math.round((deltaM / first.absX) * 100) : 0;
+        if (latest.isSuccess) {
+          hudAttemptLabel.textContent = `ATTEMPT #${total} • CONVERGED (CATCH PERFECT)`;
+          hudAttemptStatus.textContent = `ERROR -${deltaM.toFixed(2)}M (${pct}%)`;
+          hudAttemptStatus.style.color = "var(--nominal-text)";
+        } else {
+          hudAttemptLabel.textContent = `ATTEMPT #${total} • ILC TUNING (BIAS ${latest.learning ? latest.learning.bias_x : 0}m)`;
+          hudAttemptStatus.textContent = deltaM >= 0 ? `IMPROVING (-${deltaM.toFixed(2)}m)` : `RECALIBRATING`;
+          hudAttemptStatus.style.color = deltaM >= 0 ? "var(--nominal-text)" : "var(--alert-text)";
+        }
+      }
+
+      // Visual Comparison Bar Chart
+      const maxScale = Math.max(6.0, ...flightAttemptsHistory.map(r => r.absX));
+      historyChartContainer.innerHTML = flightAttemptsHistory.map((rec, i) => {
+        const pct = Math.min(100, Math.max(4, (rec.absX / maxScale) * 100));
+        const isSafe = rec.absX <= 1.8;
+        const barColor = isSafe ? "var(--nominal-text)" : (rec.absX <= 3.5 ? "var(--caution-text)" : "var(--alert-text)");
+        let deltaBadge = "";
+        if (i > 0) {
+          const d = flightAttemptsHistory[i - 1].absX - rec.absX;
+          deltaBadge = d > 0 
+            ? `<span class="delta-good" style="margin-left: 6px; font-size: 0.62rem;">&darr; ${d.toFixed(2)}m (${Math.round((d / flightAttemptsHistory[i-1].absX) * 100)}% better)</span>` 
+            : (d < 0 ? `<span class="delta-bad" style="margin-left: 6px; font-size: 0.62rem;">&uarr; ${Math.abs(d).toFixed(2)}m</span>` : "");
+        } else {
+          deltaBadge = `<span style="color: var(--text-tertiary); margin-left: 6px; font-size: 0.62rem;">(Initial Baseline)</span>`;
+        }
+
+        return `
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.66rem; font-family: 'JetBrains Mono', monospace; margin-bottom: 2px;">
+              <span>
+                <b>Attempt #${rec.attempt}:</b> <span style="color: ${barColor}; font-weight: 700;">${rec.absX.toFixed(2)}m</span>
+                ${deltaBadge}
+              </span>
+              <span style="color: ${isSafe ? 'var(--nominal-text)' : 'var(--text-tertiary)'}; font-size: 0.62rem;">
+                ${isSafe ? '&check; Inside Catch Rail (&le;1.8m)' : 'Outside Catch Rail'}
+              </span>
+            </div>
+            <div style="height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; position: relative;">
+              <div style="width: ${pct}%; height: 100%; background: ${barColor}; border-radius: 3px; transition: width 0.3s ease;"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Table Rows
+      historyTableBody.innerHTML = flightAttemptsHistory.map((rec, i) => {
+        let deltaStr = "--";
+        if (i > 0) {
+          const d = flightAttemptsHistory[i - 1].absX - rec.absX;
+          deltaStr = d > 0 
+            ? `<span class="delta-good">&darr; ${d.toFixed(2)}m</span>` 
+            : (d < 0 ? `<span class="delta-bad">&uarr; ${Math.abs(d).toFixed(2)}m</span>` : "0.0m");
+        }
+
+        const ilcTxt = rec.learning 
+          ? `Bias: ${rec.learning.bias_x >= 0 ? '+' : ''}${rec.learning.bias_x.toFixed(2)}m` 
+          : "Baseline";
+
+        const outcomeBadge = rec.isSuccess 
+          ? `<span style="color: var(--nominal-text); font-weight: 700;">CONVERGED</span>` 
+          : `<span style="color: var(--caution-text); font-weight: 600;">RETRYING</span>`;
+
+        return `
+          <tr>
+            <td style="font-weight: 700; color: #fff;">#${rec.attempt}</td>
+            <td><b>${rec.absX.toFixed(2)}m</b> <span style="font-size: 0.62rem;">(${deltaStr})</span></td>
+            <td>${rec.tilt.toFixed(1)}°</td>
+            <td>${rec.vy.toFixed(1)} m/s</td>
+            <td style="color: var(--text-tertiary); font-size: 0.62rem;">${ilcTxt}</td>
+            <td>${outcomeBadge}</td>
+            <td><button class="table-btn-replay" onclick="replayRecordedAttempt(${i})">Replay</button></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function clearAttemptsHistory() {
+      flightAttemptsHistory = [];
+      recordedAttemptSet.clear();
+      badgeAttemptCount.textContent = "1";
+      historyTotalBadge.textContent = "0";
+      summaryAttempts.textContent = "0";
+      summaryDeltaX.textContent = "--";
+      summaryDeltaTilt.textContent = "--";
+      summaryConvergence.textContent = "Ready";
+      historyChartContainer.innerHTML = '<div style="color: var(--text-tertiary); font-size: 0.70rem; text-align: center; padding: 10px;">No attempt records yet. Launch a drop to begin tracking.</div>';
+      historyTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-tertiary); padding: 14px;">No flight records yet.</td></tr>';
+      hudAttemptLabel.textContent = `ATTEMPT #1 • BASELINE`;
+      hudAttemptStatus.textContent = `READY`;
+    }
+
+    window.replayRecordedAttempt = function(idx) {
+      const rec = flightAttemptsHistory[idx];
+      if (!rec || !rec.steps || rec.steps.length === 0) return;
+      currentEpisode = {
+        ...currentEpisode,
+        steps: rec.steps,
+        duration_s: rec.duration_s,
+        is_success: rec.isSuccess,
+        touchdown: { x: rec.rawX, abs_x: rec.absX, tilt_deg: rec.tilt, vy: rec.vy, vx: rec.vx, fuel_remaining_kg: rec.fuel },
+        learning: rec.learning
+      };
+      timeScrubber.max = rec.steps.length - 1;
+      timeScrubber.value = 0;
+      currentTime_s = 0.0;
+      updateInterpolatedState(0.0);
+      isPlaying = true;
+      playIcon.textContent = "⏸";
+      playLabel.textContent = "Pause";
+      attemptHistoryPanel.style.display = 'none';
+      flightPhaseBanner.textContent = `REPLAYING ATTEMPT #${rec.attempt} (${rec.isSuccess ? 'CONVERGED' : 'RETRYING'})`;
+    };
 
     // ========================================================
     // --- 6. Telemetry & Simulation API Fetcher ---
@@ -3277,6 +3755,9 @@
           flightPhaseBanner.style.borderColor = "var(--alert-border)";
           flightPhaseBanner.style.color = "var(--alert-text)";
         }
+
+        // Record flight attempt in persistent history log
+        recordCompletedAttempt(s, td, isPerfect);
       }
     }
 
@@ -3284,6 +3765,32 @@
     // ========================================================
     // --- 8. Event Handlers & Camera Controls ---
     // ========================================================
+    // Attempt History Drawer Toggles
+    btnToggleHistory.addEventListener('click', () => {
+      const isVis = attemptHistoryPanel.style.display === 'block';
+      attemptHistoryPanel.style.display = isVis ? 'none' : 'block';
+      if (!isVis) {
+        customDropPanel.style.display = 'none';
+        scenarioDrawer.style.display = 'none';
+        audioControlPanel.style.display = 'none';
+      }
+    });
+
+    btnCloseHistory.addEventListener('click', () => {
+      attemptHistoryPanel.style.display = 'none';
+    });
+
+    btnClearHistory.addEventListener('click', () => {
+      clearAttemptsHistory();
+    });
+
+    btnOutcomeHistory.addEventListener('click', () => {
+      attemptHistoryPanel.style.display = 'block';
+      customDropPanel.style.display = 'none';
+      scenarioDrawer.style.display = 'none';
+      audioControlPanel.style.display = 'none';
+    });
+
     btnVehicleStarship.addEventListener('click', () => {
       activeVehicle = 'starship';
       btnVehicleStarship.classList.add('active');
@@ -3295,6 +3802,7 @@
       lastTouchdownX = null;
       lastTouchdownVy = null;
       lastTouchdownTilt = null;
+      clearAttemptsHistory();
       btnAutoRelaunch.className = "action-btn active";
       btnAutoRelaunch.innerHTML = "<span>Auto-Learn: ON</span>";
       fetchNextFlight();
@@ -3311,6 +3819,7 @@
       lastTouchdownX = null;
       lastTouchdownVy = null;
       lastTouchdownTilt = null;
+      clearAttemptsHistory();
       btnAutoRelaunch.className = "action-btn active";
       btnAutoRelaunch.innerHTML = "<span>Auto-Learn: ON</span>";
       fetchNextFlight();
@@ -3327,6 +3836,7 @@
       lastTouchdownX = null;
       lastTouchdownVy = null;
       lastTouchdownTilt = null;
+      clearAttemptsHistory();
       btnAutoRelaunch.className = "action-btn active";
       btnAutoRelaunch.innerHTML = "<span>Auto-Learn: ON</span>";
       fetchNextFlight();
@@ -3336,7 +3846,11 @@
     btnToggleCustom.addEventListener('click', () => {
       const isVis = customDropPanel.style.display === 'block';
       customDropPanel.style.display = isVis ? 'none' : 'block';
-      if (!isVis) scenarioDrawer.style.display = 'none';
+      if (!isVis) {
+        scenarioDrawer.style.display = 'none';
+        attemptHistoryPanel.style.display = 'none';
+        audioControlPanel.style.display = 'none';
+      }
     });
 
     btnCloseCustom.addEventListener('click', () => {
@@ -3378,6 +3892,7 @@
       lastTouchdownX = null;
       lastTouchdownVy = null;
       lastTouchdownTilt = null;
+      clearAttemptsHistory();
       btnAutoRelaunch.className = "action-btn active";
       btnAutoRelaunch.innerHTML = "<span>Auto-Learn: ON</span>";
       lastCustomQuery = `alt=${sliderAlt.value}&x=${sliderX.value}&tilt=${sliderTilt.value}&vy=${sliderVy.value}&vx=${sliderVx.value}&wind=${sliderWind.value}`;
@@ -3401,7 +3916,10 @@
     btnToggleScenarios.addEventListener('click', () => {
       const isVisible = scenarioDrawer.style.display === 'block';
       scenarioDrawer.style.display = isVisible ? 'none' : 'block';
-      if (!isVisible) customDropPanel.style.display = 'none';
+      if (!isVisible) {
+        customDropPanel.style.display = 'none';
+        attemptHistoryPanel.style.display = 'none';
+      }
     });
 
     btnCloseScenarios.addEventListener('click', () => {
@@ -3415,6 +3933,7 @@
       lastTouchdownX = null;
       lastTouchdownVy = null;
       lastTouchdownTilt = null;
+      clearAttemptsHistory();
       btnAutoRelaunch.className = "action-btn active";
       btnAutoRelaunch.innerHTML = "<span>Auto-Learn: ON</span>";
       lastCustomQuery = `alt=${alt}&x=${x}&vx=${vx}&vy=${vy}&wind=${wind}&tilt=0`;
@@ -3510,6 +4029,7 @@
       if (!isVis) {
         customDropPanel.style.display = 'none';
         scenarioDrawer.style.display = 'none';
+        attemptHistoryPanel.style.display = 'none';
       }
     });
 
