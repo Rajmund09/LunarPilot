@@ -1112,6 +1112,44 @@
     const titaniumFinMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.35, metalness: 0.85 });
     const conduitMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.4, metalness: 0.7 });
 
+    // Detailed Aerospace Materials for Falcon 9 and Artemis Lunar Lander
+    const fuselageWhiteMat = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      roughness: 0.35,
+      metalness: 0.25,
+    });
+    const interstageBlackMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a,
+      roughness: 0.65,
+      metalness: 0.4,
+    });
+    const carbonLegMat = new THREE.MeshStandardMaterial({
+      color: 0x090d16,
+      roughness: 0.7,
+      metalness: 0.5,
+    });
+    const goldMylarMat = new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      roughness: 0.25,
+      metalness: 0.85,
+    });
+    const lunarCabinMat = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      roughness: 0.45,
+      metalness: 0.15,
+    });
+    const windowGlassMat = new THREE.MeshPhysicalMaterial({
+      color: 0x0284c7,
+      metalness: 0.1,
+      roughness: 0.05,
+      transmission: 0.7,
+      transparent: true,
+      opacity: 0.85,
+    });
+    const warningYellowMat = new THREE.MeshBasicMaterial({
+      color: 0xfbbf24,
+    });
+
     // Stainless Steel Super Heavy Hull Materials (With Reentry Scorch Gradient)
     const starshipShinySteelMat = new THREE.MeshStandardMaterial({
       color: 0xe2e8f0,
@@ -1436,9 +1474,33 @@
     droneship.add(createTargetRing(15.0, 0xffffff, 0.3));
     droneship.add(createTargetRing(5.0, 0x38bdf8, 0.3));
 
+    // Dynamic Deck Blast Glow Ring on Droneship
+    const deckBlastGeo = new THREE.RingGeometry(0.5, 4.0, 32);
+    deckBlastGeo.rotateX(-Math.PI / 2);
+    const deckBlastMat = new THREE.MeshBasicMaterial({
+      color: 0xf97316,
+      transparent: true,
+      opacity: 0.0,
+      side: THREE.DoubleSide,
+    });
+    const deckBlastMesh = new THREE.Mesh(deckBlastGeo, deckBlastMat);
+    deckBlastMesh.position.set(0, 0.08, 0);
+    droneship.add(deckBlastMesh);
+
     // 3C. ARTEMIS LUNAR BASE
-    const moonGeo = new THREE.PlaneGeometry(800, 800, 32, 32);
+    const moonGeo = new THREE.PlaneGeometry(800, 800, 48, 48);
     moonGeo.rotateX(-Math.PI / 2);
+    const moonPos = moonGeo.attributes.position;
+    for (let i = 0; i < moonPos.count; i++) {
+      const mx = moonPos.getX(i);
+      const mz = moonPos.getZ(i);
+      if (Math.hypot(mx, mz) > 10) {
+        moonPos.setY(i, Math.sin(mx * 0.06) * Math.cos(mz * 0.06) * 3.5);
+      } else {
+        moonPos.setY(i, 0);
+      }
+    }
+    moonGeo.computeVertexNormals();
     const moonMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.95 });
     const moon = new THREE.Mesh(moonGeo, moonMat);
     moon.receiveShadow = true;
@@ -1446,6 +1508,12 @@
     const lunarPad = createTargetRing(7.0, 0x38bdf8, 0.4);
     lunarPad.position.y = 0.05;
     lunarGroup.add(lunarPad);
+
+    const earthGeo = new THREE.SphereGeometry(15, 32, 32);
+    const earthMat = new THREE.MeshPhongMaterial({ color: 0x1d4ed8, emissive: 0x075985, shininess: 25 });
+    const earthMesh = new THREE.Mesh(earthGeo, earthMat);
+    earthMesh.position.set(-180, 220, -350);
+    lunarGroup.add(earthMesh);
 
 
     // ========================================================
@@ -1677,40 +1745,247 @@
 
 
     // ========================================================
-    // 4B. FALCON 9 ORBITAL BOOSTER MODEL
+    // 4B. FALCON 9 ORBITAL BOOSTER (Detailed 40m SpaceX Model)
     // ========================================================
     const falconGroup = new THREE.Group();
     rocket.add(falconGroup);
     falconGroup.visible = false;
 
-    const fBodyGeo = new THREE.CylinderGeometry(1.85, 1.85, 32, 32);
-    const fBodyMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.35, metalness: 0.25 });
-    const fBody = new THREE.Mesh(fBodyGeo, fBodyMat);
-    fBody.position.y = 18.0;
-    falconGroup.add(fBody);
+    // 1. Octaweb Engine Shield Ring (y = 0.8 to 2.0)
+    const octawebGeo = new THREE.CylinderGeometry(1.85, 1.70, 1.2, 32);
+    const octaweb = new THREE.Mesh(octawebGeo, engineMetalMat);
+    octaweb.position.y = 1.4;
+    octaweb.castShadow = true;
+    falconGroup.add(octaweb);
 
-    const fInterstage = new THREE.Mesh(new THREE.CylinderGeometry(1.85, 1.85, 6, 32), darkTowerMat);
-    fInterstage.position.y = 37.0;
-    falconGroup.add(fInterstage);
+    // 8 Outer Merlin 1D Vacuum Engine Nozzle Bells (Iconic 9-engine Octaweb arrangement!)
+    for (let i = 0; i < 8; i++) {
+      const ang = (i * Math.PI) / 4;
+      const mNozzle = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.22, 0.48, 1.1, 16, 1, true),
+        engineMetalMat
+      );
+      mNozzle.position.set(Math.cos(ang) * 1.15, 0.25, Math.sin(ang) * 1.15);
+      mNozzle.castShadow = true;
+      falconGroup.add(mNozzle);
 
+      // Outer engine turbopump exhaust ducts
+      const duct = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.9, 8), conduitMat);
+      duct.position.set(Math.cos(ang) * 1.45, 0.35, Math.sin(ang) * 1.45);
+      falconGroup.add(duct);
+    }
+
+    // 2. Main Cylindrical Propellant Tanks (y = 2.0 to 34.0, height 32m)
+    const mainBodyGeo = new THREE.CylinderGeometry(1.85, 1.85, 32, 32);
+    const mainBody = new THREE.Mesh(mainBodyGeo, fuselageWhiteMat);
+    mainBody.position.y = 18.0;
+    mainBody.castShadow = true;
+    falconGroup.add(mainBody);
+
+    // Structural Weld Seam Rings along propellant tanks
+    const weldPositions = [5.5, 11.0, 17.0, 23.0, 29.0, 33.5];
+    weldPositions.forEach(yPos => {
+      const ringGeo = new THREE.TorusGeometry(1.855, 0.025, 8, 32);
+      ringGeo.rotateX(Math.PI / 2);
+      const ring = new THREE.Mesh(ringGeo, conduitMat);
+      ring.position.y = yPos;
+      falconGroup.add(ring);
+    });
+
+    // External LOX Pressurization Feedline Conduit running along the rocket flank
+    const loxConduitGeo = new THREE.CylinderGeometry(0.08, 0.08, 32.0, 12);
+    const loxConduit = new THREE.Mesh(loxConduitGeo, conduitMat);
+    loxConduit.position.set(-1.88, 18.0, 0);
+    falconGroup.add(loxConduit);
+
+    // Conduit Support Mounting Brackets
+    for (let by = 3.0; by < 34.0; by += 3.0) {
+      const bGeo = new THREE.BoxGeometry(0.12, 0.15, 0.18);
+      const bracket = new THREE.Mesh(bGeo, engineMetalMat);
+      bracket.position.set(-1.86, by, 0);
+      falconGroup.add(bracket);
+    }
+
+    // 3. Carbon Composite Interstage (Top black ring, y = 34.0 to 40.0)
+    const interstageGeo = new THREE.CylinderGeometry(1.85, 1.85, 6.0, 32);
+    const interstage = new THREE.Mesh(interstageGeo, interstageBlackMat);
+    interstage.position.y = 37.0;
+    interstage.castShadow = true;
+    falconGroup.add(interstage);
+
+    // Staging Separation Ring & Pneumatic Pushers at Interstage Top
+    const stageSepRing = new THREE.Mesh(new THREE.TorusGeometry(1.86, 0.04, 8, 32), chromePistonMat);
+    stageSepRing.rotateX(Math.PI / 2);
+    stageSepRing.position.y = 39.85;
+    falconGroup.add(stageSepRing);
+
+    for (let sp = 0; sp < 4; sp++) {
+      const spAng = (sp * Math.PI) / 2 + Math.PI / 4;
+      const pusher = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4, 8), chromePistonMat);
+      pusher.position.set(Math.cos(spAng) * 1.8, 39.9, Math.sin(spAng) * 1.8);
+      falconGroup.add(pusher);
+    }
+
+    // Top Aerodynamic Nose Dome
+    const domeGeo = new THREE.SphereGeometry(1.85, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+    const dome = new THREE.Mesh(domeGeo, interstageBlackMat);
+    dome.position.y = 40.0;
+    falconGroup.add(dome);
+
+    // External Vertical Raceways (Avionics Cable Spines)
+    function createFalconRaceway(angle) {
+      const racewayGeo = new THREE.BoxGeometry(0.2, 32, 0.3);
+      const raceway = new THREE.Mesh(racewayGeo, interstageBlackMat);
+      raceway.position.set(Math.cos(angle) * 1.95, 18.0, Math.sin(angle) * 1.95);
+      raceway.rotation.y = -angle;
+      return raceway;
+    }
+    falconGroup.add(createFalconRaceway(0));
+    falconGroup.add(createFalconRaceway(Math.PI));
+
+    // 4. Titanium Grid Fins (Top of Booster at y = 37.5) with Hydraulic Actuators
+    const fGridFins = [];
+    function createFalconGridFin(angleY) {
+      const pivot = new THREE.Group();
+      pivot.position.set(Math.cos(angleY) * 1.88, 37.5, Math.sin(angleY) * 1.88);
+      pivot.rotation.y = angleY;
+
+      // Hydraulic Rotary Actuator Housing
+      const motorHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.35, 12), engineMetalMat);
+      motorHousing.rotation.z = Math.PI / 2;
+      pivot.add(motorHousing);
+
+      const finFrame = new THREE.Group();
+      const frameGeo = new THREE.BoxGeometry(1.8, 0.12, 1.2);
+      const frame = new THREE.Mesh(frameGeo, titaniumFinMat);
+      frame.position.x = 0.9;
+      frame.castShadow = true;
+      finFrame.add(frame);
+
+      // Lattice Grid Ribs
+      for (let r = 0.3; r < 1.7; r += 0.3) {
+        const rib = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.25, 1.1), titaniumFinMat);
+        rib.position.x = r;
+        finFrame.add(rib);
+      }
+
+      pivot.add(finFrame);
+      falconGroup.add(pivot);
+      fGridFins.push(finFrame);
+      return pivot;
+    }
+    createFalconGridFin(0);
+    createFalconGridFin(Math.PI / 2);
+    createFalconGridFin(Math.PI);
+    createFalconGridFin(-Math.PI / 2);
+
+    // 5. High-Visibility Cold-Gas Nitrogen Thruster Jets on Falcon (Left & Right)
+    function createFalconRCSTube(isLeft) {
+      const rcsGroup = new THREE.Group();
+      const posX = isLeft ? -1.95 : 1.95;
+      rcsGroup.position.set(posX, 37.5, 0);
+
+      const block = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.35, 0.35), titaniumFinMat);
+      rcsGroup.add(block);
+
+      // Pulsating Supersonic Diamond Shock Cone
+      const jetConeGroup = new THREE.Group();
+      const jetGeo = new THREE.ConeGeometry(0.55, 4.8, 16);
+      jetGeo.rotateZ(isLeft ? Math.PI / 2 : -Math.PI / 2);
+      const jetMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.95 });
+      const jet = new THREE.Mesh(jetGeo, jetMat);
+      jet.position.x = isLeft ? -2.4 : 2.4;
+      jetConeGroup.add(jet);
+
+      // Inner concentrated vapor blast core
+      const coreJetGeo = new THREE.ConeGeometry(0.28, 3.2, 16);
+      coreJetGeo.rotateZ(isLeft ? Math.PI / 2 : -Math.PI / 2);
+      const coreJet = new THREE.Mesh(coreJetGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.98 }));
+      coreJet.position.x = isLeft ? -1.6 : 1.6;
+      jetConeGroup.add(coreJet);
+
+      rcsGroup.add(jetConeGroup);
+      rcsGroup.jetCone = jetConeGroup;
+
+      const rcsLight = new THREE.PointLight(0x38bdf8, 4.0, 20);
+      rcsLight.position.x = isLeft ? -2.2 : 2.2;
+      rcsGroup.add(rcsLight);
+
+      rcsGroup.visible = false;
+      falconGroup.add(rcsGroup);
+      return rcsGroup;
+    }
+    const falconLeftRcs = createFalconRCSTube(true);
+    const falconRightRcs = createFalconRCSTube(false);
+
+    // 6. Central TVC Gimballed Merlin 1D Landing Engine with Hydraulic Pushrods
     const fGimbalPivot = new THREE.Group();
     fGimbalPivot.position.set(0, 0.8, 0);
     falconGroup.add(fGimbalPivot);
 
-    const fNozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.95, 1.5, 32, 1, true), engineMetalMat);
+    const fNozzle = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.35, 0.95, 1.5, 32, 1, true),
+      new THREE.MeshStandardMaterial({
+        color: 0x334155,
+        metalness: 0.95,
+        roughness: 0.2,
+        side: THREE.DoubleSide,
+      })
+    );
     fNozzle.position.y = -0.75;
+    fNozzle.castShadow = true;
     fGimbalPivot.add(fNozzle);
 
+    const fNozzleRimRing = new THREE.Mesh(new THREE.TorusGeometry(0.96, 0.04, 8, 32), chromePistonMat);
+    fNozzleRimRing.rotateX(Math.PI / 2);
+    fNozzleRimRing.position.y = -1.5;
+    fGimbalPivot.add(fNozzleRimRing);
+
+    // Dual Hydraulic TVC Pushrod Actuators
+    function createFalconTVCPushrod(angle) {
+      const rodGroup = new THREE.Group();
+      rodGroup.position.set(Math.cos(angle) * 0.65, 0.4, Math.sin(angle) * 0.65);
+
+      const cylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.6, 8), engineMetalMat);
+      rodGroup.add(cylinder);
+
+      const piston = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.5, 8), chromePistonMat);
+      piston.position.y = -0.3;
+      rodGroup.add(piston);
+
+      falconGroup.add(rodGroup);
+    }
+    createFalconTVCPushrod(0);
+    createFalconTVCPushrod(Math.PI / 2);
+
+    // Volumetric Engine Exhaust Plume
     const fPlumeGroup = new THREE.Group();
     fPlumeGroup.position.y = -1.5;
     fGimbalPivot.add(fPlumeGroup);
 
-    const fFlameCore = new THREE.Mesh(new THREE.ConeGeometry(0.75, 11.0, 16), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.96 }));
+    const fFlameCore = new THREE.Mesh(
+      new THREE.ConeGeometry(0.75, 11.0, 16),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.96 })
+    );
     fFlameCore.geometry.rotateX(Math.PI);
     fFlameCore.position.y = -5.5;
     fPlumeGroup.add(fFlameCore);
 
-    const fOuterFlame = new THREE.Mesh(new THREE.ConeGeometry(1.7, 19.0, 16), new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.45 }));
+    // Shock diamonds for Falcon Merlin plume
+    const fShockDiamonds = [];
+    const fDiamondMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.92 });
+    for (let d = 2.0; d < 8.5; d += 2.0) {
+      const diamond = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.55, 16), fDiamondMat);
+      diamond.position.y = -d;
+      diamond.rotateX(Math.PI / 2);
+      fPlumeGroup.add(diamond);
+      fShockDiamonds.push({ mesh: diamond, baseDepth: d });
+    }
+
+    const fOuterFlame = new THREE.Mesh(
+      new THREE.ConeGeometry(1.7, 19.0, 16),
+      new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.45 })
+    );
     fOuterFlame.geometry.rotateX(Math.PI);
     fOuterFlame.position.y = -9.5;
     fPlumeGroup.add(fOuterFlame);
@@ -1720,20 +1995,266 @@
     fPlumeGroup.add(fPlumeLight);
     fPlumeGroup.visible = false;
 
-    // 4C. ARTEMIS LUNAR LANDER MODEL
+    // 7. Telescoping Carbon-Fiber Landing Legs with Chrome Hydraulic Pistons
+    const fLandingLegs = [];
+    function createFalconArticulatedLandingLeg(angleY) {
+      const legRoot = new THREE.Group();
+      legRoot.position.set(Math.cos(angleY) * 1.85, 0.8, Math.sin(angleY) * 1.85);
+      legRoot.rotation.y = angleY;
+
+      const strutGroup = new THREE.Group();
+      const legGeo = new THREE.BoxGeometry(0.35, 11.0, 0.45);
+      const legMesh = new THREE.Mesh(legGeo, carbonLegMat);
+      legMesh.position.y = 5.5;
+      legMesh.castShadow = true;
+      strutGroup.add(legMesh);
+
+      const pistonSleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 6.0, 8), engineMetalMat);
+      pistonSleeve.position.set(0, 4.0, 0.15);
+      strutGroup.add(pistonSleeve);
+
+      const pistonRod = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 5.0, 8), chromePistonMat);
+      pistonRod.position.set(0, 2.5, 0.15);
+      strutGroup.add(pistonRod);
+
+      const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 0.15, 16), engineMetalMat);
+      foot.position.set(0, 0.05, 0);
+      strutGroup.add(foot);
+
+      legRoot.add(strutGroup);
+      falconGroup.add(legRoot);
+
+      fLandingLegs.push({
+        root: legRoot,
+        strut: strutGroup,
+        pistonRod: pistonRod,
+        deployedAngle: 1.15,
+      });
+      return legRoot;
+    }
+    createFalconArticulatedLandingLeg(0);
+    createFalconArticulatedLandingLeg(Math.PI / 2);
+    createFalconArticulatedLandingLeg(Math.PI);
+    createFalconArticulatedLandingLeg(-Math.PI / 2);
+
+
+    // ========================================================
+    // 4C. ARTEMIS HUMAN LUNAR LANDER / SATELLITE (Detailed Gold Mylar & Cabin)
+    // ========================================================
     const artemisGroup = new THREE.Group();
     rocket.add(artemisGroup);
     artemisGroup.visible = false;
 
-    const cabin = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.8, 3.2, 8), new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.4 }));
-    cabin.position.y = 2.4;
+    // 1. Octagonal Gold Mylar Foil Descent Base (y = 0.5 to 2.2)
+    const descentBaseGeo = new THREE.CylinderGeometry(2.3, 2.6, 1.8, 8);
+    const descentBase = new THREE.Mesh(descentBaseGeo, goldMylarMat);
+    descentBase.position.y = 1.35;
+    descentBase.castShadow = true;
+    artemisGroup.add(descentBase);
+
+    // 4 Gold Spherical Hypergolic Propellant Tanks with Bracket Straps
+    const tankGeo = new THREE.SphereGeometry(0.68, 16, 16);
+    for (let i = 0; i < 4; i++) {
+      const ang = (i * Math.PI) / 2 + Math.PI / 4;
+      const tank = new THREE.Mesh(tankGeo, goldMylarMat);
+      tank.position.set(Math.cos(ang) * 1.85, 1.4, Math.sin(ang) * 1.85);
+      tank.castShadow = true;
+      artemisGroup.add(tank);
+
+      const strap = new THREE.Mesh(new THREE.TorusGeometry(0.69, 0.03, 8, 24), engineMetalMat);
+      strap.position.set(Math.cos(ang) * 1.85, 1.4, Math.sin(ang) * 1.85);
+      artemisGroup.add(strap);
+    }
+
+    // Modular Science Equipment Lockers on Descent Stage
+    for (let s = 0; s < 4; s++) {
+      const sAng = (s * Math.PI) / 2;
+      const bay = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.8, 0.35), titaniumFinMat);
+      bay.position.set(Math.cos(sAng) * 2.25, 1.35, Math.sin(sAng) * 2.25);
+      bay.rotation.y = -sAng;
+      artemisGroup.add(bay);
+    }
+
+    // 2. White Pressurized Crew Cabin (Ascent Stage)
+    const cabinGeo = new THREE.BoxGeometry(2.7, 2.0, 2.5);
+    const cabin = new THREE.Mesh(cabinGeo, lunarCabinMat);
+    cabin.position.y = 2.9;
+    cabin.castShadow = true;
     artemisGroup.add(cabin);
 
-    const artemisMainPlume = new THREE.Mesh(new THREE.ConeGeometry(0.6, 3.5, 16), new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.9 }));
-    artemisMainPlume.geometry.rotateX(Math.PI);
-    artemisMainPlume.position.y = -1.75;
+    // Cockpit Triangular Viewport Windows with Cyan Glass
+    const winLeft = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.45, 0.12), windowGlassMat);
+    winLeft.position.set(-0.6, 3.15, 1.3);
+    winLeft.rotation.y = -0.15;
+    artemisGroup.add(winLeft);
+
+    const winRight = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.45, 0.12), windowGlassMat);
+    winRight.position.set(0.6, 3.15, 1.3);
+    winRight.rotation.y = 0.15;
+    artemisGroup.add(winRight);
+
+    // EVA Egress Platform Porch with Yellow Hazard Warning Strip
+    const porch = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.08, 0.7), titaniumFinMat);
+    porch.position.set(0, 2.0, 1.55);
+    artemisGroup.add(porch);
+
+    const porchStripe = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.04, 0.04), warningYellowMat);
+    porchStripe.position.set(0, 2.06, 1.88);
+    artemisGroup.add(porchStripe);
+
+    // EVA Porch Handrails
+    const railLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.7, 8), engineMetalMat);
+    railLeft.position.set(-0.48, 2.35, 1.85);
+    artemisGroup.add(railLeft);
+    const railRight = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.7, 8), engineMetalMat);
+    railRight.position.set(0.48, 2.35, 1.85);
+    artemisGroup.add(railRight);
+
+    // Top Docking Drogue Collar
+    const dockRing = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 0.35, 16), engineMetalMat);
+    dockRing.position.y = 4.05;
+    artemisGroup.add(dockRing);
+
+    // Steerable High-Gain Parabolic Communications Dish on Gimbal Arm
+    const dishArm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.8, 8), engineMetalMat);
+    dishArm.position.set(0.9, 4.2, -0.4);
+    dishArm.rotation.z = -0.4;
+    artemisGroup.add(dishArm);
+
+    const dishGeo = new THREE.SphereGeometry(0.55, 16, 8, 0, Math.PI * 2, 0, Math.PI / 3);
+    const dish = new THREE.Mesh(dishGeo, goldMylarMat);
+    dish.position.set(1.15, 4.6, -0.6);
+    dish.rotation.x = -Math.PI / 3;
+    artemisGroup.add(dish);
+
+    // 3. Cantilevered Lunar Landing Legs with Lunar Contact Probes
+    function createLunarLeg(angleY, hasLadder = false) {
+      const legPivot = new THREE.Group();
+      legPivot.rotation.y = angleY;
+
+      const strutGeo = new THREE.CylinderGeometry(0.09, 0.09, 3.4, 12);
+      const strut = new THREE.Mesh(strutGeo, titaniumFinMat);
+      strut.position.set(0, 0.85, 2.2);
+      strut.rotation.x = 0.75;
+      strut.castShadow = true;
+      legPivot.add(strut);
+
+      const padGeo = new THREE.CylinderGeometry(0.48, 0.58, 0.12, 16);
+      const pad = new THREE.Mesh(padGeo, goldMylarMat);
+      pad.position.set(0, 0.05, 3.35);
+      legPivot.add(pad);
+
+      const probeGeo = new THREE.CylinderGeometry(0.012, 0.012, 1.5, 6);
+      const probe = new THREE.Mesh(probeGeo, chromePistonMat);
+      probe.position.set(0, -0.7, 3.35);
+      legPivot.add(probe);
+
+      if (hasLadder) {
+        for (let l = 0.2; l < 2.0; l += 0.25) {
+          const rung = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.03, 0.03), warningYellowMat);
+          rung.position.set(0, l, 2.2 - l * 0.4);
+          legPivot.add(rung);
+        }
+      }
+
+      artemisGroup.add(legPivot);
+    }
+    createLunarLeg(0, true); // Forward leg with ladder!
+    createLunarLeg(Math.PI / 2);
+    createLunarLeg(Math.PI);
+    createLunarLeg(-Math.PI / 2);
+
+    // 4. Central Main Descent Engine & Plume
+    const artemisNozzle = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.28, 0.82, 1.1, 24, 1, true),
+      engineMetalMat
+    );
+    artemisNozzle.position.y = 0.35;
+    artemisGroup.add(artemisNozzle);
+
+    const artemisMainPlume = new THREE.Group();
+    artemisMainPlume.position.y = -0.15;
     artemisGroup.add(artemisMainPlume);
+
+    const artemisFlameGeo = new THREE.ConeGeometry(0.65, 5.5, 16);
+    artemisFlameGeo.rotateX(Math.PI);
+    const artemisFlame = new THREE.Mesh(
+      artemisFlameGeo,
+      new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.85 })
+    );
+    artemisFlame.position.y = -2.75;
+    artemisMainPlume.add(artemisFlame);
+
+    const artemisFlameCore = new THREE.Mesh(
+      new THREE.ConeGeometry(0.35, 3.2, 16),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 })
+    );
+    artemisFlameCore.rotation.x = Math.PI;
+    artemisFlameCore.position.y = -1.6;
+    artemisMainPlume.add(artemisFlameCore);
+
+    const artemisMainLight = new THREE.PointLight(0xf97316, 5.5, 35);
+    artemisMainLight.position.y = -1.0;
+    artemisMainPlume.add(artemisMainLight);
     artemisMainPlume.visible = false;
+
+    // 5. PROMINENT LEFT & RIGHT ATTITUDE THRUSTER PODS WITH PULSATING REACTION JETS
+    function createArtemisThrusterCluster(isLeft) {
+      const cluster = new THREE.Group();
+      const posX = isLeft ? -1.95 : 1.95;
+      cluster.position.set(posX, 2.7, 0);
+
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.15, 0.15), engineMetalMat);
+      arm.position.x = isLeft ? 0.25 : -0.25;
+      cluster.add(arm);
+
+      const quadBlock = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), titaniumFinMat);
+      cluster.add(quadBlock);
+
+      const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.6, 8), goldMylarMat);
+      pipe.rotation.z = isLeft ? -0.4 : 0.4;
+      pipe.position.set(isLeft ? 0.3 : -0.3, -0.2, 0);
+      cluster.add(pipe);
+
+      const nozzleCone = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.14, 0.28, 12, 1, true),
+        engineMetalMat
+      );
+      nozzleCone.rotation.z = isLeft ? Math.PI / 2 : -Math.PI / 2;
+      nozzleCone.position.x = isLeft ? -0.16 : 0.16;
+      cluster.add(nozzleCone);
+
+      const plumeJetGroup = new THREE.Group();
+      const plumeConeGeo = new THREE.ConeGeometry(0.48, 3.8, 16);
+      plumeConeGeo.rotateZ(isLeft ? Math.PI / 2 : -Math.PI / 2);
+      const plumeMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.92 });
+      const plumeMesh = new THREE.Mesh(plumeConeGeo, plumeMat);
+      plumeMesh.position.x = isLeft ? -2.0 : 2.0;
+      plumeJetGroup.add(plumeMesh);
+
+      const coreJetGeo = new THREE.ConeGeometry(0.26, 2.5, 16);
+      coreJetGeo.rotateZ(isLeft ? Math.PI / 2 : -Math.PI / 2);
+      const coreJet = new THREE.Mesh(
+        coreJetGeo,
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.98 })
+      );
+      coreJet.position.x = isLeft ? -1.35 : 1.35;
+      plumeJetGroup.add(coreJet);
+
+      const jetLight = new THREE.PointLight(0x38bdf8, 4.5, 18);
+      jetLight.position.x = isLeft ? -1.8 : 1.8;
+      plumeJetGroup.add(jetLight);
+
+      plumeJetGroup.visible = false;
+      cluster.add(plumeJetGroup);
+      cluster.plumeJet = plumeJetGroup;
+
+      artemisGroup.add(cluster);
+      return plumeJetGroup;
+    }
+
+    const artemisLeftPlume = createArtemisThrusterCluster(true);
+    const artemisRightPlume = createArtemisThrusterCluster(false);
 
 
     // ========================================================
@@ -2404,13 +2925,55 @@
           fPlumeGroup.scale.set(flameScale, flameScale, flameScale);
           fPlumeLight.intensity = throttle * 6.5;
         }
+
+        // Active Aerodynamic Grid Fins Cant / Steering!
+        const finCant = Math.max(-0.4, Math.min(0.4, -s.vx * 0.08 - s.gimbal_deg * 0.04));
+        fGridFins[0].rotation.z = finCant;
+        fGridFins[2].rotation.z = -finCant;
+        fGridFins[1].rotation.x = Math.sin(time_s * 4.0) * 0.08;
+        fGridFins[3].rotation.x = -Math.sin(time_s * 4.0) * 0.08;
+
+        // Left & Right Cold-Gas Nitrogen Attitude Thrusters
+        falconLeftRcs.visible = leftOn && !isTerminal;
+        falconRightRcs.visible = rightOn && !isTerminal;
+
+        // Telescoping Carbon-Fiber Landing Leg Deployment Animation
+        const deployProgress = Math.max(0.0, Math.min(1.0, (45.0 - hFoot) / 25.0));
+        fLandingLegs.forEach(leg => {
+          leg.strut.rotation.z = deployProgress * leg.deployedAngle;
+        });
+
+        // Dynamic Droneship Deck Blast Glow
+        if (deckBlastMesh) {
+          if (hFoot < 20.0 && throttle > 0.08 && !isTerminal) {
+            deckBlastMesh.material.opacity = Math.max(0, (20.0 - hFoot) / 20.0) * 0.85;
+            deckBlastMesh.scale.setScalar(1.0 + (20.0 - hFoot) * 0.08);
+          } else {
+            deckBlastMesh.material.opacity = 0.0;
+          }
+        }
+
         badgeLegLeft.className = s.left_contact ? "leg-badge contact" : "leg-badge";
-        badgeLegLeft.textContent = s.left_contact ? "LEFT LEG: LOCKED" : "LEFT LEG: FREE";
+        badgeLegLeft.textContent = s.left_contact ? "LEFT LEG: LOCKED" : (deployProgress > 0 ? "LEFT LEG: DEPLOYED" : "LEFT LEG: STOWED");
         badgeLegRight.className = s.right_contact ? "leg-badge contact" : "leg-badge";
-        badgeLegRight.textContent = s.right_contact ? "RIGHT LEG: LOCKED" : "RIGHT LEG: FREE";
+        badgeLegRight.textContent = s.right_contact ? "RIGHT LEG: LOCKED" : (deployProgress > 0 ? "RIGHT LEG: DEPLOYED" : "RIGHT LEG: STOWED");
       } else {
-        // Artemis Mode
-        artemisMainPlume.visible = (throttle > 0.1 && !isTerminal);
+        // Artemis Lunar Lander / Satellite
+        artemisMainPlume.visible = (throttle > 0.05 && !isTerminal);
+        if (artemisMainPlume.visible) {
+          const flameScale = Math.max(0.35, throttle);
+          artemisMainPlume.scale.set(flameScale, flameScale, flameScale);
+          artemisMainLight.intensity = throttle * 6.0;
+        }
+
+        // Left & Right Hypergolic Attitude Thruster Jets
+        artemisLeftPlume.visible = leftOn && !isTerminal;
+        artemisRightPlume.visible = rightOn && !isTerminal;
+
+        badgeLegLeft.className = s.left_contact ? "leg-badge contact" : "leg-badge";
+        badgeLegLeft.textContent = s.left_contact ? "LEFT PAD: CONTACT" : "LEFT PAD: FREE";
+        badgeLegRight.className = s.right_contact ? "leg-badge contact" : "leg-badge";
+        badgeLegRight.textContent = s.right_contact ? "RIGHT PAD: CONTACT" : "RIGHT PAD: FREE";
       }
 
       // HUD Badges
@@ -2879,29 +3442,77 @@
         });
       }
 
-      // Smooth Camera Positioning
+      if (fPlumeGroup && fPlumeGroup.visible) {
+        fShockDiamonds.forEach((sd, i) => {
+          sd.mesh.position.y = -sd.baseDepth + Math.sin(now * 0.03 + i * 1.4) * 0.22;
+          const diamScale = 0.92 + Math.sin(now * 0.04 + i) * 0.16;
+          sd.mesh.scale.set(diamScale, diamScale, diamScale);
+        });
+      }
+
+      const rcsPulsing = 0.85 + Math.sin(now * 0.06) * 0.2 + (Math.random() - 0.5) * 0.1;
+      if (falconLeftRcs && falconLeftRcs.visible && falconLeftRcs.jetCone) {
+        falconLeftRcs.jetCone.scale.set(rcsPulsing, 0.9 + Math.sin(now * 0.08) * 0.15, rcsPulsing);
+      }
+      if (falconRightRcs && falconRightRcs.visible && falconRightRcs.jetCone) {
+        falconRightRcs.jetCone.scale.set(rcsPulsing, 0.9 + Math.sin(now * 0.08) * 0.15, rcsPulsing);
+      }
+      if (artemisLeftPlume && artemisLeftPlume.visible) {
+        artemisLeftPlume.scale.set(rcsPulsing, 0.9 + Math.sin(now * 0.07) * 0.18, rcsPulsing);
+      }
+      if (artemisRightPlume && artemisRightPlume.visible) {
+        artemisRightPlume.scale.set(rcsPulsing, 0.9 + Math.sin(now * 0.07) * 0.18, rcsPulsing);
+      }
+      if (artemisMainPlume && artemisMainPlume.visible && artemisFlameCore) {
+        const flicker = 0.95 + Math.random() * 0.1;
+        artemisFlameCore.scale.set(flicker, 0.95 + Math.sin(now * 0.03) * 0.08, flicker);
+      }
+
+      // Smooth Camera Positioning (Dynamically adapts to Vehicle Dimensions!)
       if (cameraMode === 'tower') {
-        // High-drama Mechazilla Tower Camera: looking from tower track out at the incoming booster!
-        const towerCamX = -18.0;
-        const towerCamY = 38.0;
-        const towerCamZ = 18.0;
-        camera.position.lerp(new THREE.Vector3(towerCamX, towerCamY, towerCamZ), 0.08);
-        camera.lookAt(rocket.position.x, rocket.position.y + 12.0, 0);
+        if (activeVehicle === 'starship') {
+          const towerCamX = -18.0;
+          const towerCamY = 38.0;
+          const towerCamZ = 18.0;
+          camera.position.lerp(new THREE.Vector3(towerCamX, towerCamY, towerCamZ), 0.08);
+          camera.lookAt(rocket.position.x, rocket.position.y + 12.0, 0);
+        } else if (activeVehicle === 'falcon') {
+          camera.position.lerp(new THREE.Vector3(-18.0, 32.0, 24.0), 0.08);
+          camera.lookAt(rocket.position.x, rocket.position.y + 10.0, 0);
+        } else {
+          camera.position.lerp(new THREE.Vector3(-12.0, 8.0, 16.0), 0.08);
+          camera.lookAt(rocket.position.x, rocket.position.y + 2.0, 0);
+        }
       } else if (cameraMode === 'chase') {
-        // Broad aerospace framing keeping entire 42m booster in view
-        const targetCamX = rocket.position.x * 0.4 + 28.0;
-        const targetCamY = rocket.position.y + 22.0;
-        const targetCamZ = 68.0;
-        camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.08);
-        camera.lookAt(rocket.position.x, rocket.position.y + 18.0, 0);
+        if (activeVehicle === 'artemis') {
+          const targetCamX = rocket.position.x * 0.5 + 8.0;
+          const targetCamY = rocket.position.y + 5.0;
+          const targetCamZ = 18.0;
+          camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.08);
+          camera.lookAt(rocket.position.x, rocket.position.y + 2.5, 0);
+        } else {
+          const targetCamX = rocket.position.x * 0.4 + 28.0;
+          const targetCamY = rocket.position.y + 22.0;
+          const targetCamZ = 68.0;
+          camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.08);
+          camera.lookAt(rocket.position.x, rocket.position.y + 18.0, 0);
+        }
       } else if (cameraMode === 'deck') {
-        // Low angle ground view from the pad
-        camera.position.set(-22, 2.5, 42);
-        camera.lookAt(rocket.position.x, Math.max(2.0, rocket.position.y + 14.0), 0);
+        if (activeVehicle === 'artemis') {
+          camera.position.set(-8, 1.2, 14);
+          camera.lookAt(rocket.position.x, Math.max(1.0, rocket.position.y + 2.0), 0);
+        } else {
+          camera.position.set(-22, 2.5, 42);
+          camera.lookAt(rocket.position.x, Math.max(2.0, rocket.position.y + 14.0), 0);
+        }
       } else if (cameraMode === 'booster') {
-        // Onboard rocket view looking down the stainless steel fuselage
-        camera.position.set(rocket.position.x + 2.8, rocket.position.y + 40.0, 1.2);
-        camera.lookAt(rocket.position.x, rocket.position.y - 12.0, 0);
+        if (activeVehicle === 'artemis') {
+          camera.position.set(rocket.position.x + 1.2, rocket.position.y + 5.2, 0.8);
+          camera.lookAt(rocket.position.x, rocket.position.y - 1.0, 0);
+        } else {
+          camera.position.set(rocket.position.x + 2.8, rocket.position.y + 40.0, 1.2);
+          camera.lookAt(rocket.position.x, rocket.position.y - 12.0, 0);
+        }
       } else if (cameraMode === 'orbit') {
         controls.update();
       }
