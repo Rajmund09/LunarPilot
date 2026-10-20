@@ -127,10 +127,10 @@ def simulate_rocket_episode(
             # Negative feedback ILC update: if rocket landed at +x, bias_x must decrease so raw_x - bias_x increases (commanding leftward velocity)
             state_learn["bias_x"] = float(np.clip(state_learn["bias_x"] - 0.70 * float(prev_x), -50.0, 50.0))
             if abs(float(prev_x)) > 1.8:
-                state_learn["extra_ignite"] = float(min(45.0, state_learn["extra_ignite"] + 4.0))
-                state_learn["gain_lat"] = float(min(1.35, state_learn["gain_lat"] + 0.05))
+                state_learn["extra_ignite"] = float(min(60.0, state_learn["extra_ignite"] + 12.0))
+                state_learn["gain_lat"] = float(min(1.45, state_learn["gain_lat"] + 0.08))
         if prev_vy is not None and abs(float(prev_vy)) > 1.8:
-            state_learn["extra_ignite"] = float(min(45.0, state_learn["extra_ignite"] + 4.0))
+            state_learn["extra_ignite"] = float(min(60.0, state_learn["extra_ignite"] + 8.0))
         if prev_tilt is not None and abs(float(prev_tilt)) > 1.2:
             state_learn["kd_boost"] = float(min(5.0, state_learn["kd_boost"] + 1.0))
 

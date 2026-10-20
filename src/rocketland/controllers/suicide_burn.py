@@ -90,7 +90,7 @@ class SuicideBurnController:
 
         # Lateral divert margin: provides altitude and burn time needed to traverse large horizontal offsets
         lat_err = abs(x) + abs(vx) * 2.0
-        extra_h = min(50.0, 2.5 * lat_err) + self.extra_ignite
+        extra_h = min(160.0, 4.5 * lat_err) + self.extra_ignite
         ignite_alt = max(100.0 + extra_h, burn_dist * (self.margin + 0.03) + extra_h)
 
         if not self.ignited and h_foot <= ignite_alt:
@@ -98,7 +98,7 @@ class SuicideBurnController:
 
         if not self.ignited:
             # Active aerodynamic glide: negative tilt creates negative ax when falling downward (vy < 0)
-            glide_tilt_deg = float(np.clip((-0.15 * x - 0.25 * vx), -4.0, 4.0))
+            glide_tilt_deg = float(np.clip((-0.18 * x - 0.25 * vx), -6.0, 6.0))
             theta_target = float(np.radians(glide_tilt_deg))
             a_throttle = -1.0
         else:
@@ -112,33 +112,33 @@ class SuicideBurnController:
             thr_frac = thrust_req / self.cfg.thrust_max
             a_throttle = float(-1.0 + np.clip((thr_frac - self.cfg.throttle_min) / (1.0 - self.cfg.throttle_min), 0.0, 1.0) * 2.0)
 
-            # Lateral velocity profile and dynamic tilt envelope
+            # Lateral velocity profile and dynamic tilt envelope with divert authority
             if h_foot > 35.0:
-                v_limit = 3.5
-                max_tilt = np.radians(12.0)
+                v_limit = min(9.0, 3.5 + 0.30 * lat_err) * self.gain_lat
+                max_tilt = np.radians(14.0)
             elif h_foot > 12.0:
-                v_limit = 1.8
+                v_limit = min(4.0, 1.8 + 0.12 * lat_err) * self.gain_lat
                 max_tilt = np.radians(6.5)
             elif h_foot > 3.0:
-                v_limit = 0.7
-                max_tilt = np.radians(3.0)
+                v_limit = 0.75
+                max_tilt = np.radians(2.8)
             else:
                 v_limit = 0.15
                 frac = max(0.0, h_foot / 3.0)
-                max_tilt = np.radians(0.60 + 1.2 * frac)
+                max_tilt = np.radians(0.50 + 1.0 * frac)
 
-            target_vx = float(np.clip(-0.30 * x * self.gain_lat, -v_limit, v_limit))
+            target_vx = float(np.clip(-0.35 * x * self.gain_lat, -v_limit, v_limit))
             vx_err = vx - target_vx
-            theta_target = float(np.clip(0.025 * vx_err, -max_tilt, max_tilt))
+            theta_target = float(np.clip(0.038 * vx_err, -max_tilt, max_tilt))
 
         # 3. Attitude control: stiff critically damped TVC gimbal and RCS reaction jets
         theta_error = theta - theta_target
         if h_foot < 25.0:
-            kp_g, kd_g = 13.0, 9.0 + self.kd_boost
-            kp_rcs, kd_rcs = 14.0, 9.5 + self.kd_boost
+            kp_g, kd_g = 13.0, 7.5 + self.kd_boost
+            kp_rcs, kd_rcs = 14.0, 8.0 + self.kd_boost
         else:
-            kp_g, kd_g = 6.0, 4.2
-            kp_rcs, kd_rcs = 6.5, 4.5
+            kp_g, kd_g = 7.5, 4.5
+            kp_rcs, kd_rcs = 8.5, 5.0
 
         gimbal_cmd = kp_g * theta_error + kd_g * omega
         a_gimbal = float(np.clip(gimbal_cmd, -1.0, 1.0))
