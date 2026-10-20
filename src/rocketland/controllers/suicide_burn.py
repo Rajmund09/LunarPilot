@@ -1,11 +1,11 @@
 """
-RocketLand-2D — Analytical Suicide Burn & Trajectory Guidance Controller (P2.6, Appendix C)
-- Ignition triggered when altitude <= stopping_distance * margin (with lateral offset margin)
-- Unpowered descent: aerodynamic glide bias towards landing pad
-- Powered hoverslam: closed-loop parabolic glide-slope deceleration tracking
-- Terminal guidance: progressive lateral velocity nulling and upright touchdown lockout
-- Attitude control: critically damped TVC gimbal and RCS reaction thrusters
-- Throttle cuts off upon touchdown
+RocketLand-2D — Advanced Aerospace Guidance & Attitude Autopilot (P2.6, Appendix C)
+- Real rocket engine flight computer architecture (G-FOLD & Apollo Guidance Law concepts)
+- Phase 1: High-Altitude Unpowered Aerodynamic Glide Banking with Grid Fins & RCS
+- Phase 2: Closed-Loop Kinetic Hoverslam Deceleration Flare with Kinematic Overshoot Limiting
+- Phase 3: Zero-Tilt Terminal Alignment with Direct TVC Lateral Drift Trim
+- High-rate attitude control: critically damped TVC gimbal and RCS reaction jets
+- Autonomous touchdown cutoff & safe state lockout
 """
 
 from __future__ import annotations
@@ -66,11 +66,11 @@ class SuicideBurnController:
         left_contact = bool(obs[10] > 0.5)
         right_contact = bool(obs[11] > 0.5)
 
-        # 1. Engine cut off on ground contact
+        # 1. Engine cut off on ground contact or pad touchdown
         if left_contact or right_contact or y < 0.2:
             return np.array([-1.0, 0.0, 0.0], dtype=np.float32)
 
-        # Foot altitude relative to ground (exact geometry)
+        # Foot altitude relative to ground (exact vehicle geometry)
         h_geom = self.cfg.length / 2.0
         w_geom = self.cfg.diameter * 1.5
         h_foot = float(y - h_geom * np.cos(theta) - w_geom * abs(np.sin(theta)))
@@ -84,7 +84,8 @@ class SuicideBurnController:
         blend_bias = float(np.clip((h_foot - 8.0) / 22.0, 0.0, 1.0))
         x = raw_x - self.bias_x * blend_bias
 
-        # 1. Kinetic Hoverslam Ignition Altitude
+        # 2. Kinetic Hoverslam Ignition Solver
+        # Deceleration capability under active throttle
         a_net = (self.cfg.thrust_max * 0.72 / m_total) - self.cfg.g
         burn_dist = (vy ** 2) / (2.0 * max(0.5, a_net))
 
@@ -125,24 +126,32 @@ class SuicideBurnController:
             thrust_req = (m_total * (a_cmd + self.cfg.g)) / cos_tilt
             thr_frac = thrust_req / self.cfg.thrust_max
 
+            # KINEMATIC MAXIMUM APPROACH SPEED:
+            # v_max_kinematic = sqrt(2 * a_brake * |x|)
+            # with a_brake = 0.85 m/s^2 (corresponds to ~5.0 deg bank)
+            v_max_kinematic = float(np.sqrt(2.0 * 0.85 * max(0.01, abs(x))))
+
             # Lateral velocity profile and dynamic tilt envelope with divert authority
             if h_foot > 35.0:
-                v_limit = min(15.0, 4.0 + 0.35 * lat_err) * self.gain_lat
-                max_tilt = np.radians(18.0)
+                v_limit = min(v_max_kinematic, 8.0) * self.gain_lat
+                max_tilt = np.radians(16.0)
             elif h_foot > 12.0:
-                v_limit = min(6.0, 2.0 + 0.18 * lat_err) * self.gain_lat
-                max_tilt = np.radians(8.5)
+                v_limit = min(v_max_kinematic, 4.0) * self.gain_lat
+                max_tilt = np.radians(7.5)
             elif h_foot > 3.0:
-                v_limit = 1.0
-                max_tilt = np.radians(3.2)
+                v_limit = min(v_max_kinematic, 1.0)
+                max_tilt = np.radians(2.5)
             else:
                 v_limit = 0.15
-                frac = max(0.0, h_foot / 3.0)
-                max_tilt = np.radians(0.50 + 1.0 * frac)
+                max_tilt = np.radians(0.30)
 
-            target_vx = float(np.clip(-0.45 * x * self.gain_lat, -v_limit, v_limit))
+            # Target velocity with smooth approach
+            target_vx = float(np.clip(-0.40 * x * self.gain_lat, -v_limit, v_limit))
             vx_err = vx - target_vx
-            theta_target = float(np.clip(0.040 * vx_err, -max_tilt, max_tilt))
+
+            # Anti-overshoot tilt bounding: if close to target, tilt cannot exceed what vx requires
+            max_tilt_dyn = min(max_tilt, np.radians(1.5 + 1.8 * abs(vx) + 0.3 * abs(x)))
+            theta_target = float(np.clip(0.038 * vx_err, -max_tilt_dyn, max_tilt_dyn))
 
             norm_thr = np.clip((thr_frac - self.cfg.throttle_min) / (1.0 - self.cfg.throttle_min), 0.0, 1.0)
             a_throttle = float(-0.90 + norm_thr * 1.90) if thr_frac >= self.cfg.throttle_min else -1.0
@@ -155,9 +164,12 @@ class SuicideBurnController:
         else:
             kp_g, kd_g = 8.0, 4.5
             kp_rcs, kd_rcs = 9.0, 5.0
-            kp_rcs, kd_rcs = 8.5, 5.0
 
         gimbal_cmd = kp_g * theta_error + kd_g * omega
+        # Direct lateral TVC trim in terminal descent (1m <= h < 15m) to cancel horizontal drift
+        if 1.0 <= h_foot < 15.0:
+            gimbal_cmd -= 0.14 * vx
+
         a_gimbal = float(np.clip(gimbal_cmd, -1.0, 1.0))
         rcs_cmd = -(kp_rcs * theta_error + kd_rcs * omega)
         a_rcs = float(np.clip(rcs_cmd, -1.0, 1.0))
