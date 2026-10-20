@@ -84,52 +84,68 @@ class SuicideBurnController:
         blend_bias = float(np.clip((h_foot - 8.0) / 22.0, 0.0, 1.0))
         x = raw_x - self.bias_x * blend_bias
 
-        # 2. Hoverslam Ignition & Vertical Throttle Guidance
+        # 1. Kinetic Hoverslam Ignition Altitude
         a_net = (self.cfg.thrust_max * 0.72 / m_total) - self.cfg.g
         burn_dist = (vy ** 2) / (2.0 * max(0.5, a_net))
 
-        # Lateral divert margin: provides altitude and burn time needed to traverse large horizontal offsets
-        lat_err = abs(x) + abs(vx) * 2.0
-        extra_h = min(160.0, 4.5 * lat_err) + self.extra_ignite
-        ignite_alt = max(100.0 + extra_h, burn_dist * (self.margin + 0.03) + extra_h)
+        # True kinematic divert requirement: accounting for horizontal kinetic energy
+        if x * vx > 0.0:
+            x_peak = abs(x) + (vx ** 2) / 4.4
+        else:
+            x_peak = abs(x)
 
-        if not self.ignited and h_foot <= ignite_alt:
+        lat_err = x_peak
+        lat_divert_h = min(120.0, 3.2 * lat_err) + self.extra_ignite
+        ignite_alt = max(100.0 + lat_divert_h, burn_dist * (self.margin + 0.03) + lat_divert_h)
+
+        if not self.ignited and h_foot <= ignite_alt and vy < -8.0:
             self.ignited = True
 
         if not self.ignited:
             # Active aerodynamic glide: negative tilt creates negative ax when falling downward (vy < 0)
-            glide_tilt_deg = float(np.clip((-0.18 * x - 0.25 * vx), -6.0, 6.0))
+            glide_tilt_deg = float(np.clip((-0.22 * x - 0.35 * vx), -14.0, 14.0))
             theta_target = float(np.radians(glide_tilt_deg))
             a_throttle = -1.0
         else:
-            # Powered hoverslam parabolic deceleration profile
-            a_glide = 8.2
-            v_target = -np.sqrt(2.0 * a_glide * max(0.001, h_foot) + 0.20)
+            # Powered hoverslam parabolic deceleration profile flaring to soft touchdown
+            a_glide = 8.0
+            if h_foot > 6.0:
+                v_target = -np.sqrt(2.0 * a_glide * (h_foot - 1.5) + 0.5)
+            else:
+                frac = max(0.0, h_foot / 6.0)
+                v_target = -(0.85 + 1.2 * frac)
+
+            # Terminal Translate Gate: If still offset (> 1.5m) in the final 25m, brake vertical speed to allow translation!
+            if h_foot < 25.0 and abs(raw_x) > 1.8:
+                v_target = max(-1.4, v_target)
+
             v_err = vy - v_target
-            a_cmd = a_glide - 4.5 * v_err
-            cos_tilt = max(0.7, np.cos(theta))
+            a_cmd = a_glide - 4.8 * v_err
+            cos_tilt = max(0.65, np.cos(theta))
             thrust_req = (m_total * (a_cmd + self.cfg.g)) / cos_tilt
             thr_frac = thrust_req / self.cfg.thrust_max
-            a_throttle = float(-1.0 + np.clip((thr_frac - self.cfg.throttle_min) / (1.0 - self.cfg.throttle_min), 0.0, 1.0) * 2.0)
 
             # Lateral velocity profile and dynamic tilt envelope with divert authority
             if h_foot > 35.0:
-                v_limit = min(9.0, 3.5 + 0.30 * lat_err) * self.gain_lat
-                max_tilt = np.radians(14.0)
+                v_limit = min(15.0, 4.0 + 0.35 * lat_err) * self.gain_lat
+                max_tilt = np.radians(18.0)
             elif h_foot > 12.0:
-                v_limit = min(4.0, 1.8 + 0.12 * lat_err) * self.gain_lat
-                max_tilt = np.radians(6.5)
+                v_limit = min(6.0, 2.0 + 0.18 * lat_err) * self.gain_lat
+                max_tilt = np.radians(8.5)
             elif h_foot > 3.0:
-                v_limit = 0.75
-                max_tilt = np.radians(2.8)
+                v_limit = 1.0
+                max_tilt = np.radians(3.2)
             else:
                 v_limit = 0.15
                 frac = max(0.0, h_foot / 3.0)
                 max_tilt = np.radians(0.50 + 1.0 * frac)
 
-            target_vx = float(np.clip(-0.35 * x * self.gain_lat, -v_limit, v_limit))
+            target_vx = float(np.clip(-0.45 * x * self.gain_lat, -v_limit, v_limit))
             vx_err = vx - target_vx
-            theta_target = float(np.clip(0.038 * vx_err, -max_tilt, max_tilt))
+            theta_target = float(np.clip(0.040 * vx_err, -max_tilt, max_tilt))
+
+            norm_thr = np.clip((thr_frac - self.cfg.throttle_min) / (1.0 - self.cfg.throttle_min), 0.0, 1.0)
+            a_throttle = float(-0.90 + norm_thr * 1.90) if thr_frac >= self.cfg.throttle_min else -1.0
 
         # 3. Attitude control: stiff critically damped TVC gimbal and RCS reaction jets
         theta_error = theta - theta_target
@@ -137,7 +153,8 @@ class SuicideBurnController:
             kp_g, kd_g = 13.0, 7.5 + self.kd_boost
             kp_rcs, kd_rcs = 14.0, 8.0 + self.kd_boost
         else:
-            kp_g, kd_g = 7.5, 4.5
+            kp_g, kd_g = 8.0, 4.5
+            kp_rcs, kd_rcs = 9.0, 5.0
             kp_rcs, kd_rcs = 8.5, 5.0
 
         gimbal_cmd = kp_g * theta_error + kd_g * omega

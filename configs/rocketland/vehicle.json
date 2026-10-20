@@ -13,7 +13,7 @@
   "gimbal_rate_limit_deg_s": 20.0,
   "throttle_rate_limit_s": 2.0,
   "throttle_tau": 0.1,
-  "rcs_max_torque": 350000.0,
+  "rcs_max_torque": 600000.0,
   "rho0": 1.225,
   "scale_height": 8500.0,
   "cd_axial": 0.8,
