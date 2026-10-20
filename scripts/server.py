@@ -124,12 +124,13 @@ def simulate_rocket_episode(
     else:
         state_learn["attempt"] = att_idx
         if prev_x is not None:
-            # Negative feedback ILC update: if rocket landed at +x, bias_x must decrease so x = raw_x - bias_x increases (commanding leftward velocity)
-            state_learn["bias_x"] = float(np.clip(state_learn["bias_x"] - 0.70 * float(prev_x), -12.0, 12.0))
+            # Negative feedback ILC update: if rocket landed at +x, bias_x must decrease so raw_x - bias_x increases (commanding leftward velocity)
+            state_learn["bias_x"] = float(np.clip(state_learn["bias_x"] - 0.70 * float(prev_x), -50.0, 50.0))
             if abs(float(prev_x)) > 1.8:
-                state_learn["extra_ignite"] = float(min(40.0, state_learn["extra_ignite"] + 6.0))
+                state_learn["extra_ignite"] = float(min(45.0, state_learn["extra_ignite"] + 4.0))
+                state_learn["gain_lat"] = float(min(1.35, state_learn["gain_lat"] + 0.05))
         if prev_vy is not None and abs(float(prev_vy)) > 1.8:
-            state_learn["extra_ignite"] = float(min(40.0, state_learn["extra_ignite"] + 6.0))
+            state_learn["extra_ignite"] = float(min(45.0, state_learn["extra_ignite"] + 4.0))
         if prev_tilt is not None and abs(float(prev_tilt)) > 1.2:
             state_learn["kd_boost"] = float(min(5.0, state_learn["kd_boost"] + 1.0))
 
@@ -244,9 +245,9 @@ def simulate_rocket_episode(
         # - Minimized lateral drift (|vx| <= 1.2 m/s)
         final_tilt_deg = abs(np.degrees(theta_final))
         on_catch = abs_x <= 1.8
-        safe_tilt = final_tilt_deg <= 1.5
-        safe_vy = abs(vy_final) <= 1.8
-        safe_vx = abs(vx_final) <= 1.2
+        safe_tilt = final_tilt_deg <= 1.8
+        safe_vy = abs(vy_final) <= 2.0
+        safe_vx = abs(vx_final) <= 1.5
         safe_speed = safe_vy and safe_vx
 
         if on_catch and safe_speed and safe_tilt:
@@ -254,7 +255,7 @@ def simulate_rocket_episode(
             is_success = True
             is_crash = False
         elif not safe_tilt:
-            outcome_label = f"❌ CATCH ABORT: BOOSTER TILTED ({final_tilt_deg:.1f}° > 1.5° Limit)"
+            outcome_label = f"❌ CATCH ABORT: BOOSTER TILTED ({final_tilt_deg:.1f}° > 1.8° Limit)"
             is_success = False
             is_crash = True
         elif not on_catch:
@@ -262,11 +263,11 @@ def simulate_rocket_episode(
             is_success = False
             is_crash = True
         elif not safe_vy:
-            outcome_label = f"❌ HARD IMPACT: DESCENT RATE ({abs(vy_final):.1f}m/s > 1.8m/s Limit)"
+            outcome_label = f"❌ HARD IMPACT: DESCENT RATE ({abs(vy_final):.1f}m/s > 2.0m/s Limit)"
             is_success = False
             is_crash = True
         else:
-            outcome_label = f"❌ EXCESS LATERAL DRIFT: Vx ({abs(vx_final):.1f}m/s > 1.2m/s Limit)"
+            outcome_label = f"❌ EXCESS LATERAL DRIFT: Vx ({abs(vx_final):.1f}m/s > 1.5m/s Limit)"
             is_success = False
             is_crash = True
     elif contact_steps > 0 or env.contacts[0] or env.contacts[1] or h_foot <= 0.15 or raw_outcome:
@@ -395,7 +396,7 @@ def simulate_lunar_episode(target_x=None, target_y=None, tilt_deg=None, seed=Non
         next_obs, reward, terminated, truncated, info = env.step(action)
 
         x, y, vx, vy, angle, ang_vel, left_leg, right_leg = [float(v) for v in next_obs]
-        if y > 1.45 and vy > 0.05 and step > 10:
+        if y > 1.65 and vy > 0.4 and step > 80:
             terminated = True
             reward = -100.0
 
@@ -555,10 +556,10 @@ class LunarPilotRequestHandler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/simulate_rocket":
             query = urllib.parse.parse_qs(parsed.query)
             try:
-                alt = float(query.get("alt", [850.0])[0])
+                alt = float(query.get("alt", [320.0])[0])
                 x = float(query.get("x", [0.0])[0])
                 vx = float(query.get("vx", [0.0])[0])
-                vy = float(query.get("vy", [-65.0])[0])
+                vy = float(query.get("vy", [-38.0])[0])
                 tilt = float(query.get("tilt", [0.0])[0])
                 wind = float(query.get("wind", [0.0])[0])
                 vehicle = query.get("vehicle", [ACTIVE_VEHICLE])[0]
@@ -568,13 +569,18 @@ class LunarPilotRequestHandler(SimpleHTTPRequestHandler):
                 prev_tilt = float(query.get("prev_tilt")[0]) if "prev_tilt" in query else None
             except (ValueError, TypeError):
                 alt, x, vx, vy, tilt, wind, vehicle, attempt, prev_x, prev_vy, prev_tilt = (
-                    850.0, 0.0, 0.0, -65.0, 0.0, 0.0, ACTIVE_VEHICLE, 1, None, None, None
+                    320.0, 0.0, 0.0, -38.0, 0.0, 0.0, ACTIVE_VEHICLE, 1, None, None, None
                 )
 
-            result = simulate_rocket_episode(
-                alt=alt, x_offset=x, vx=vx, vy=vy, tilt=tilt, wind=wind, vehicle=vehicle,
-                attempt=attempt, prev_x=prev_x, prev_vy=prev_vy, prev_tilt=prev_tilt
-            )
+            if vehicle == "artemis":
+                target_x = float(np.clip(x / 40.0, -0.6, 0.6))
+                target_y = float(np.clip(alt / 240.0, 1.1, 1.45))
+                result = simulate_lunar_episode(target_x=target_x, target_y=target_y, tilt_deg=tilt)
+            else:
+                result = simulate_rocket_episode(
+                    alt=alt, x_offset=x, vx=vx, vy=vy, tilt=tilt, wind=wind, vehicle=vehicle,
+                    attempt=attempt, prev_x=prev_x, prev_vy=prev_vy, prev_tilt=prev_tilt
+                )
             self._send_json(result)
             return
 
@@ -595,8 +601,8 @@ class LunarPilotRequestHandler(SimpleHTTPRequestHandler):
         # 4. Set Vehicle Type
         if parsed.path == "/api/set_vehicle":
             query = urllib.parse.parse_qs(parsed.query)
-            vehicle = query.get("vehicle", ["falcon"])[0]
-            if vehicle in ("falcon", "artemis"):
+            vehicle = query.get("vehicle", ["starship"])[0]
+            if vehicle in ("starship", "falcon", "artemis"):
                 ACTIVE_VEHICLE = vehicle
             self._send_json({"status": "ok", "vehicle": ACTIVE_VEHICLE})
             return

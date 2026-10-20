@@ -55,7 +55,6 @@ class SuicideBurnController:
         """
         # Unpack physical state from normalized observation
         raw_x = float(obs[0]) * self.cfg.pad_half_width
-        x = raw_x - self.bias_x  # Guidance target offset with learned adaptation bias
         y = float(obs[1]) * 1000.0
         vx = float(obs[2]) * 50.0
         vy = float(obs[3]) * 50.0
@@ -81,26 +80,31 @@ class SuicideBurnController:
 
         m_total = self.cfg.dry_mass + fuel
 
+        # Lead adaptation bias: active at high/mid approach, tapers near ground so rocket settles at pad center
+        blend_bias = float(np.clip((h_foot - 8.0) / 22.0, 0.0, 1.0))
+        x = raw_x - self.bias_x * blend_bias
+
         # 2. Hoverslam Ignition & Vertical Throttle Guidance
         a_net = (self.cfg.thrust_max * 0.72 / m_total) - self.cfg.g
         burn_dist = (vy ** 2) / (2.0 * max(0.5, a_net))
 
         # Lateral divert margin: provides altitude and burn time needed to traverse large horizontal offsets
         lat_err = abs(x) + abs(vx) * 2.0
-        extra_h = min(85.0, 3.8 * lat_err) + self.extra_ignite
-        ignite_alt = max(115.0 + extra_h, burn_dist * (self.margin + 0.03) + extra_h)
+        extra_h = min(50.0, 2.5 * lat_err) + self.extra_ignite
+        ignite_alt = max(100.0 + extra_h, burn_dist * (self.margin + 0.03) + extra_h)
 
         if not self.ignited and h_foot <= ignite_alt:
             self.ignited = True
 
         if not self.ignited:
-            glide_tilt_deg = np.clip((0.20 * x + 0.30 * vx), -4.0, 4.0)
-            theta_target = np.radians(glide_tilt_deg)
+            # Active aerodynamic glide: negative tilt creates negative ax when falling downward (vy < 0)
+            glide_tilt_deg = float(np.clip((-0.15 * x - 0.25 * vx), -4.0, 4.0))
+            theta_target = float(np.radians(glide_tilt_deg))
             a_throttle = -1.0
         else:
             # Powered hoverslam parabolic deceleration profile
             a_glide = 8.2
-            v_target = -np.sqrt(2.0 * a_glide * max(0.001, h_foot) + 0.16)
+            v_target = -np.sqrt(2.0 * a_glide * max(0.001, h_foot) + 0.20)
             v_err = vy - v_target
             a_cmd = a_glide - 4.5 * v_err
             cos_tilt = max(0.7, np.cos(theta))
@@ -108,26 +112,30 @@ class SuicideBurnController:
             thr_frac = thrust_req / self.cfg.thrust_max
             a_throttle = float(-1.0 + np.clip((thr_frac - self.cfg.throttle_min) / (1.0 - self.cfg.throttle_min), 0.0, 1.0) * 2.0)
 
-            # Continuous progressive lateral velocity tracking without overshoot
-            vx_target = float(np.clip(-0.25 * x, -2.5, 2.5))
-            if h_foot > 30.0:
-                max_tilt = np.radians(6.0)
-            elif h_foot > 10.0:
+            # Lateral velocity profile and dynamic tilt envelope
+            if h_foot > 35.0:
+                v_limit = 3.5
+                max_tilt = np.radians(12.0)
+            elif h_foot > 12.0:
+                v_limit = 1.8
+                max_tilt = np.radians(6.5)
+            elif h_foot > 3.0:
+                v_limit = 0.7
                 max_tilt = np.radians(3.0)
-            elif h_foot > 2.0:
-                max_tilt = np.radians(1.0)
             else:
-                vx_target = 0.0
-                max_tilt = np.radians(0.2)
+                v_limit = 0.15
+                frac = max(0.0, h_foot / 3.0)
+                max_tilt = np.radians(0.60 + 1.2 * frac)
 
-            vx_err = vx - vx_target
-            theta_target = float(np.clip(0.06 * vx_err, -max_tilt, max_tilt))
+            target_vx = float(np.clip(-0.30 * x * self.gain_lat, -v_limit, v_limit))
+            vx_err = vx - target_vx
+            theta_target = float(np.clip(0.025 * vx_err, -max_tilt, max_tilt))
 
         # 3. Attitude control: stiff critically damped TVC gimbal and RCS reaction jets
         theta_error = theta - theta_target
         if h_foot < 25.0:
-            kp_g, kd_g = 11.0, 8.0 + self.kd_boost
-            kp_rcs, kd_rcs = 12.0, 8.5 + self.kd_boost
+            kp_g, kd_g = 13.0, 9.0 + self.kd_boost
+            kp_rcs, kd_rcs = 14.0, 9.5 + self.kd_boost
         else:
             kp_g, kd_g = 6.0, 4.2
             kp_rcs, kd_rcs = 6.5, 4.5

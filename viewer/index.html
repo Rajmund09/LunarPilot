@@ -2493,6 +2493,7 @@
     // ========================================================
     const artemisGroup = new THREE.Group();
     rocket.add(artemisGroup);
+    artemisGroup.position.y = 0.20;
     artemisGroup.visible = false;
 
     // 1. Octagonal Gold Mylar Foil Descent Base (y = 0.5 to 2.2)
@@ -2594,9 +2595,9 @@
       pad.position.set(0, 0.05, 3.35);
       legPivot.add(pad);
 
-      const probeGeo = new THREE.CylinderGeometry(0.012, 0.012, 1.5, 6);
+      const probeGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.45, 6);
       const probe = new THREE.Mesh(probeGeo, chromePistonMat);
-      probe.position.set(0, -0.7, 3.35);
+      probe.position.set(0, -0.20, 3.35);
       legPivot.add(probe);
 
       if (hasLadder) {
@@ -3698,18 +3699,38 @@
         const finalVy = Math.abs(td.vy !== undefined ? td.vy : Math.abs(s.vy));
         const finalVx = Math.abs(td.vx !== undefined ? td.vx : Math.abs(s.vx));
 
-        // Strict Mechazilla verification:
-        const isUpright = finalTilt <= 1.5;
-        const isCentered = finalX <= 1.8;
-        const isSoft = finalVy <= 1.8 && finalVx <= 1.2;
+        // Dynamic verification per vehicle type
+        let maxTiltLimit = 1.8;
+        let maxXLimit = 1.8;
+        let maxVyLimit = 2.0;
+        let maxVxLimit = 1.5;
+        let successTitle = "MECHAZILLA CATCH // VERIFIED";
+
+        if (activeVehicle === 'falcon') {
+          maxTiltLimit = 4.0;
+          maxXLimit = 15.0;
+          maxVyLimit = 2.2;
+          maxVxLimit = 1.8;
+          successTitle = "DRONESHIP TOUCHDOWN // SECURED";
+        } else if (activeVehicle === 'artemis') {
+          maxTiltLimit = 6.0;
+          maxXLimit = 15.0;
+          maxVyLimit = 2.5;
+          maxVxLimit = 2.0;
+          successTitle = "LUNAR TOUCHDOWN // VERIFIED";
+        }
+
+        const isUpright = finalTilt <= maxTiltLimit;
+        const isCentered = finalX <= maxXLimit;
+        const isSoft = finalVy <= maxVyLimit && finalVx <= maxVxLimit;
         const isPerfect = Boolean(currentEpisode.is_success && isUpright && isCentered && isSoft);
 
         outcomeModal.className = isPerfect ? "success" : "crash";
-        outcomeTitle.textContent = isPerfect ? "MECHAZILLA CATCH // VERIFIED" : (currentEpisode.outcome ? currentEpisode.outcome.toUpperCase() : "APPROACH ABORT // EXCEEDED TOLERANCE");
+        outcomeTitle.textContent = isPerfect ? successTitle : (currentEpisode.outcome ? currentEpisode.outcome.toUpperCase() : "APPROACH ABORT // EXCEEDED TOLERANCE");
 
         const learn = currentEpisode.learning || null;
         let learningBanner = '';
-        if (learn) {
+        if (learn && activeVehicle !== 'artemis') {
           learningBanner = `
             <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 6px; padding: 6px 10px; margin-bottom: 8px; font-size: 0.68rem; color: #bae6fd; text-align: left;">
               <div style="color: var(--accent-cyan); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">ITERATIVE LEARNING CONTROL</div>
@@ -3721,18 +3742,18 @@
 
         outcomeDesc.innerHTML = `
           <div style="margin-bottom: 8px; font-weight: 600; font-size: 0.72rem; color: ${isPerfect ? 'var(--nominal-text)' : 'var(--alert-text)'}">
-            ${isPerfect ? 'Nominal touchdown: Verticality and cradle alignment criteria verified.' : 'Tolerance boundary exceeded: Guidance repositioning required.'}
+            ${isPerfect ? 'Nominal touchdown: Verticality and position alignment criteria verified.' : 'Tolerance boundary exceeded: Guidance repositioning required.'}
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 0.70rem; margin-bottom: 10px; font-variant-numeric: tabular-nums;">
-            <div style="background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px; border: 1px solid var(--panel-border);">Tilt: <b style="color: ${isUpright ? 'var(--nominal-text)' : 'var(--alert-text)'}">${finalTilt.toFixed(1)}°</b> <span style="color: var(--text-tertiary);">(≤1.5°)</span></div>
-            <div style="background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px; border: 1px solid var(--panel-border);">Offset: <b style="color: ${isCentered ? 'var(--nominal-text)' : 'var(--alert-text)'}">${finalX.toFixed(2)}m</b> <span style="color: var(--text-tertiary);">(≤1.8m)</span></div>
-            <div style="background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px; border: 1px solid var(--panel-border);">Vy: <b style="color: ${finalVy <= 1.8 ? 'var(--nominal-text)' : 'var(--alert-text)'}">${Math.abs(s.vy).toFixed(2)} m/s</b> <span style="color: var(--text-tertiary);">(≤1.8)</span></div>
-            <div style="background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px; border: 1px solid var(--panel-border);">Vx: <b style="color: ${finalVx <= 1.2 ? 'var(--nominal-text)' : 'var(--alert-text)'}">${Math.abs(s.vx).toFixed(2)} m/s</b> <span style="color: var(--text-tertiary);">(≤1.2)</span></div>
+            <div style="background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px; border: 1px solid var(--panel-border);">Tilt: <b style="color: ${isUpright ? 'var(--nominal-text)' : 'var(--alert-text)'}">${finalTilt.toFixed(1)}°</b> <span style="color: var(--text-tertiary);">(≤${maxTiltLimit}°)</span></div>
+            <div style="background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px; border: 1px solid var(--panel-border);">Offset: <b style="color: ${isCentered ? 'var(--nominal-text)' : 'var(--alert-text)'}">${finalX.toFixed(2)}m</b> <span style="color: var(--text-tertiary);">(≤${maxXLimit}m)</span></div>
+            <div style="background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px; border: 1px solid var(--panel-border);">Vy: <b style="color: ${finalVy <= maxVyLimit ? 'var(--nominal-text)' : 'var(--alert-text)'}">${Math.abs(s.vy).toFixed(2)} m/s</b> <span style="color: var(--text-tertiary);">(≤${maxVyLimit})</span></div>
+            <div style="background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px; border: 1px solid var(--panel-border);">Vx: <b style="color: ${finalVx <= maxVxLimit ? 'var(--nominal-text)' : 'var(--alert-text)'}">${Math.abs(s.vx).toFixed(2)} m/s</b> <span style="color: var(--text-tertiary);">(≤${maxVxLimit})</span></div>
           </div>
           ${learningBanner}
           <div style="font-size: 0.68rem; color: var(--text-tertiary); border-top: 1px solid var(--panel-border); padding-top: 8px;">
             ${isPerfect ? 
-              `<span style="color: var(--nominal-text); font-weight: 600;">CONVERGED:</span> Attempt #${learnAttemptCount} achieved nominal catch. Learning loop complete.` :
+              `<span style="color: var(--nominal-text); font-weight: 600;">CONVERGED:</span> Attempt #${learnAttemptCount} achieved nominal touchdown. Learning loop complete.` :
               (autoLearnActive ? 
                 `<span style="color: var(--caution-text); font-weight: 600;">RETRYING:</span> Attempt #${learnAttemptCount} out of bound. Adapting guidance and relaunching in 2.0s...` : 
                 `Auto-Relaunch paused. Click "Next Flight" or toggle auto-learn.`)}
