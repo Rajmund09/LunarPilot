@@ -3,7 +3,7 @@ RocketLand-2D — Advanced Aerospace Guidance & Attitude Autopilot (P2.6, Append
 - Real rocket engine flight computer architecture (G-FOLD & Apollo Guidance Law concepts)
 - Phase 1: High-Altitude Unpowered Aerodynamic Glide Banking with Grid Fins & RCS
 - Phase 2: Closed-Loop Kinetic Hoverslam Deceleration Flare with Kinematic Overshoot Limiting
-- Phase 3: Zero-Tilt Terminal Alignment with Direct TVC Lateral Drift Trim
+- Phase 3: Decisive Non-Hovering Terminal Touchdown with Direct TVC Lateral Drift Trim
 - High-rate attitude control: critically damped TVC gimbal and RCS reaction jets
 - Autonomous touchdown cutoff & safe state lockout
 """
@@ -81,7 +81,7 @@ class SuicideBurnController:
         m_total = self.cfg.dry_mass + fuel
 
         # Lead adaptation bias: active at high/mid approach, tapers near ground so rocket settles at pad center
-        blend_bias = float(np.clip((h_foot - 8.0) / 22.0, 0.0, 1.0))
+        blend_bias = float(np.clip((h_foot - 6.0) / 20.0, 0.0, 1.0))
         x = raw_x - self.bias_x * blend_bias
 
         # 2. Kinetic Hoverslam Ignition Solver
@@ -97,41 +97,42 @@ class SuicideBurnController:
 
         lat_err = x_peak
         lat_divert_h = min(120.0, 3.2 * lat_err) + self.extra_ignite
-        ignite_alt = max(100.0 + lat_divert_h, burn_dist * (self.margin + 0.03) + lat_divert_h)
+        ignite_alt = max(95.0 + lat_divert_h, burn_dist * (self.margin + 0.00) + lat_divert_h)
 
         if not self.ignited and h_foot <= ignite_alt and vy < -8.0:
             self.ignited = True
 
         if not self.ignited:
-            # Active aerodynamic glide: negative tilt creates negative ax when falling downward (vy < 0)
+            # Phase 1: Unpowered aerodynamic glide banking
             glide_tilt_deg = float(np.clip((-0.22 * x - 0.35 * vx), -14.0, 14.0))
             theta_target = float(np.radians(glide_tilt_deg))
             a_throttle = -1.0
         else:
-            # Powered hoverslam parabolic deceleration profile flaring to soft touchdown
-            a_glide = 8.0
-            if h_foot > 6.0:
-                v_target = -np.sqrt(2.0 * a_glide * (h_foot - 1.5) + 0.5)
+            # Phase 2: Closed-Loop Kinetic Flare Guidance
+            # Decelerates firmly without hovering or floating at the end
+            if h_foot > 5.5:
+                v_target = -np.sqrt(2.0 * 8.0 * (h_foot - 1.0) + 1.25**2)
+                a_ff = 8.0
             else:
-                frac = max(0.0, h_foot / 6.0)
-                v_target = -(0.85 + 1.2 * frac)
+                # Decisive, confident terminal touchdown descent (1.0 to 1.25 m/s sink rate)
+                # Prevents hanging in the air, fuel waste, and lateral drift
+                v_target = -1.25
+                a_ff = 4.0
 
-            # Terminal Translate Gate: If still offset (> 1.5m) in the final 25m, brake vertical speed to allow translation!
+            # Terminal Translate Gate: If still offset (> 1.5m) in the final 25m, brake vertical speed slightly to allow translation
             if h_foot < 25.0 and abs(raw_x) > 1.8:
-                v_target = max(-1.4, v_target)
+                v_target = max(-1.6, v_target)
 
             v_err = vy - v_target
-            a_cmd = a_glide - 4.8 * v_err
+            a_cmd = a_ff - 4.8 * v_err
             cos_tilt = max(0.65, np.cos(theta))
             thrust_req = (m_total * (a_cmd + self.cfg.g)) / cos_tilt
             thr_frac = thrust_req / self.cfg.thrust_max
 
-            # KINEMATIC MAXIMUM APPROACH SPEED:
-            # v_max_kinematic = sqrt(2 * a_brake * |x|)
-            # with a_brake = 0.85 m/s^2 (corresponds to ~5.0 deg bank)
+            # Kinematic Maximum Approach Speed: prevents overshooting and reverse whipping
             v_max_kinematic = float(np.sqrt(2.0 * 0.85 * max(0.01, abs(x))))
 
-            # Lateral velocity profile and dynamic tilt envelope with divert authority
+            # Altitude-tiered lateral velocity envelope
             if h_foot > 35.0:
                 v_limit = min(v_max_kinematic, 8.0) * self.gain_lat
                 max_tilt = np.radians(16.0)
@@ -143,20 +144,20 @@ class SuicideBurnController:
                 max_tilt = np.radians(2.5)
             else:
                 v_limit = 0.15
-                max_tilt = np.radians(0.30)
+                max_tilt = np.radians(0.20)
 
             # Target velocity with smooth approach
-            target_vx = float(np.clip(-0.40 * x * self.gain_lat, -v_limit, v_limit))
+            target_vx = float(np.clip(-0.42 * x * self.gain_lat, -v_limit, v_limit))
             vx_err = vx - target_vx
 
-            # Anti-overshoot tilt bounding: if close to target, tilt cannot exceed what vx requires
+            # Anti-overshoot dynamic tilt envelope: tightens tilt when horizontal speed is already small
             max_tilt_dyn = min(max_tilt, np.radians(1.5 + 1.8 * abs(vx) + 0.3 * abs(x)))
             theta_target = float(np.clip(0.038 * vx_err, -max_tilt_dyn, max_tilt_dyn))
 
             norm_thr = np.clip((thr_frac - self.cfg.throttle_min) / (1.0 - self.cfg.throttle_min), 0.0, 1.0)
             a_throttle = float(-0.90 + norm_thr * 1.90) if thr_frac >= self.cfg.throttle_min else -1.0
 
-        # 3. Attitude control: stiff critically damped TVC gimbal and RCS reaction jets
+        # Phase 3: Attitude autopilot (TVC Gimbal + Reaction Control System)
         theta_error = theta - theta_target
         if h_foot < 25.0:
             kp_g, kd_g = 13.0, 7.5 + self.kd_boost
@@ -166,9 +167,9 @@ class SuicideBurnController:
             kp_rcs, kd_rcs = 9.0, 5.0
 
         gimbal_cmd = kp_g * theta_error + kd_g * omega
-        # Direct lateral TVC trim in terminal descent (1m <= h < 15m) to cancel horizontal drift
-        if 1.0 <= h_foot < 15.0:
-            gimbal_cmd -= 0.14 * vx
+        # Direct lateral TVC trim in terminal descent (0.5m <= h < 15m) to cancel horizontal drift cleanly
+        if 0.5 <= h_foot < 15.0:
+            gimbal_cmd -= 0.20 * vx
 
         a_gimbal = float(np.clip(gimbal_cmd, -1.0, 1.0))
         rcs_cmd = -(kp_rcs * theta_error + kd_rcs * omega)
