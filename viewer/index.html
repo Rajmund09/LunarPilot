@@ -1867,6 +1867,7 @@
       transparent: true,
       opacity: 0.0,
       roughness: 1.0,
+      depthWrite: false,
     });
     const delugePuffs = [];
     for (let p = 0; p < 28; p++) {
@@ -1874,6 +1875,7 @@
       const ang = (p * Math.PI * 2) / 28;
       const dist = 6.0 + Math.random() * 24.0;
       puff.position.set(Math.cos(ang) * dist, 1.0 + Math.random() * 5.0, Math.sin(ang) * dist);
+      puff.renderOrder = 20;
       starbaseGroup.add(puff);
       delugePuffs.push(puff);
     }
@@ -1932,6 +1934,7 @@
       transparent: true,
       opacity: 0.0,
       side: THREE.DoubleSide,
+      depthWrite: false,
     });
     const deckBlastMesh = new THREE.Mesh(deckBlastGeo, deckBlastMat);
     deckBlastMesh.position.set(0, 0.08, 0);
@@ -2141,14 +2144,14 @@
     // Intense Supersonic Core with Mach Diamonds
     const shCoreFlameGeo = new THREE.ConeGeometry(0.95, 14.0, 20);
     shCoreFlameGeo.rotateX(Math.PI);
-    const shCoreFlameMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.98 });
+    const shCoreFlameMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.98, depthWrite: false });
     const shCoreFlame = new THREE.Mesh(shCoreFlameGeo, shCoreFlameMat);
     shCoreFlame.position.y = -7.0;
     shPlumeGroup.add(shCoreFlame);
 
     // 5 Dynamic Mach Shock Diamond Rings
     const shDiamonds = [];
-    const shDiamondMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.92 });
+    const shDiamondMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.92, depthWrite: false });
     for (let d = 2.0; d < 12.0; d += 2.2) {
       const dRing = new THREE.Mesh(new THREE.RingGeometry(0.12, 0.70, 16), shDiamondMat);
       dRing.position.y = -d;
@@ -2160,7 +2163,7 @@
     // Turbulent Methalox Outer Expansion Flame
     const shOuterFlameGeo = new THREE.ConeGeometry(2.4, 22.0, 20);
     shOuterFlameGeo.rotateX(Math.PI);
-    const shOuterFlameMat = new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.55 });
+    const shOuterFlameMat = new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.55, depthWrite: false });
     const shOuterFlame = new THREE.Mesh(shOuterFlameGeo, shOuterFlameMat);
     shOuterFlame.position.y = -11.0;
     shPlumeGroup.add(shOuterFlame);
@@ -2177,7 +2180,9 @@
 
       const jetGeo = new THREE.ConeGeometry(0.65, 5.5, 16);
       jetGeo.rotateZ(isLeft ? Math.PI / 2 : -Math.PI / 2);
-      const jet = new THREE.Mesh(jetGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 }));
+      const jetMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, depthWrite: false });
+      const jet = new THREE.Mesh(jetGeo, jetMat);
+      rcsGroup.jetMat = jetMat;
       jet.position.x = isLeft ? -2.75 : 2.75;
       rcsGroup.add(jet);
       rcsGroup.jet = jet;
@@ -2342,7 +2347,7 @@
       const jetConeGroup = new THREE.Group();
       const jetGeo = new THREE.ConeGeometry(0.55, 4.8, 16);
       jetGeo.rotateZ(isLeft ? Math.PI / 2 : -Math.PI / 2);
-      const jetMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.95 });
+      const jetMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.95, depthWrite: false });
       const jet = new THREE.Mesh(jetGeo, jetMat);
       jet.position.x = isLeft ? -2.4 : 2.4;
       jetConeGroup.add(jet);
@@ -2350,7 +2355,7 @@
       // Inner concentrated vapor blast core
       const coreJetGeo = new THREE.ConeGeometry(0.28, 3.2, 16);
       coreJetGeo.rotateZ(isLeft ? Math.PI / 2 : -Math.PI / 2);
-      const coreJet = new THREE.Mesh(coreJetGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.98 }));
+      const coreJet = new THREE.Mesh(coreJetGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.98, depthWrite: false }));
       coreJet.position.x = isLeft ? -1.6 : 1.6;
       jetConeGroup.add(coreJet);
 
@@ -2415,7 +2420,7 @@
 
     const fFlameCore = new THREE.Mesh(
       new THREE.ConeGeometry(0.75, 11.0, 16),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.96 })
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.96, depthWrite: false })
     );
     fFlameCore.geometry.rotateX(Math.PI);
     fFlameCore.position.y = -5.5;
@@ -2423,7 +2428,7 @@
 
     // Shock diamonds for Falcon Merlin plume
     const fShockDiamonds = [];
-    const fDiamondMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.92 });
+    const fDiamondMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.92, depthWrite: false });
     for (let d = 2.0; d < 8.5; d += 2.0) {
       const diamond = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.55, 16), fDiamondMat);
       diamond.position.y = -d;
@@ -2434,7 +2439,7 @@
 
     const fOuterFlame = new THREE.Mesh(
       new THREE.ConeGeometry(1.7, 19.0, 16),
-      new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.45 })
+      new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.45, depthWrite: false })
     );
     fOuterFlame.geometry.rotateX(Math.PI);
     fOuterFlame.position.y = -9.5;
@@ -2631,14 +2636,14 @@
     artemisFlameGeo.rotateX(Math.PI);
     const artemisFlame = new THREE.Mesh(
       artemisFlameGeo,
-      new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.85 })
+      new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.85, depthWrite: false })
     );
     artemisFlame.position.y = -2.75;
     artemisMainPlume.add(artemisFlame);
 
     const artemisFlameCore = new THREE.Mesh(
       new THREE.ConeGeometry(0.35, 3.2, 16),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 })
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, depthWrite: false })
     );
     artemisFlameCore.rotation.x = Math.PI;
     artemisFlameCore.position.y = -1.6;
@@ -2678,7 +2683,7 @@
       const plumeJetGroup = new THREE.Group();
       const plumeConeGeo = new THREE.ConeGeometry(0.48, 3.8, 16);
       plumeConeGeo.rotateZ(isLeft ? Math.PI / 2 : -Math.PI / 2);
-      const plumeMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.92 });
+      const plumeMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.92, depthWrite: false });
       const plumeMesh = new THREE.Mesh(plumeConeGeo, plumeMat);
       plumeMesh.position.x = isLeft ? -2.0 : 2.0;
       plumeJetGroup.add(plumeMesh);
@@ -2687,7 +2692,7 @@
       coreJetGeo.rotateZ(isLeft ? Math.PI / 2 : -Math.PI / 2);
       const coreJet = new THREE.Mesh(
         coreJetGeo,
-        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.98 })
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.98, depthWrite: false })
       );
       coreJet.position.x = isLeft ? -1.35 : 1.35;
       plumeJetGroup.add(coreJet);
@@ -3056,6 +3061,13 @@
     let autoRelaunch = true;
     let isFetching = false;
 
+    // Smoothed Visual State (Eliminates all smoke, steam, and plume flickering/blinking)
+    let currentSteamOpacity = 0.0;
+    let currentDeckBlastOpacity = 0.0;
+    let smoothRcsLeft = 0.0;
+    let smoothRcsRight = 0.0;
+    let smoothThrottle = 0.0;
+
     // DOM Elements
     const btnVehicleStarship = document.getElementById('btn-vehicle-starship');
     const btnVehicleFalcon = document.getElementById('btn-vehicle-falcon');
@@ -3372,6 +3384,11 @@
         currentEpisode = data;
         currentStepIdx = 0;
         currentTime_s = 0.0;
+        currentSteamOpacity = 0.0;
+        currentDeckBlastOpacity = 0.0;
+        smoothRcsLeft = 0.0;
+        smoothRcsRight = 0.0;
+        smoothThrottle = 0.0;
         celebrationPlayed = false;
         audioEngine.stopContinuous();
         timeScrubber.max = data.steps.length - 1;
@@ -3532,9 +3549,20 @@
         shGridFins[1].rotation.x = Math.sin(time_s * 5.0) * 0.08;
         shGridFins[3].rotation.x = -Math.sin(time_s * 5.0) * 0.08;
 
-        // Left & Right Hot Gas Attitude Thrusters
-        shLeftRcs.visible = leftOn;
-        shRightRcs.visible = rightOn;
+        // Left & Right Hot Gas Attitude Thrusters (Smooth decay, no blinking!)
+        const targetRcsL = (leftOn && !isTerminal) ? 1.0 : 0.0;
+        const targetRcsR = (rightOn && !isTerminal) ? 1.0 : 0.0;
+        smoothRcsLeft += (targetRcsL - smoothRcsLeft) * (targetRcsL > smoothRcsLeft ? 0.4 : 0.15);
+        smoothRcsRight += (targetRcsR - smoothRcsRight) * (targetRcsR > smoothRcsRight ? 0.4 : 0.15);
+
+        shLeftRcs.visible = smoothRcsLeft > 0.02;
+        if (shLeftRcs.visible && shLeftRcs.jet) {
+          shLeftRcs.jet.scale.set(smoothRcsLeft, 0.85 + smoothRcsLeft * 0.25, smoothRcsLeft);
+        }
+        shRightRcs.visible = smoothRcsRight > 0.02;
+        if (shRightRcs.visible && shRightRcs.jet) {
+          shRightRcs.jet.scale.set(smoothRcsRight, 0.85 + smoothRcsRight * 0.25, smoothRcsRight);
+        }
 
         // ===================================================
         // KINEMATIC MECHAZILLA CHOPSTICKS (THE HOLDER) TRACKING!
@@ -3573,16 +3601,20 @@
           mechazillaHolder.position.y = 33.9 - 0.25 * Math.min(1, (1.5 - hFoot) / 1.5);
         }
 
-        // 2. High-Pressure Deluge Water Steam Eruption!
-        if (hFoot < 28.0 && throttle > 0.08 && !isTerminal) {
-          const steamOpacity = Math.max(0, (28.0 - hFoot) / 28.0) * 0.85;
-          delugeCloudMat.opacity = steamOpacity;
-          delugePuffs.forEach((puff, idx) => {
-            puff.scale.setScalar(1.2 + Math.sin(time_s * 4 + idx) * 0.5 + (28.0 - hFoot) * 0.35);
-          });
-        } else {
-          delugeCloudMat.opacity = 0.0;
+        // 2. High-Pressure Deluge Water Steam Eruption (Smooth Alpha & Continuous Diffusion - NO BLINKING!)
+        let targetSteam = 0.0;
+        if (hFoot < 36.0 && !isTerminal && (throttle > 0.03 || hFoot < 12.0 || (s.phase && (s.phase.includes('FLARE') || s.phase.includes('BURN'))))) {
+          targetSteam = Math.max(0, (36.0 - hFoot) / 36.0) * 0.82;
         }
+        currentSteamOpacity += (targetSteam - currentSteamOpacity) * 0.12;
+        delugeCloudMat.opacity = currentSteamOpacity;
+        const steamActive = currentSteamOpacity > 0.01;
+        delugePuffs.forEach((puff, idx) => {
+          puff.visible = steamActive;
+          if (steamActive) {
+            puff.scale.setScalar(1.2 + Math.sin(time_s * 2.5 + idx * 0.5) * 0.25 + (36.0 - hFoot) * 0.28);
+          }
+        });
 
       } else if (activeVehicle === 'falcon') {
         // Falcon 9 Plume & Thrusters
@@ -3600,9 +3632,20 @@
         fGridFins[1].rotation.x = Math.sin(time_s * 4.0) * 0.08;
         fGridFins[3].rotation.x = -Math.sin(time_s * 4.0) * 0.08;
 
-        // Left & Right Cold-Gas Nitrogen Attitude Thrusters
-        falconLeftRcs.visible = leftOn && !isTerminal;
-        falconRightRcs.visible = rightOn && !isTerminal;
+        // Left & Right Cold-Gas Nitrogen Attitude Thrusters (Smooth decay, no blinking!)
+        const targetRcsL = (leftOn && !isTerminal) ? 1.0 : 0.0;
+        const targetRcsR = (rightOn && !isTerminal) ? 1.0 : 0.0;
+        smoothRcsLeft += (targetRcsL - smoothRcsLeft) * (targetRcsL > smoothRcsLeft ? 0.4 : 0.15);
+        smoothRcsRight += (targetRcsR - smoothRcsRight) * (targetRcsR > smoothRcsRight ? 0.4 : 0.15);
+
+        falconLeftRcs.visible = smoothRcsLeft > 0.02;
+        if (falconLeftRcs.visible && falconLeftRcs.jetCone) {
+          falconLeftRcs.jetCone.scale.set(smoothRcsLeft, 0.85 + smoothRcsLeft * 0.25, smoothRcsLeft);
+        }
+        falconRightRcs.visible = smoothRcsRight > 0.02;
+        if (falconRightRcs.visible && falconRightRcs.jetCone) {
+          falconRightRcs.jetCone.scale.set(smoothRcsRight, 0.85 + smoothRcsRight * 0.25, smoothRcsRight);
+        }
 
         // Telescoping Carbon-Fiber Landing Leg Deployment Animation
         const deployProgress = Math.max(0.0, Math.min(1.0, (45.0 - hFoot) / 25.0));
@@ -3610,13 +3653,17 @@
           leg.strut.rotation.z = deployProgress * leg.deployedAngle;
         });
 
-        // Dynamic Droneship Deck Blast Glow
+        // Dynamic Droneship Deck Blast Glow (Smooth fade, no blinking!)
         if (deckBlastMesh) {
-          if (hFoot < 20.0 && throttle > 0.08 && !isTerminal) {
-            deckBlastMesh.material.opacity = Math.max(0, (20.0 - hFoot) / 20.0) * 0.85;
-            deckBlastMesh.scale.setScalar(1.0 + (20.0 - hFoot) * 0.08);
-          } else {
-            deckBlastMesh.material.opacity = 0.0;
+          let targetBlast = 0.0;
+          if (hFoot < 25.0 && !isTerminal && (throttle > 0.03 || hFoot < 8.0)) {
+            targetBlast = Math.max(0, (25.0 - hFoot) / 25.0) * 0.85;
+          }
+          currentDeckBlastOpacity += (targetBlast - currentDeckBlastOpacity) * 0.15;
+          deckBlastMesh.material.opacity = currentDeckBlastOpacity;
+          deckBlastMesh.visible = currentDeckBlastOpacity > 0.01;
+          if (deckBlastMesh.visible) {
+            deckBlastMesh.scale.setScalar(1.0 + (25.0 - hFoot) * 0.08);
           }
         }
 
@@ -3633,9 +3680,20 @@
           artemisMainLight.intensity = throttle * 6.0;
         }
 
-        // Left & Right Hypergolic Attitude Thruster Jets
-        artemisLeftPlume.visible = leftOn && !isTerminal;
-        artemisRightPlume.visible = rightOn && !isTerminal;
+        // Left & Right Hypergolic Attitude Thruster Jets (Smooth decay, no blinking!)
+        const targetRcsL = (leftOn && !isTerminal) ? 1.0 : 0.0;
+        const targetRcsR = (rightOn && !isTerminal) ? 1.0 : 0.0;
+        smoothRcsLeft += (targetRcsL - smoothRcsLeft) * (targetRcsL > smoothRcsLeft ? 0.4 : 0.15);
+        smoothRcsRight += (targetRcsR - smoothRcsRight) * (targetRcsR > smoothRcsRight ? 0.4 : 0.15);
+
+        artemisLeftPlume.visible = smoothRcsLeft > 0.02;
+        if (artemisLeftPlume.visible) {
+          artemisLeftPlume.scale.set(smoothRcsLeft, 0.85 + smoothRcsLeft * 0.25, smoothRcsLeft);
+        }
+        artemisRightPlume.visible = smoothRcsRight > 0.02;
+        if (artemisRightPlume.visible) {
+          artemisRightPlume.scale.set(smoothRcsRight, 0.85 + smoothRcsRight * 0.25, smoothRcsRight);
+        }
 
         badgeLegLeft.className = s.left_contact ? "leg-badge contact" : "leg-badge";
         badgeLegLeft.textContent = s.left_contact ? "LEFT PAD: CONTACT" : "LEFT PAD: FREE";
