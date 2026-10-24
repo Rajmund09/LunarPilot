@@ -1860,21 +1860,27 @@
     chopstickRight.rotation.y = -0.22;
 
     // 6. Deluge Steam & Vapor Billows System
-    // Emits huge white clouds rolling across Starbase when rocket approaches pad
-    const delugeCloudGeo = new THREE.SphereGeometry(1, 12, 12);
+    // Emits realistic ground-hugging vapor rolling radially across Starbase pad (subtle & non-obtrusive)
+    const delugeCloudGeo = new THREE.SphereGeometry(1, 14, 10);
     const delugeCloudMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
+      color: 0xf1f5f9,
       transparent: true,
       opacity: 0.0,
-      roughness: 1.0,
+      roughness: 0.95,
       depthWrite: false,
     });
     const delugePuffs = [];
-    for (let p = 0; p < 28; p++) {
+    for (let p = 0; p < 24; p++) {
       const puff = new THREE.Mesh(delugeCloudGeo, delugeCloudMat);
-      const ang = (p * Math.PI * 2) / 28;
-      const dist = 6.0 + Math.random() * 24.0;
-      puff.position.set(Math.cos(ang) * dist, 1.0 + Math.random() * 5.0, Math.sin(ang) * dist);
+      const ang = (p * Math.PI * 2) / 24 + (Math.random() - 0.5) * 0.18;
+      const baseDist = 8.0 + (p % 4) * 4.5;
+      puff.position.set(Math.cos(ang) * baseDist, 0.45, Math.sin(ang) * baseDist);
+      puff.userData = {
+        ang: ang,
+        baseDist: baseDist,
+        speed: 6.5 + Math.random() * 4.0,
+        phase: Math.random() * Math.PI * 2
+      };
       puff.renderOrder = 20;
       starbaseGroup.add(puff);
       delugePuffs.push(puff);
@@ -2178,17 +2184,17 @@
       const rcsGroup = new THREE.Group();
       rcsGroup.position.set(isLeft ? -SH_DIAM / 2 - 0.1 : SH_DIAM / 2 + 0.1, 38.5, 0);
 
-      const jetGeo = new THREE.ConeGeometry(0.65, 5.5, 16);
+      const jetGeo = new THREE.ConeGeometry(0.48, 4.2, 16);
       jetGeo.rotateZ(isLeft ? Math.PI / 2 : -Math.PI / 2);
-      const jetMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, depthWrite: false });
+      const jetMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.65, depthWrite: false });
       const jet = new THREE.Mesh(jetGeo, jetMat);
       rcsGroup.jetMat = jetMat;
-      jet.position.x = isLeft ? -2.75 : 2.75;
+      jet.position.x = isLeft ? -2.1 : 2.1;
       rcsGroup.add(jet);
       rcsGroup.jet = jet;
 
-      const light = new THREE.PointLight(0x38bdf8, 3.5, 25);
-      light.position.x = isLeft ? -2.5 : 2.5;
+      const light = new THREE.PointLight(0x38bdf8, 2.2, 18);
+      light.position.x = isLeft ? -2.0 : 2.0;
       rcsGroup.add(light);
 
       rcsGroup.visible = false;
@@ -2345,18 +2351,18 @@
 
       // Pulsating Supersonic Diamond Shock Cone
       const jetConeGroup = new THREE.Group();
-      const jetGeo = new THREE.ConeGeometry(0.55, 4.8, 16);
+      const jetGeo = new THREE.ConeGeometry(0.40, 3.8, 16);
       jetGeo.rotateZ(isLeft ? Math.PI / 2 : -Math.PI / 2);
-      const jetMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.95, depthWrite: false });
+      const jetMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.65, depthWrite: false });
       const jet = new THREE.Mesh(jetGeo, jetMat);
-      jet.position.x = isLeft ? -2.4 : 2.4;
+      jet.position.x = isLeft ? -1.9 : 1.9;
       jetConeGroup.add(jet);
 
       // Inner concentrated vapor blast core
-      const coreJetGeo = new THREE.ConeGeometry(0.28, 3.2, 16);
+      const coreJetGeo = new THREE.ConeGeometry(0.20, 2.4, 16);
       coreJetGeo.rotateZ(isLeft ? Math.PI / 2 : -Math.PI / 2);
-      const coreJet = new THREE.Mesh(coreJetGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.98, depthWrite: false }));
-      coreJet.position.x = isLeft ? -1.6 : 1.6;
+      const coreJet = new THREE.Mesh(coreJetGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75, depthWrite: false }));
+      coreJet.position.x = isLeft ? -1.2 : 1.2;
       jetConeGroup.add(coreJet);
 
       rcsGroup.add(jetConeGroup);
@@ -3601,10 +3607,10 @@
           mechazillaHolder.position.y = 33.9 - 0.25 * Math.min(1, (1.5 - hFoot) / 1.5);
         }
 
-        // 2. High-Pressure Deluge Water Steam Eruption (Smooth Alpha & Continuous Diffusion - NO BLINKING!)
+        // 2. Realistic Ground-Hugging Deluge Vapor (Refined, subtle radial flow - doesn't block the rocket)
         let targetSteam = 0.0;
-        if (hFoot < 36.0 && !isTerminal && (throttle > 0.03 || hFoot < 12.0 || (s.phase && (s.phase.includes('FLARE') || s.phase.includes('BURN'))))) {
-          targetSteam = Math.max(0, (36.0 - hFoot) / 36.0) * 0.82;
+        if (hFoot < 28.0 && !isTerminal && (throttle > 0.04 || hFoot < 10.0 || (s.phase && (s.phase.includes('FLARE') || s.phase.includes('BURN'))))) {
+          targetSteam = Math.max(0, (28.0 - hFoot) / 28.0) * 0.32; // Softened to 32% max opacity (clean, subtle & realistic)
         }
         currentSteamOpacity += (targetSteam - currentSteamOpacity) * 0.12;
         delugeCloudMat.opacity = currentSteamOpacity;
@@ -3612,7 +3618,17 @@
         delugePuffs.forEach((puff, idx) => {
           puff.visible = steamActive;
           if (steamActive) {
-            puff.scale.setScalar(1.2 + Math.sin(time_s * 2.5 + idx * 0.5) * 0.25 + (36.0 - hFoot) * 0.28);
+            const u = puff.userData;
+            // Realistic radial expansion rolling horizontally away from the launch mount
+            const expansion = ((time_s * u.speed + idx * 2.4) % 20.0);
+            const currentDist = u.baseDist + expansion;
+            puff.position.x = Math.cos(u.ang) * currentDist;
+            puff.position.z = Math.sin(u.ang) * currentDist;
+            puff.position.y = 0.40 + Math.sin(time_s * 2.0 + u.phase) * 0.15;
+
+            // Flattened ground billow (height is 35% of width) - hugs the pad surface, keeping chopsticks & rocket fully visible!
+            const puffScale = Math.min(3.0, 0.9 + (currentDist / 28.0) * 1.5);
+            puff.scale.set(puffScale, puffScale * 0.35, puffScale);
           }
         });
 
@@ -3653,17 +3669,17 @@
           leg.strut.rotation.z = deployProgress * leg.deployedAngle;
         });
 
-        // Dynamic Droneship Deck Blast Glow (Smooth fade, no blinking!)
+        // Dynamic Droneship Deck Blast Glow (Subtle & clean)
         if (deckBlastMesh) {
           let targetBlast = 0.0;
-          if (hFoot < 25.0 && !isTerminal && (throttle > 0.03 || hFoot < 8.0)) {
-            targetBlast = Math.max(0, (25.0 - hFoot) / 25.0) * 0.85;
+          if (hFoot < 20.0 && !isTerminal && (throttle > 0.03 || hFoot < 6.0)) {
+            targetBlast = Math.max(0, (20.0 - hFoot) / 20.0) * 0.40;
           }
           currentDeckBlastOpacity += (targetBlast - currentDeckBlastOpacity) * 0.15;
           deckBlastMesh.material.opacity = currentDeckBlastOpacity;
           deckBlastMesh.visible = currentDeckBlastOpacity > 0.01;
           if (deckBlastMesh.visible) {
-            deckBlastMesh.scale.setScalar(1.0 + (25.0 - hFoot) * 0.08);
+            deckBlastMesh.scale.setScalar(1.0 + (20.0 - hFoot) * 0.05);
           }
         }
 
