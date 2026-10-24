@@ -187,7 +187,7 @@ python -m src.rocketland.benchmark --episodes 1000
 ## 📊 Empirical Benchmark Results
 
 <!-- RESULTS:START -->
-### LunarPilot PPO Benchmark (1,000 Test Flights, Seeds 20000–20999)
+### Verified Benchmark Results (1000 Test Flights, Seeds 20000–20999)
 
 | Metric | Null Policy (Engine Off) | Random Uniform Baseline | Classical Heuristic Floor | Trained PPO Agent (G0 Validated) |
 |:---|:---:|:---:|:---:|:---:|
@@ -199,22 +199,22 @@ python -m src.rocketland.benchmark --episodes 1000
 | **Touchdown Lateral Error p50 / p95** | N/A | N/A | 0.086 / 0.789 | **0.039 / 0.109** |
 
 > **Gate G0 Status: PASSED**
-> - Target: $\ge 95.0\%$ `LANDED_ON_PAD` on 1,000 test seeds with Wilson Lower Bound $\ge 90.0\%$.
+> - Target: >=95.0% `LANDED_ON_PAD` on 1,000 test seeds with Wilson Lower Bound >=90.0%.
 > - Achieved: **95.50%** landing success with Wilson 95% CI **[94.03%, 96.62%]** (lower bound 94.03% exceeds gate threshold).
 
----
 
 ### RocketLand-2D Booster Recovery Benchmark (1,000 Test Flights, Seeds 20000–20999)
 
 | Evaluation Scenario | Policy / Guidance Law | Landing Success (`LANDED_ON_PAD`) | 95% Wilson Confidence Interval | Mean Touchdown $v_y$ | Gate Status |
 |:---|:---|:---:|:---:|:---:|:---:|
-| **NOMINAL** | Classical Closed-Loop Hoverslam (`suicide_burn`) | **98.00%** | **[96.93%, 98.70%]** | -0.72 m/s | **Gate G2a: PASSED** (Target $\ge 90.0\%$) |
-| **NOMINAL** | Pre-trained RL Policy (`rocket_ppo_best`) | **0.00%** | **[0.00%, 0.38%]** | -39.18 m/s | **Gate G2b: FAILED** (Target $\ge 95.0\%$) |
-| **ROBUST_2X** | Pre-trained RL Policy (`rocket_ppo_best`) | **0.00%** | **[0.00%, 0.38%]** | -39.18 m/s | **Gate G2c: FAILED** (Target $\ge 85.0\%$) |
+| **NOMINAL** | Classical Closed-Loop Hoverslam (`suicide_burn`) | **98.00%** | **[96.93%, 98.70%]** | -0.72 m/s | **Gate G2a: PASSED** (Target >= 90.0%) |
+| **NOMINAL** | Pre-trained RL Policy (`rocket_ppo_best`) | **0.00%** | **[0.00%, 0.38%]** | -39.18 m/s | **Gate G2b: FAILED** (Target >= 95.0%) |
+| **ROBUST_2X** | Pre-trained RL Policy (`rocket_ppo_best`) | **0.00%** | **[0.00%, 0.38%]** | -39.18 m/s | **Gate G2c: FAILED** (Target >= 85.0%) |
 
-> **Scientific Verification Notes**:
-> - **Autonomous Guidance (Gate G2a)**: The analytical closed-loop suicide burn controller with TVC gimbal damping and progressive lateral flare achieves **98.00%** landing success on the droneship deck across 1,000 held-out Monte Carlo test seeds, passing Gate G2a.
+> **Verification Notes**:
+> - **Classical Guidance (Gate G2a)**: The analytical closed-loop suicide burn controller with TVC gimbal damping and progressive lateral flare achieves **98.00%** landing success on the droneship deck across 1,000 held-out Monte Carlo test seeds, passing Gate G2a.
 > - **RL Benchmark (Gate G2b & G2c)**: In accordance with Rule 1 ("No fake numbers"), un-converged infant RL policies are reported with their true zero metrics rather than synthetic values. The failure atlas is catalogued in `results/figures/rocketland_failure_atlas.png`.
+
 <!-- RESULTS:END -->
 
 ---
